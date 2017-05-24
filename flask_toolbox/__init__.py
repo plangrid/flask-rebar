@@ -199,6 +199,7 @@ class Toolbox(object):
         @app.errorhandler(Exception)
         def handle_werkzeug_http_error(error):
             current_app.log_exception(exc_info=sys.exc_info())
+            bugsnag.notify(error)
             return self._create_json_error_response(
                 message='Internal Server Error',
                 http_status_code=500
