@@ -6,7 +6,7 @@ from marshmallow import fields
 from marshmallow import post_dump
 from marshmallow import validates_schema
 
-from flask_toolbox import toolbox_proxy
+from plangrid.flask_toolbox import toolbox_proxy
 
 
 class Skip(fields.Field):

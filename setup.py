@@ -11,7 +11,7 @@ if __name__ == '__main__':
     setup(
         author='PlanGrid',
         description='Tools for quickly getting a Flask service up and running',
-        name='flask-toolbox',
+        name='plangrid.flask-toolbox',
         packages=packages,
         install_requires=[
             'bugsnag[flask]==3.1.0',
@@ -20,5 +20,6 @@ if __name__ == '__main__':
         ],
         version='0.0.1',
         zip_safe=True,
+        namespace_packages=['plangrid'],
         url='https://github.com/plangrid/flask-toolbox'
     )

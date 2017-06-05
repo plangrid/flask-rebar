@@ -19,8 +19,7 @@ from six.moves.urllib.parse import urlencode
 from werkzeug.local import LocalProxy
 from werkzeug.security import safe_str_cmp
 
-from flask_toolbox import http_errors
-
+from plangrid.flask_toolbox import http_errors
 
 DEFAULT_PAGINATION_LIMIT_MAX = 100
 HEADER_AUTH_TOKEN = 'X-PG-Auth'
