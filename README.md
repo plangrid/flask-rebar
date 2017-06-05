@@ -2,10 +2,6 @@ Flask Toolbox
 =============
 Utilities for jumpstarting a RESTful PlanGrid service.
 
-*Warning - Under Development!* 
-------------------------------
-Expect interfaces to change without a major version.
-
 
 Summary
 -------
@@ -34,7 +30,7 @@ Installation
 ------------
 
 ```
-pip install flask-toolbox
+pip install plangrid.flask-toolbox
 ```
 
 
@@ -43,7 +39,7 @@ Example Usage
 
 ```python
 from flask import Flask
-from flask_toolbox import (
+from plangrid.flask_toolbox import (
     Toolbox, 
     response, 
     paginated_response,
@@ -51,7 +47,7 @@ from flask_toolbox import (
     get_json_body_params_or_400,
     marshal
 )
-from flask_toolbox.validation import (
+from plangrid.flask_toolbox.validation import (
     RequestSchema, 
     ResponseSchema, 
     Skip, 
