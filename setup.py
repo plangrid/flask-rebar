@@ -18,7 +18,7 @@ if __name__ == '__main__':
             'Flask==0.12.1',
             'marshmallow==2.13.5'
         ],
-        version='1.0.1',
+        version='1.0.2',
         zip_safe=True,
         namespace_packages=['plangrid'],
         url='https://github.com/plangrid/flask-toolbox'
