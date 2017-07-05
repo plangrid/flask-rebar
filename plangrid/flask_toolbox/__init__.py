@@ -143,7 +143,8 @@ class Toolbox(object):
         self._register_custom_error_handler(app)
         self._register_werkzeug_error_handler(app)
         self._register_healthcheck(app)
-        self._configure_bugsnag(app)
+        if self.bugsnag_api_key:
+            self._configure_bugsnag(app)
 
         # Set the flask.request proxy to our extended type
         app.request_class = ToolboxRequest
