@@ -325,12 +325,8 @@ def _get_json_body_or_400():
     if (not request.data) or (len(request.data) == 0):
         raise http_errors.BadRequest("Fields must be in JSON body.")
 
-    try:
-        json_data = request.get_json()
-    except werkzeug.exceptions.BadRequest:
-        raise http_errors.BadRequest("Failed to decode JSON body.")
-
-    return json_data
+    # JSON decoding errors will be handled in ToolboxRequest.on_json_loading_failed
+    return request.get_json()
 
 
 def _format_marshmallow_errors_for_response_in_place(errs):
