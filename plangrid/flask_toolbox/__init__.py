@@ -41,6 +41,9 @@ class ToolboxRequest(Request):
     def auth_token(self):
         return self.headers.get(HEADER_AUTH_TOKEN)
 
+    def on_json_loading_failed(self, e):
+        raise http_errors.BadRequest('Failed to decode JSON body.')
+
 
 class Toolbox(object):
     """

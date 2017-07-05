@@ -171,6 +171,11 @@ class TestJsonBodyValidation(TestCase):
             data = flask_toolbox.get_json_body_params_or_400(schema=Schema)
             return flask_toolbox.response(data)
 
+        @app.route('/route_using_get_json', methods=['POST'])
+        def get_json_body_handler():
+            data = request.get_json()
+            return flask_toolbox.response(data)
+
         return app
 
     def test_json_encoding_validation(self):
@@ -275,6 +280,15 @@ class TestJsonBodyValidation(TestCase):
                 }
             }
         })
+
+    def test_invalid_json_error(self):
+        resp = self.app.test_client().post(
+            path='/route_using_get_json',
+            data='this_isnt_valid_json',
+            headers={'Content-Type': 'application/json'}
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json, {'message': 'Failed to decode JSON body.'})
 
 
 class TestQueryStringValidation(TestCase):
