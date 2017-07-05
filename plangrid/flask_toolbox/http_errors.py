@@ -84,6 +84,10 @@ class ExpectationFailed(HttpJsonError):
     http_status_code, default_message = 417, 'Expectation Failed'
 
 
+class UnprocessableEntity(HttpJsonError):
+    http_status_code, default_message = 422, 'Unprocessable Entity'
+
+
 class InternalError(HttpJsonError):
     http_status_code, default_message = 500, "Internal Server Error"
 
