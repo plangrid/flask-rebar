@@ -15,6 +15,7 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import request
+from newrelic import agent as newrelic_agent
 from six.moves.urllib.parse import urlencode
 from werkzeug.local import LocalProxy
 from werkzeug.security import safe_str_cmp
@@ -201,8 +202,10 @@ class Toolbox(object):
 
         @app.errorhandler(Exception)
         def handle_werkzeug_http_error(error):
-            current_app.log_exception(exc_info=sys.exc_info())
+            exc_info = sys.exc_info()
+            current_app.log_exception(exc_info=exc_info)
             bugsnag.notify(error)
+            newrelic_agent.record_exception(*exc_info)
             return self._create_json_error_response(
                 message='Internal Server Error',
                 http_status_code=500

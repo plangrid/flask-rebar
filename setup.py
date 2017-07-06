@@ -16,9 +16,10 @@ if __name__ == '__main__':
         install_requires=[
             'bugsnag[flask]==3.1.0',
             'Flask==0.12.1',
-            'marshmallow==2.13.5'
+            'marshmallow==2.13.5',
+            'newrelic==2.46.0.37'
         ],
-        version='1.0.2',
+        version='1.0.3',
         zip_safe=True,
         namespace_packages=['plangrid'],
         url='https://github.com/plangrid/flask-toolbox'
