@@ -53,6 +53,12 @@ class TestRestfulApiAdapter(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, {'message': BadRequest.default_message})
 
+    def test_missing_http_method(self):
+        app = Flask(__name__)
+        blueprint = Blueprint('test', __name__)
+        adapter = RestfulApiAdapter(blueprint)
+        self.assertRaises(NotImplementedError, lambda: adapter.add_resource(SimpleHandler, '/thing', ['GET', 'DELETE']))
+
 def gen_test_dict():
     return {'some': 'stuff', 'in_a': 'dict'}
 

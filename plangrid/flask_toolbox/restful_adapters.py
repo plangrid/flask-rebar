@@ -14,6 +14,10 @@ class RestfulApiAdapter(object):
             self.blueprint.add_url_rule(rule=rule, view_func=view_func, endpoint=endpoint, methods=[method])
 
     def _make_view_func(self, handler, method):
+        if not hasattr(handler, method.lower()) or not callable(getattr(handler, method.lower())):
+            err = 'Handler {0} claims to accept the {1} HTTP method, but has no {2} method on it. You should add one or edit the methods list.'
+            raise NotImplementedError(err.format(handler.__name__, method, method.lower()))
+
         def view_func(*args, **kwargs):
             instance = handler()
             func = getattr(instance, method.lower())
