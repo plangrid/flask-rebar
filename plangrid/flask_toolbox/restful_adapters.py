@@ -22,5 +22,8 @@ class RestfulApiAdapter(object):
         def view_func(*args, **kwargs):
             instance = handler()
             func = getattr(instance, method.lower())
-            return response(*func(*args, **kwargs))
+            result = func(*args, **kwargs)
+            if not isinstance(result, tuple):
+                result = result, 200
+            return response(*result)
         return view_func

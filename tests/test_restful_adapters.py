@@ -16,6 +16,7 @@ class TestRestfulApiAdapter(TestCase):
         adapter.add_resource(EmptyResponseHandler, '/nothing', ['GET'])
         adapter.add_resource(KwargsHandler, '/exclaim/<string:word>', ['GET'])
         adapter.add_resource(ErrorThrowingHandler, '/error', ['GET'])
+        adapter.add_resource(SingleReturnHandler, '/single_return', ['GET'])
         app.register_blueprint(blueprint)
         return app
 
@@ -49,6 +50,11 @@ class TestRestfulApiAdapter(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, {'message': BadRequest.default_message})
 
+    def test_single_return_method(self):
+        resp = self.app.test_client().get('/single_return')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json, gen_test_dict())
+
     def test_missing_http_method(self):
         app = Flask(__name__)
         blueprint = Blueprint('test', __name__)
@@ -81,3 +87,7 @@ class KwargsHandler(object):
 class ErrorThrowingHandler(object):
     def get(self):
         raise BadRequest()
+
+class SingleReturnHandler(object):
+    def get(self):
+        return gen_test_dict()
