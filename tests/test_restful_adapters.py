@@ -38,7 +38,7 @@ class TestRestfulApiAdapter(TestCase):
     def test_dict_response(self):
         resp = self.app.test_client().get('/dict')
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, TEST_DICT)
+        self.assertEqual(resp.json, gen_test_dict())
 
     def test_empty_response(self):
         resp = self.app.test_client().get('/nothing')
@@ -53,7 +53,8 @@ class TestRestfulApiAdapter(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, {'message': BadRequest.default_message})
 
-TEST_DICT = {'some': 'stuff', 'in_a': 'dict'}
+def gen_test_dict():
+    return {'some': 'stuff', 'in_a': 'dict'}
 
 class SimpleHandler(object):
     def get(self):
@@ -63,7 +64,7 @@ class SimpleHandler(object):
 
 class DictRespondingHandler(object):
     def get(self):
-        return TEST_DICT, 200
+        return gen_test_dict(), 200
 
 class EmptyResponseHandler(object):
     def get(self):
