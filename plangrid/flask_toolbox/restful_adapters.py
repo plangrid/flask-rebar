@@ -2,7 +2,7 @@ from flask import jsonify
 
 # Tools for making old apps that use Flask-RESTful work with Flask-Toolbox instead.
 
-class RestfulApiAdapter:
+class RestfulApiAdapter(object):
     """Replacement for the Api class in Flask-RESTful."""
     def __init__(self, blueprint):
         self.blueprint = blueprint

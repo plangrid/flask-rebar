@@ -55,24 +55,24 @@ class TestRestfulApiAdapter(TestCase):
 
 TEST_DICT = {'some': 'stuff', 'in_a': 'dict'}
 
-class SimpleHandler:
+class SimpleHandler(object):
     def get(self):
         return 'hello', 200
     def post(self):
         return 'goodbye', 201
 
-class DictRespondingHandler:
+class DictRespondingHandler(object):
     def get(self):
         return TEST_DICT, 200
 
-class EmptyResponseHandler:
+class EmptyResponseHandler(object):
     def get(self):
         return None, 204
 
-class KwargsHandler:
+class KwargsHandler(object):
     def get(self, word):
         return '{}!'.format(word), 200
 
-class ErrorThrowingHandler:
+class ErrorThrowingHandler(object):
     def get(self):
         raise BadRequest()
