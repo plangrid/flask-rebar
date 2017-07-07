@@ -13,7 +13,6 @@ class TestRestfulApiAdapter(TestCase):
         blueprint = Blueprint('test', __name__)
         adapter = RestfulApiAdapter(blueprint)
         adapter.add_resource(SimpleHandler, '/thing', ['GET', 'POST'])
-        adapter.add_resource(DictRespondingHandler, '/dict', ['GET'])
         adapter.add_resource(EmptyResponseHandler, '/nothing', ['GET'])
         adapter.add_resource(KwargsHandler, '/exclaim/<string:word>', ['GET'])
         adapter.add_resource(ErrorThrowingHandler, '/error', ['GET'])
@@ -23,11 +22,11 @@ class TestRestfulApiAdapter(TestCase):
     def test_http_methods(self):
         resp = self.app.test_client().get('/thing')
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.data.decode('utf-8'), 'hello')
+        self.assertEqual(resp.json, gen_test_dict())
 
         resp = self.app.test_client().post('/thing')
         self.assertEqual(resp.status_code, 201)
-        self.assertEqual(resp.data.decode('utf-8'), 'goodbye')
+        self.assertEqual(resp.json, gen_test_dict())
 
         resp = self.app.test_client().delete('/thing')
         self.assertEqual(resp.status_code, 405)
@@ -35,18 +34,15 @@ class TestRestfulApiAdapter(TestCase):
         resp = self.app.test_client().get('/stuff')
         self.assertEqual(resp.status_code, 404)
 
-    def test_dict_response(self):
-        resp = self.app.test_client().get('/dict')
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, gen_test_dict())
-
     def test_empty_response(self):
         resp = self.app.test_client().get('/nothing')
         self.assertEqual(resp.data.decode('utf-8'), '')
 
     def test_kwargs(self):
         resp = self.app.test_client().get('/exclaim/hello')
-        self.assertEqual(resp.data.decode('utf-8'), 'hello!')
+        expected = gen_test_dict()
+        expected['test'] = 'hello'
+        self.assertEqual(resp.json, expected)
 
     def test_error_handler(self):
         resp = self.app.test_client().get('/error')
@@ -64,9 +60,9 @@ def gen_test_dict():
 
 class SimpleHandler(object):
     def get(self):
-        return 'hello', 200
+        return gen_test_dict(), 200
     def post(self):
-        return 'goodbye', 201
+        return gen_test_dict(), 201
 
 class DictRespondingHandler(object):
     def get(self):
@@ -78,7 +74,9 @@ class EmptyResponseHandler(object):
 
 class KwargsHandler(object):
     def get(self, word):
-        return '{}!'.format(word), 200
+        val = gen_test_dict()
+        val['test'] = word
+        return val, 200
 
 class ErrorThrowingHandler(object):
     def get(self):

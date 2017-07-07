@@ -1,4 +1,5 @@
 from flask import jsonify
+from plangrid.flask_toolbox import response
 
 # Tools for making old apps that use Flask-RESTful work with Flask-Toolbox instead.
 
@@ -21,12 +22,5 @@ class RestfulApiAdapter(object):
         def view_func(*args, **kwargs):
             instance = handler()
             func = getattr(instance, method.lower())
-            result, code = func(*args, **kwargs)
-
-            if isinstance(result, dict):
-                result = jsonify(result)
-            elif result is None:
-                result = ''
-
-            return result, code
+            return response(*func(*args, **kwargs))
         return view_func
