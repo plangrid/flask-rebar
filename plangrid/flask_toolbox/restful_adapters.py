@@ -25,5 +25,5 @@ class RestfulApiAdapter(object):
             result = func(*args, **kwargs)
             if not isinstance(result, tuple):
                 result = result, 200
-            return response(*result)
+            return response(data=result[0], status_code=result[1])
         return view_func
