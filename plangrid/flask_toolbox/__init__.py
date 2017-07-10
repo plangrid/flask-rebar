@@ -21,6 +21,7 @@ from werkzeug.local import LocalProxy
 from werkzeug.security import safe_str_cmp
 
 from plangrid.flask_toolbox import http_errors
+from plangrid.flask_toolbox import messages
 
 DEFAULT_PAGINATION_LIMIT_MAX = 100
 HEADER_AUTH_TOKEN = 'X-PG-Auth'
@@ -43,7 +44,7 @@ class ToolboxRequest(Request):
         return self.headers.get(HEADER_AUTH_TOKEN)
 
     def on_json_loading_failed(self, e):
-        raise http_errors.BadRequest('Failed to decode JSON body.')
+        raise http_errors.BadRequest(messages.invalid_json)
 
 
 class Toolbox(object):
@@ -207,7 +208,7 @@ class Toolbox(object):
             bugsnag.notify(error)
             newrelic_agent.record_exception(*exc_info)
             return self._create_json_error_response(
-                message='Internal Server Error',
+                message=messages.internal_server_error,
                 http_status_code=500
             )
 
@@ -215,7 +216,7 @@ class Toolbox(object):
         """Adds a /health endpoint to the application."""
         @app.route('/health')
         def handle_healthcheck():
-            return jsonify({'message': "I'm doing OK, thanks for asking."})
+            return jsonify({'message': messages.health_check_response})
 
     def _configure_bugsnag(self, app):
         """Configures flask to forward uncaught exceptions to Bugsnag."""
@@ -321,13 +322,10 @@ def _get_json_body_or_400():
     if the request doesn't include a valid JSON payload.
     """
     if 'application/json' not in request.headers.get('content-type', ''):
-        raise http_errors.BadRequest(
-            "Only payloads with 'content-type' "
-            "'application/json' are supported."
-        )
+        raise http_errors.BadRequest(messages.unsupported_content_type)
 
     if (not request.data) or (len(request.data) == 0):
-        raise http_errors.BadRequest("Fields must be in JSON body.")
+        raise http_errors.BadRequest(messages.empty_json_body)
 
     # JSON decoding errors will be handled in ToolboxRequest.on_json_loading_failed
     return request.get_json()
@@ -409,7 +407,7 @@ def get_json_body_params_or_400(schema):
     if errs:
         _raise_400_for_marshmallow_errors(
             errs=errs,
-            msg='JSON body parameters are invalid.'
+            msg=messages.body_validation_failed
         )
 
     return json_body_params
@@ -432,7 +430,7 @@ def get_query_string_params_or_400(schema):
     if errs:
         _raise_400_for_marshmallow_errors(
             errs=errs,
-            msg='Query string parameters are invalid.'
+            msg=messages.query_string_validation_failed
         )
 
     return query_string_params
@@ -463,15 +461,15 @@ def authenticated(handler):
         token = request.headers.get(HEADER_AUTH_TOKEN)
 
         if not token:
-            raise http_errors.Unauthorized('No auth token provided.')
+            raise http_errors.Unauthorized(messages.missing_auth_token)
 
         elif not safe_str_cmp(str(token), toolbox_proxy.auth_token):
-            raise http_errors.Unauthorized('Invalid authentication.')
+            raise http_errors.Unauthorized(messages.invalid_auth_token)
 
         user_id = request.headers.get(HEADER_USER_ID)
 
         if not user_id:
-            raise http_errors.Unauthorized('No user_id provided.')
+            raise http_errors.Unauthorized(messages.missing_user_id)
 
         bugsnag.configure_request(user={"id": user_id})
 

@@ -6,11 +6,12 @@ from marshmallow import fields
 from marshmallow import post_dump
 from marshmallow import validates_schema
 
+from plangrid.flask_toolbox import messages
 from plangrid.flask_toolbox import toolbox_proxy
 
 
 class Skip(fields.Field):
-    ERROR_MSG = 'Skip must be 0 or positive integer.'
+    ERROR_MSG = messages.invalid_skip_value
 
     def __init__(self, default=0, **kwargs):
         # "missing" is used on deserialize
@@ -41,7 +42,7 @@ class USE_APPLICATION_DEFAULT(object):
 
 
 class Limit(fields.Field):
-    ERROR_MSG = 'Limit must be a positive integer.'
+    ERROR_MSG = messages.invalid_limit_value
 
     def __init__(self, default=USE_APPLICATION_DEFAULT, **kwargs):
         super(Limit, self).__init__(missing=default, **kwargs)
@@ -67,12 +68,12 @@ class Limit(fields.Field):
             raise ValidationError(self.ERROR_MSG)
         limit_max = toolbox_proxy.pagination_limit_max
         if val > limit_max:
-            raise ValidationError('Maximum limit is {}'.format(limit_max))
+            raise ValidationError(messages.limit_over_max(limit_max))
         return super(Limit, self)._validate(val)
 
 
 class ObjectId(fields.Str):
-    ERROR_MSG = "Not a valid ObjectID."
+    ERROR_MSG = messages.invalid_object_id
 
     def _deserialize(self, val, attr, data):
         if not _is_oid(val):
@@ -88,7 +89,7 @@ class ObjectId(fields.Str):
 
 
 class UUID(fields.Str):
-    ERROR_MSG = "Not a valid UUID."
+    ERROR_MSG = messages.invalid_uuid
 
     def _deserialize(self, val, attr, data):
         if not _is_uuid(val):
@@ -130,9 +131,9 @@ class ActuallyRequireOnDumpMixin(object):
             field = self.fields[field_name]
             if field.required:
                 if field_name not in data:
-                    raise ValidationError("Required field missing: {}".format(field_name))
+                    raise ValidationError(messages.required_field_missing(field_name))
                 elif field.allow_none is False and data[field_name] is None:
-                    raise ValidationError("Value for required field cannot be None: {}".format(field_name))
+                    raise ValidationError(messages.required_field_empty(field_name))
 
 
 class DisallowExtraFieldsMixin(object):
@@ -147,7 +148,7 @@ class DisallowExtraFieldsMixin(object):
         excluded_fields = self.exclude
         unsupported_fields = set(input_fields) - set(expected_fields) - set(excluded_fields)
         if len(unsupported_fields) > 0:
-            raise ValidationError(message='Unexpected field: {}'.format(','.join(unsupported_fields)))
+            raise ValidationError(message=messages.unsupported_fields(unsupported_fields))
 
 
 def add_custom_error_message(base_class, field_validation_error_function):

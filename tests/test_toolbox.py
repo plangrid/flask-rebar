@@ -13,6 +13,7 @@ from marshmallow import ValidationError
 from marshmallow import fields
 
 from plangrid.flask_toolbox import http_errors
+from plangrid.flask_toolbox import messages
 
 
 class TestErrors(TestCase):
@@ -78,7 +79,7 @@ class TestErrors(TestCase):
         resp = self.app.test_client().get('/uncaught_errors')
         self.assertEqual(resp.status_code, 500)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json, {'message': 'Internal Server Error'})
+        self.assertEqual(resp.json, {'message': messages.internal_server_error})
 
 
 class TestHealthcheck(TestCase):
@@ -114,7 +115,7 @@ class TestAuthentication(TestCase):
         resp = self.app.test_client().get('/secrets', headers=headers)
 
         self.assertEqual(resp.status_code, 401)
-        self.assertEqual(resp.json, {'message': 'No auth token provided.'})
+        self.assertEqual(resp.json, {'message': messages.missing_auth_token})
 
     def test_401_if_token_is_wrong(self):
         headers = {
@@ -124,7 +125,7 @@ class TestAuthentication(TestCase):
         resp = self.app.test_client().get('/secrets', headers=headers)
 
         self.assertEqual(resp.status_code, 401)
-        self.assertEqual(resp.json, {'message': 'Invalid authentication.'})
+        self.assertEqual(resp.json, {'message': messages.invalid_auth_token})
 
     def test_401_if_user_id_header_is_missing(self):
         headers = {
@@ -133,7 +134,7 @@ class TestAuthentication(TestCase):
         resp = self.app.test_client().get('/secrets', headers=headers)
 
         self.assertEqual(resp.status_code, 401)
-        self.assertEqual(resp.json, {'message': 'No user_id provided.'})
+        self.assertEqual(resp.json, {'message': messages.missing_user_id})
 
     def test_all_good_if_everything_is_valid(self):
         headers = {
@@ -184,7 +185,7 @@ class TestJsonBodyValidation(TestCase):
             headers={'Content-Type': 'application/json'}
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {'message': 'Fields must be in JSON body.'})
+        self.assertEqual(resp.json, {'message': messages.empty_json_body})
 
         resp = self.app.test_client().post(
             path='/stuffs',
@@ -194,8 +195,7 @@ class TestJsonBodyValidation(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(
             resp.json,
-            {'message': "Only payloads with 'content-type' "
-                        "'application/json' are supported."}
+            {'message': messages.unsupported_content_type}
         )
 
         resp = self.app.test_client().post(
@@ -204,7 +204,7 @@ class TestJsonBodyValidation(TestCase):
             headers={'Content-Type': 'application/json'}
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {'message': 'Failed to decode JSON body.'})
+        self.assertEqual(resp.json, {'message': messages.invalid_json})
 
     def test_json_body_parameter_validation(self):
         # Only field errors
@@ -214,7 +214,7 @@ class TestJsonBodyValidation(TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, {
-            'message': 'JSON body parameters are invalid.',
+            'message': messages.body_validation_failed,
             'errors': {
                 'foo': 'Not a valid integer.',
                 'bar': 'Not a valid email address.'
@@ -228,7 +228,7 @@ class TestJsonBodyValidation(TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, {
-            'message': 'JSON body parameters are invalid.',
+            'message': messages.body_validation_failed,
             'errors': {'_general': 'Unexpected field: baz'}
         })
 
@@ -239,7 +239,7 @@ class TestJsonBodyValidation(TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, {
-            'message': 'JSON body parameters are invalid.',
+            'message': messages.body_validation_failed,
             'errors': {
                 '_general': 'Unexpected field: baz',
                 'foo': 'Missing data for required field.'
@@ -267,7 +267,7 @@ class TestJsonBodyValidation(TestCase):
         self.assertEqual(resp.status_code, 400)
 
         self.assertEqual(resp.json, {
-            'message': 'JSON body parameters are invalid.',
+            'message': messages.body_validation_failed,
             'errors': {
                 '_general': 'Unexpected field: bam',
                 'foo': 'Missing data for required field.',
@@ -288,7 +288,7 @@ class TestJsonBodyValidation(TestCase):
             headers={'Content-Type': 'application/json'}
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {'message': 'Failed to decode JSON body.'})
+        self.assertEqual(resp.json, {'message': messages.invalid_json})
 
 
 class TestQueryStringValidation(TestCase):
@@ -314,7 +314,7 @@ class TestQueryStringValidation(TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, {
-            'message': 'Query string parameters are invalid.',
+            'message': messages.query_string_validation_failed,
             'errors': {
                 'foo': 'Not a valid integer.'
             }
@@ -325,7 +325,7 @@ class TestQueryStringValidation(TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, {
-            'message': 'Query string parameters are invalid.',
+            'message': messages.query_string_validation_failed,
             'errors': {
                 'foo': 'Missing data for required field.'
             }
@@ -336,7 +336,7 @@ class TestQueryStringValidation(TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, {
-            'message': 'Query string parameters are invalid.',
+            'message': messages.query_string_validation_failed,
             'errors': {'_general': 'Unexpected field: unexpected'}
         })
 

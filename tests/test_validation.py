@@ -8,6 +8,7 @@ from marshmallow import Schema
 from marshmallow import ValidationError
 from marshmallow import fields
 
+from plangrid.flask_toolbox import messages
 from plangrid.flask_toolbox import Toolbox
 from plangrid.flask_toolbox.validation import ActuallyRequireOnDumpMixin
 from plangrid.flask_toolbox.validation import CommaSeparatedList
@@ -42,7 +43,7 @@ class TestDisallowExtraFieldsMixin(TestCase):
 
     def test_unexpected_field(self):
         data, errs = DisallowExtraFieldsSchema().load({'foo': 'bar'})
-        self.assertEqual(errs, {'_schema': ['Unexpected field: foo']})
+        self.assertEqual(errs, {'_schema': [messages.unsupported_fields(['foo'])]})
 
     def test_respects_load_from_and_attribute(self):
         data, errors = DisallowExtraFieldsSchema().load({'c': 'bar'})
@@ -191,12 +192,12 @@ class TestUUID(TestCase):
     def test_deserialize_errors(self):
         id = '123456'
         _, errs = ObjectWithUUID().load({'id': id})
-        self.assertEqual(errs['id'], ['Not a valid UUID.'])
+        self.assertEqual(errs['id'], [messages.invalid_uuid])
 
     def test_serialize_errors(self):
         id = '123456'
         _, errs = ObjectWithUUID().dump({'id': id})
-        self.assertEqual(errs['id'], ['Not a valid UUID.'])
+        self.assertEqual(errs['id'], [messages.invalid_uuid])
 
 
 class ObjectWithObjectID(Schema):
@@ -217,12 +218,12 @@ class TestObjectId(TestCase):
     def test_deserialize_errors(self):
         id = '123456'
         _, errs = ObjectWithObjectID().load({'id': id})
-        self.assertEqual(errs['id'], ['Not a valid ObjectID.'])
+        self.assertEqual(errs['id'], [messages.invalid_object_id])
 
     def test_serialize_errors(self):
         id = '123456'
         _, errs = ObjectWithObjectID().dump({'id': id})
-        self.assertEqual(errs['id'], ['Not a valid ObjectID.'])
+        self.assertEqual(errs['id'], [messages.invalid_object_id])
 
 
 class ObjectWithSkip(Schema):
@@ -252,11 +253,11 @@ class TestSkip(TestCase):
 
     def test_deserialize_errors(self):
         _, errs = ObjectWithSkip().load({'skip': -1})
-        self.assertEqual(errs['skip'], ['Skip must be 0 or positive integer.'])
+        self.assertEqual(errs['skip'], [messages.invalid_skip_value])
 
     def test_serialize_errors(self):
         _, errs = ObjectWithSkip().dump({'skip': 'hello'})
-        self.assertEqual(errs['skip'], ['Skip must be 0 or positive integer.'])
+        self.assertEqual(errs['skip'], [messages.invalid_skip_value])
 
 
 class ObjectWithLimit(Schema):
@@ -297,11 +298,11 @@ class TestLimit(flask_testing.TestCase):
 
     def test_deserialize_errors(self):
         _, errs = ObjectWithLimit().load({'limit': 0})
-        self.assertEqual(errs['limit'], ['Limit must be a positive integer.'])
+        self.assertEqual(errs['limit'], [messages.invalid_limit_value])
 
         _, errs = ObjectWithLimit().load({'limit': self.PAGINATION_LIMIT_MAX + 1})
-        self.assertEqual(errs['limit'], ['Maximum limit is {}'.format(self.PAGINATION_LIMIT_MAX)])
+        self.assertEqual(errs['limit'], [messages.limit_over_max(self.PAGINATION_LIMIT_MAX)])
 
     def test_serialize_errors(self):
         _, errs = ObjectWithLimit().dump({'limit': 'hello'})
-        self.assertEqual(errs['limit'], ['Limit must be a positive integer.'])
+        self.assertEqual(errs['limit'], [messages.invalid_limit_value])
