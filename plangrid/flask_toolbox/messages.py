@@ -14,7 +14,9 @@ missing_auth_token = 'No auth token provided.'
 
 invalid_auth_token = 'Invalid authentication.'
 
-missing_user_id = 'No user_id provided.'
+missing_user_id = 'No user ID provided.'
+
+invalid_user_id = 'Invalid user ID.'
 
 health_check_response = "I'm doing OK, thanks for asking."
 

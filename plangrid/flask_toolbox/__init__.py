@@ -12,16 +12,16 @@ import marshmallow
 import werkzeug.exceptions
 from flask import Request
 from flask import current_app
-from flask import g
 from flask import jsonify
 from flask import request
 from newrelic import agent as newrelic_agent
 from six.moves.urllib.parse import urlencode
-from werkzeug.local import LocalProxy
 from werkzeug.security import safe_str_cmp
 
 from plangrid.flask_toolbox import http_errors
 from plangrid.flask_toolbox import messages
+from plangrid.flask_toolbox.toolbox_proxy import toolbox_proxy
+from plangrid.flask_toolbox.validation import ObjectId
 
 DEFAULT_PAGINATION_LIMIT_MAX = 100
 HEADER_AUTH_TOKEN = 'X-PG-Auth'
@@ -225,11 +225,6 @@ class Toolbox(object):
             release_stage=self.bugsnag_release_stage
         )
         bugsnag.flask.handle_exceptions(app)
-
-
-# Werkzeug LocalProxy that can be used to retrieved the toolbox attached to
-# the current application context.
-toolbox_proxy = LocalProxy(lambda: g.toolbox)
 
 
 def _make_url(resource_path, query_params):
@@ -437,6 +432,25 @@ def get_query_string_params_or_400(schema):
         )
 
     return query_string_params
+
+
+def get_user_id_from_header_or_400():
+    """
+    Retrieves the user ID from the header of a request, validating it as an
+    ObjectID and raising a 400 error if it is missing or invalid.
+
+    :rtype: str
+    """
+    user_id = request.user_id
+    if not user_id:
+        raise http_errors.BadRequest(msg=messages.missing_user_id)
+
+    try:
+        user = ObjectId().deserialize(value=user_id)
+    except marshmallow.ValidationError:
+        raise http_errors.BadRequest(msg=messages.invalid_user_id)
+
+    return user_id
 
 
 def marshal(data, schema):

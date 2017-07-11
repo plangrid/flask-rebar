@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import random
 import unittest
 import uuid
 
@@ -533,3 +534,39 @@ class TestMarshal(unittest.TestCase):
                 data={'foo': 'bar'},
                 schema=SchemaForMarshaling
             )
+
+
+def gen_object_id():
+    chars = [hex(x)[2] for x in range(0, 16)]
+    return ''.join([random.choice(chars) for x in range(0, 24)])
+
+
+class TestRetrieveUserID(TestCase):
+    def create_app(self):
+        app = Flask(__name__)
+        flask_toolbox.Toolbox(app)
+
+        @app.route('/whoami')
+        def route():
+            user_id = flask_toolbox.get_user_id_from_header_or_400()
+            return flask_toolbox.response({'user_id': user_id})
+
+        return app
+
+    def test_missing_user_id(self):
+        resp = self.app.test_client().get('/whoami')
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json, {'message': messages.missing_user_id})
+
+    def test_invalid_user_id(self):
+        headers = {'X-PG-UserId': 'asdfghjkl;'}
+        resp = self.app.test_client().get('/whoami', headers=headers)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json, {'message': messages.invalid_user_id})
+
+    def test_valid_user_id(self):
+        user_id = gen_object_id()
+        headers = {'X-PG-UserId': user_id}
+        resp = self.app.test_client().get('/whoami', headers=headers)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json, {'user_id': user_id})
