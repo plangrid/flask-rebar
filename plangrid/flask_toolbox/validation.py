@@ -125,10 +125,15 @@ class CommaSeparatedList(fields.List):
 
 
 class QueryParamList(fields.List):
+    """
+    A field class for Marshmallow; use this class when your list will be
+    deserialized from a query string containing the same param multiple
+    times where each param is an item in the list.
+    e.g. ?foo=bar&foo=baz -> {'foo': ['bar', 'baz']}
+    """
     def _deserialize(self, value, attr, data):
         # data is a MultiDict of query params, so pull out all of the items
         # with getlist instead of just the first
-        # i.e. ?foo=bar&foo=baz -> {'foo': ['bar', 'baz']}
         items = data.getlist(attr)
         return super(QueryParamList, self)._deserialize(items, attr, data)
 
