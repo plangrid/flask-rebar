@@ -536,7 +536,7 @@ class TestMarshal(unittest.TestCase):
             )
 
 
-def gen_object_id():
+def generate_object_id():
     chars = [hex(x)[2] for x in range(0, 16)]
     return ''.join([random.choice(chars) for x in range(0, 24)])
 
@@ -565,7 +565,7 @@ class TestRetrieveUserID(TestCase):
         self.assertEqual(resp.json, {'message': messages.invalid_user_id})
 
     def test_valid_user_id(self):
-        user_id = gen_object_id()
+        user_id = generate_object_id()
         headers = {'X-PG-UserId': user_id}
         resp = self.app.test_client().get('/whoami', headers=headers)
         self.assertEqual(resp.status_code, 200)
