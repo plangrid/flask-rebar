@@ -124,6 +124,15 @@ class CommaSeparatedList(fields.List):
         return ','.join([str(i) for i in items])
 
 
+class QueryParamList(fields.List):
+    def _deserialize(self, value, attr, data):
+        # data is a MultiDict of query params, so pull out all of the items
+        # with getlist instead of just the first
+        # i.e. ?foo=bar&foo=baz -> {'foo': ['bar', 'baz']}
+        items = data.getlist(attr)
+        return super(QueryParamList, self)._deserialize(items, attr, data)
+
+
 class ActuallyRequireOnDumpMixin(object):
     @post_dump()
     def require_output_fields(self, data):

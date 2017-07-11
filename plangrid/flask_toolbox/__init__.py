@@ -421,11 +421,14 @@ def get_query_string_params_or_400(schema):
     :param schema:
     :rtype: dict
     """
-    query_args = request.args.to_dict()
+    query_multidict = request.args.copy()
 
     schema = _normalize_schema(schema)
 
-    query_string_params, errs = schema.load(data=query_args)
+    # Deliberately use the request.args MultiDict in case a validator wants to
+    # do something with several of the same query param (e.g. ?foo=1&foo=2), in
+    # which case it will need the getlist method
+    query_string_params, errs = schema.load(data=query_multidict)
 
     if errs:
         _raise_400_for_marshmallow_errors(

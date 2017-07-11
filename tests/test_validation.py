@@ -7,6 +7,7 @@ from flask import Flask
 from marshmallow import Schema
 from marshmallow import ValidationError
 from marshmallow import fields
+from werkzeug.datastructures import MultiDict
 
 from plangrid.flask_toolbox import messages
 from plangrid.flask_toolbox import Toolbox
@@ -15,6 +16,7 @@ from plangrid.flask_toolbox.validation import CommaSeparatedList
 from plangrid.flask_toolbox.validation import DisallowExtraFieldsMixin
 from plangrid.flask_toolbox.validation import Limit
 from plangrid.flask_toolbox.validation import ObjectId
+from plangrid.flask_toolbox.validation import QueryParamList
 from plangrid.flask_toolbox.validation import Skip
 from plangrid.flask_toolbox.validation import UUID
 from plangrid.flask_toolbox.validation import add_custom_error_message
@@ -171,6 +173,36 @@ class TestCommaSeparatedList(TestCase):
             # Marshmallow's fields.List formats the dump errors differently
             # than load :shrug:
             'foos': ['Not a valid integer.']
+        })
+
+
+class StringQuery(Schema):
+    foos = QueryParamList(fields.String())
+
+
+class IntegerQuery(Schema):
+    foos = QueryParamList(fields.Integer())
+
+
+class TestQueryParamList(TestCase):
+    def test_deserialize(self):
+        query = MultiDict([('foos', 'bar')])
+        data, _ = StringQuery().load(query)
+        self.assertEqual(data['foos'], ['bar'])
+
+        query = MultiDict([('foos', 'bar'), ('foos', 'baz')])
+        data, _ = StringQuery().load(query)
+        self.assertEqual(data['foos'], ['bar', 'baz'])
+
+        query = MultiDict([('foos', 1), ('foos', 2)])
+        data, _ = IntegerQuery().load(query)
+        self.assertEqual(data['foos'], [1, 2])
+
+    def test_deserialize_errors(self):
+        query = MultiDict([('foos', 1), ('foos', 'two')])
+        _, errs = IntegerQuery().load(query)
+        self.assertEqual(errs, {
+            'foos': {1: ['Not a valid integer.']}
         })
 
 
