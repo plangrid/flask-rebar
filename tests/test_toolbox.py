@@ -5,7 +5,7 @@ import random
 import unittest
 import uuid
 
-from plangrid import flask_toolbox
+from flask import Blueprint
 from flask import Flask
 from flask import request
 from flask_testing import TestCase
@@ -13,6 +13,7 @@ from plangrid.flask_toolbox import validation
 from marshmallow import ValidationError
 from marshmallow import fields
 
+from plangrid import flask_toolbox
 from plangrid.flask_toolbox import http_errors
 from plangrid.flask_toolbox import messages
 
@@ -477,7 +478,9 @@ class TestRequestAttributes(TestCase):
             data = {
                 'request_id': request.request_id,
                 'user_id': request.user_id,
-                'auth_token': request.auth_token
+                'auth_token': request.auth_token,
+                'scopes': list(request.scopes),
+                'application_id': request.application_id
             }
             return flask_toolbox.response(data=data)
 
@@ -487,25 +490,56 @@ class TestRequestAttributes(TestCase):
         auth_token = '123'
         user_id = '456'
         request_id = '789'
+        scope = 'foo'
+        application_id = '101'
 
         resp = self.app.test_client().get(
             '/request_info',
             headers={
                 'X-PG-Auth': auth_token,
                 'X-PG-UserId': user_id,
-                'X-PG-RequestId': request_id
+                'X-PG-RequestId': request_id,
+                'X-PG-Scopes': scope,
+                'X-PG-AppId': application_id
             }
         )
         self.assertEqual(resp.json, {
             'request_id': request_id,
             'user_id': user_id,
-            'auth_token': auth_token
+            'auth_token': auth_token,
+            'scopes': [scope],
+            'application_id': application_id
         })
 
     def test_get_request_id_is_defaulted(self):
         resp = self.app.test_client().get('/request_info')
         uuid.UUID(resp.json['request_id'])
         # nothing blew up!
+
+    def test_scopes_are_properly_parsed(self):
+        resp = self.app.test_client().get(
+            '/request_info',
+            headers={'X-PG-Scopes': 'foo bar  baz '}
+        )
+        self.assertEqual(len(resp.json['scopes']), 3)
+        self.assertIn('foo', resp.json['scopes'])
+        self.assertIn('bar', resp.json['scopes'])
+        self.assertIn('baz', resp.json['scopes'])
+
+        resp = self.app.test_client().get(
+            '/request_info',
+            headers={'X-PG-Scopes': ''}
+        )
+        self.assertEqual(resp.json['scopes'], [])
+
+        resp = self.app.test_client().get(
+            '/request_info',
+            headers={'X-PG-Scopes': ' '}
+        )
+        self.assertEqual(resp.json['scopes'], [])
+
+        resp = self.app.test_client().get('/request_info')
+        self.assertEqual(resp.json['scopes'], [])
 
 
 class SchemaForMarshaling(validation.ResponseSchema):
@@ -570,3 +604,119 @@ class TestRetrieveUserID(TestCase):
         resp = self.app.test_client().get('/whoami', headers=headers)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json, {'user_id': user_id})
+
+
+class TestVerifyScopeOr403(TestCase):
+    SCOPE_FOO = 'write:foo'
+
+    def create_app(self):
+        app = Flask(__name__)
+        flask_toolbox.Toolbox(app)
+
+        @app.route('/scoped')
+        def route():
+            flask_toolbox.verify_scope_or_403(self.SCOPE_FOO)
+            return flask_toolbox.response(data={}, status_code=200)
+
+        return app
+
+    def test_request_doesnt_have_correct_scope(self):
+        headers = {'X-PG-Scopes': 'bar baz'}
+        resp = self.app.test_client().get('/scoped', headers=headers)
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.json, {'message': messages.missing_required_scope})
+
+    def test_request_has_correct_scope(self):
+        headers = {'X-PG-Scopes': 'bar {}'.format(self.SCOPE_FOO)}
+        resp = self.app.test_client().get('/scoped', headers=headers)
+        self.assertEqual(resp.status_code, 200)
+
+
+class TestScopedEndpoint(TestCase):
+    SCOPE_FOO = 'write:foo'
+
+    def create_app(self):
+        app = Flask(__name__)
+        flask_toolbox.Toolbox(app)
+
+        @app.route('/scoped')
+        @flask_toolbox.scoped(self.SCOPE_FOO)
+        def route():
+            return flask_toolbox.response(data={}, status_code=200)
+
+        return app
+
+    def test_request_doesnt_have_correct_scope(self):
+        headers = {'X-PG-Scopes': 'bar baz'}
+        resp = self.app.test_client().get('/scoped', headers=headers)
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.json, {'message': messages.missing_required_scope})
+
+    def test_request_has_correct_scope(self):
+        headers = {'X-PG-Scopes': 'bar {}'.format(self.SCOPE_FOO)}
+        resp = self.app.test_client().get('/scoped', headers=headers)
+        self.assertEqual(resp.status_code, 200)
+
+
+class TestScopedBlueprint(TestCase):
+    SCOPE_FOO = 'write:foo'
+
+    def create_app(self):
+        blueprint = Blueprint('scoped', '__name__')
+
+        @blueprint.route('/scoped')
+        def scoped():
+            return flask_toolbox.response(data={}, status_code=200)
+
+        flask_toolbox.scope_app(required_scope=self.SCOPE_FOO, app=blueprint)
+
+        app = Flask(__name__)
+        app.register_blueprint(blueprint)
+        flask_toolbox.Toolbox(app)
+
+        @app.route('/unscoped')
+        def unscoped():
+            return flask_toolbox.response(data={}, status_code=200)
+
+        return app
+
+    def test_request_doesnt_have_correct_scope(self):
+        headers = {'X-PG-Scopes': 'bar baz'}
+        resp = self.app.test_client().get('/scoped', headers=headers)
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.json, {'message': messages.missing_required_scope})
+
+        resp = self.app.test_client().get('/unscoped', headers=headers)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_request_has_correct_scope(self):
+        headers = {'X-PG-Scopes': 'bar {}'.format(self.SCOPE_FOO)}
+        resp = self.app.test_client().get('/scoped', headers=headers)
+        self.assertEqual(resp.status_code, 200)
+
+
+class TestScopedApplication(TestCase):
+    SCOPE_FOO = 'write:foo'
+
+    def create_app(self):
+        app = Flask(__name__)
+        flask_toolbox.Toolbox(app)
+
+        @app.route('/scoped')
+        def unscoped():
+            return flask_toolbox.response(data={}, status_code=200)
+
+        flask_toolbox.scope_app(required_scope=self.SCOPE_FOO, app=app)
+
+        return app
+
+    def test_request_doesnt_have_correct_scope(self):
+        headers = {'X-PG-Scopes': 'bar baz'}
+        resp = self.app.test_client().get('/scoped', headers=headers)
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.json, {'message': messages.missing_required_scope})
+
+    def test_request_has_correct_scope(self):
+        headers = {'X-PG-Scopes': 'bar {}'.format(self.SCOPE_FOO)}
+        resp = self.app.test_client().get('/scoped', headers=headers)
+        self.assertEqual(resp.status_code, 200)

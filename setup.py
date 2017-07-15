@@ -19,7 +19,7 @@ if __name__ == '__main__':
             'marshmallow==2.13.5',
             'newrelic==2.46.0.37'
         ],
-        version='1.0.8',
+        version='1.1.0',
         zip_safe=True,
         namespace_packages=['plangrid'],
         url='https://github.com/plangrid/flask-toolbox'

@@ -1,41 +1,47 @@
-invalid_json = 'Failed to decode JSON body.'
-
-internal_server_error = 'Internal Server Error'
+body_validation_failed = 'JSON body parameters are invalid.'
 
 empty_json_body = 'Fields must be in JSON body.'
 
-unsupported_content_type = "Only payloads with 'content-type' 'application/json' are supported."
+health_check_response = "I'm doing OK, thanks for asking."
 
-body_validation_failed = 'JSON body parameters are invalid.'
-
-query_string_validation_failed = 'Query string parameters are invalid.'
-
-missing_auth_token = 'No auth token provided.'
+internal_server_error = "Sorry, PlanGrid's system had an error and the team has been notified. If this happens again, please contact developers@plangrid.com."
 
 invalid_auth_token = 'Invalid authentication.'
 
-missing_user_id = 'No user ID provided.'
+invalid_json = 'Failed to decode JSON body.'
 
-invalid_user_id = 'Invalid user ID.'
+invalid_limit_value = 'Limit must be a positive integer.'
 
-health_check_response = "I'm doing OK, thanks for asking."
+invalid_object_id = 'Not a valid ObjectID.'
 
 invalid_skip_value = 'Skip must be 0 or positive integer.'
 
-invalid_limit_value = 'Limit must be a positive integer.'
+invalid_user_id = 'Invalid user ID.'
+
+invalid_uuid = 'Not a valid UUID.'
+
+missing_auth_token = 'No auth token provided.'
+
+missing_required_scope = 'Missing the required scope to access resource.'
+
+missing_user_id = 'No user ID provided.'
+
+query_string_validation_failed = 'Query string parameters are invalid.'
+
+unsupported_content_type = "Only payloads with 'content-type' 'application/json' are supported."
+
 
 def limit_over_max(max_limit):
     return 'Maximum limit is {}'.format(max_limit)
 
-invalid_object_id = 'Not a valid ObjectID.'
 
-invalid_uuid = 'Not a valid UUID.'
+def required_field_empty(field_name):
+    return "Value for required field cannot be None: {}".format(field_name)
+
 
 def required_field_missing(field_name):
     return "Required field missing: {}".format(field_name)
 
-def required_field_empty(field_name):
-    return "Value for required field cannot be None: {}".format(field_name)
 
 def unsupported_fields(field_names):
     return 'Unexpected field: {}'.format(','.join(field_names))

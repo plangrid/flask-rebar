@@ -9,7 +9,6 @@ from functools import wraps
 import bugsnag
 import bugsnag.flask
 import marshmallow
-import werkzeug.exceptions
 from flask import Request
 from flask import current_app
 from flask import jsonify
@@ -27,6 +26,8 @@ DEFAULT_PAGINATION_LIMIT_MAX = 100
 HEADER_AUTH_TOKEN = 'X-PG-Auth'
 HEADER_USER_ID = 'X-PG-UserId'
 HEADER_REQUEST_ID = 'X-PG-RequestId'
+HEADER_SCOPES = 'X-PG-Scopes'
+HEADER_APPLICATION_ID = 'X-PG-AppId'
 
 
 class ToolboxRequest(Request):
@@ -42,6 +43,23 @@ class ToolboxRequest(Request):
     @property
     def auth_token(self):
         return self.headers.get(HEADER_AUTH_TOKEN)
+
+    @property
+    def application_id(self):
+        return self.headers.get(HEADER_APPLICATION_ID)
+
+    @property
+    def scopes(self):
+        scopes_string = self.headers.get(HEADER_SCOPES, '').strip()
+        if scopes_string:
+            scopes_split = [
+                s.strip()
+                for s in scopes_string.split(' ')
+                if s
+            ]
+            return set(scopes_split)
+        else:
+            return set()
 
     def on_json_loading_failed(self, e):
         raise http_errors.BadRequest(messages.invalid_json)
@@ -225,6 +243,22 @@ class Toolbox(object):
             release_stage=self.bugsnag_release_stage
         )
         bugsnag.flask.handle_exceptions(app)
+
+
+def scope_app(app, required_scope):
+    """
+    Extends an application (or blueprint) to only accept requests that
+    have the proper scope set in the headers.
+
+    :param flask.Flask|flask.Blueprint app:
+
+    :param str required_scope: 
+      The extension will verify that all requests have this scope in the headers
+    """
+
+    @app.before_request
+    def verify_scope():
+        verify_scope_or_403(required_scope=required_scope)
 
 
 def _make_url(resource_path, query_params):
@@ -446,11 +480,23 @@ def get_user_id_from_header_or_400():
         raise http_errors.BadRequest(msg=messages.missing_user_id)
 
     try:
-        user = ObjectId().deserialize(value=user_id)
+        ObjectId().deserialize(value=user_id)
     except marshmallow.ValidationError:
         raise http_errors.BadRequest(msg=messages.invalid_user_id)
 
     return user_id
+
+
+def verify_scope_or_403(required_scope):
+    """
+    Verifies that the given scope is included in the request headers. If it
+    isn't, this will raise a 403 error.
+
+    :param str required_scope:
+    :raises: https_errors.Forbidden 
+    """
+    if required_scope not in request.scopes:
+        raise http_errors.Forbidden(messages.missing_required_scope)
 
 
 def marshal(data, schema):
@@ -475,7 +521,7 @@ def authenticated(handler):
     """
     @wraps(handler)
     def wrapper(*args, **kwargs):
-        token = request.headers.get(HEADER_AUTH_TOKEN)
+        token = request.auth_token
 
         if not token:
             raise http_errors.Unauthorized(messages.missing_auth_token)
@@ -483,7 +529,7 @@ def authenticated(handler):
         elif not safe_str_cmp(str(token), toolbox_proxy.auth_token):
             raise http_errors.Unauthorized(messages.invalid_auth_token)
 
-        user_id = request.headers.get(HEADER_USER_ID)
+        user_id = request.user_id
 
         if not user_id:
             raise http_errors.Unauthorized(messages.missing_user_id)
@@ -495,3 +541,21 @@ def authenticated(handler):
     return wrapper
 
 
+def scoped(required_scope):
+    """
+    Verifies that the request to the target endpoint has the proper scope.
+    
+    Scope is included as a space separated list in a header.
+    
+    :param str required_scope: The scope required to access this resource 
+    """
+    def decorator(handler):
+        @wraps(handler)
+        def wrapper(*args, **kwargs):
+            verify_scope_or_403(required_scope=required_scope)
+
+            return handler(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
