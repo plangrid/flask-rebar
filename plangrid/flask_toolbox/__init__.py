@@ -28,6 +28,7 @@ HEADER_USER_ID = 'X-PG-UserId'
 HEADER_REQUEST_ID = 'X-PG-RequestId'
 HEADER_SCOPES = 'X-PG-Scopes'
 HEADER_APPLICATION_ID = 'X-PG-AppId'
+HEALTHCHECK_ENDPOINT = 'health'
 
 
 class ToolboxRequest(Request):
@@ -232,7 +233,7 @@ class Toolbox(object):
 
     def _register_healthcheck(self, app):
         """Adds a /health endpoint to the application."""
-        @app.route('/health')
+        @app.route('/health', endpoint=HEALTHCHECK_ENDPOINT)
         def handle_healthcheck():
             return jsonify({'message': messages.health_check_response})
 
@@ -357,7 +358,15 @@ def _get_json_body_or_400():
         raise http_errors.BadRequest(messages.empty_json_body)
 
     # JSON decoding errors will be handled in ToolboxRequest.on_json_loading_failed
-    return request.get_json()
+    body = request.get_json()
+
+    if not isinstance(body, list) and not isinstance(body, dict):
+        # request.get_json() treats strings as valid JSON, which is technically
+        # true... but they're not valid objects. So let's throw an error on
+        # primitive types.
+        raise http_errors.BadRequest(messages.invalid_json)
+
+    return body
 
 
 def _format_marshmallow_errors_for_response_in_place(errs):

@@ -292,6 +292,14 @@ class TestJsonBodyValidation(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, {'message': messages.invalid_json})
 
+        resp = self.app.test_client().post(
+            path='/stuffs',
+            data='"Im technically valid JSON, but not an object"',
+            headers={'Content-Type': 'application/json'}
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json, {'message': messages.invalid_json})
+
 
 class TestQueryStringValidation(TestCase):
     def create_app(self):

@@ -1,7 +1,10 @@
-from flask import jsonify
+"""
+Tools for making old apps that use Flask-RESTful work with Flask-Toolbox instead.
+"""
+from werkzeug.wrappers import Response
+
 from plangrid.flask_toolbox import response
 
-# Tools for making old apps that use Flask-RESTful work with Flask-Toolbox instead.
 
 class RestfulApiAdapter(object):
     """Replacement for the Api class in Flask-RESTful."""
@@ -12,18 +15,41 @@ class RestfulApiAdapter(object):
         for method in methods:
             view_func = self._make_view_func(handler, method)
             endpoint = method + ' ' + rule
-            self.blueprint.add_url_rule(rule=rule, view_func=view_func, endpoint=endpoint, methods=[method])
+            self.blueprint.add_url_rule(
+                rule=rule,
+                view_func=view_func,
+                endpoint=endpoint,
+                methods=[method]
+            )
 
     def _make_view_func(self, handler, method):
-        if not hasattr(handler, method.lower()) or not callable(getattr(handler, method.lower())):
-            err = 'Handler {0} claims to accept the {1} HTTP method, but has no {2} method on it. You should add one or edit the methods list.'
-            raise NotImplementedError(err.format(handler.__name__, method, method.lower()))
+        if not hasattr(handler, method.lower()) \
+                or not callable(getattr(handler, method.lower())):
+            err = 'Handler {class_name} claims to accept the {http_method} ' \
+                  'HTTP method, but has no {method} method on it. ' \
+                  'You should add one or edit the methods list.'
+            raise NotImplementedError(
+                err.format(
+                    class_name=handler.__name__,
+                    http_method=method,
+                    method=method.lower()
+                )
+            )
 
         def view_func(*args, **kwargs):
             instance = handler()
             func = getattr(instance, method.lower())
             result = func(*args, **kwargs)
+
+            # Some handlers return a response object directly. If that's the
+            # case, just go ahead and return it.
+            if isinstance(result, Response):
+                return result
+
+            # Others return only an object to be serialized as the response
+            # body, leaving out the status code. In this case we assume a 200.
             if not isinstance(result, tuple):
                 result = result, 200
+
             return response(data=result[0], status_code=result[1])
         return view_func
