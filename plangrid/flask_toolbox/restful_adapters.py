@@ -11,16 +11,17 @@ class RestfulApiAdapter(object):
     def __init__(self, blueprint):
         self.blueprint = blueprint
 
-    def add_resource(self, handler, rule, methods):
-        for method in methods:
-            view_func = self._make_view_func(handler, method)
-            endpoint = method + ' ' + rule
-            self.blueprint.add_url_rule(
-                rule=rule,
-                view_func=view_func,
-                endpoint=endpoint,
-                methods=[method]
-            )
+    def add_resource(self, handler, *rules, **kwargs):
+        for rule in rules:
+            for method in kwargs['methods']:
+                view_func = self._make_view_func(handler, method)
+                endpoint = method + ' ' + rule
+                self.blueprint.add_url_rule(
+                    rule=rule,
+                    view_func=view_func,
+                    endpoint=endpoint,
+                    methods=[method]
+                )
 
     def _make_view_func(self, handler, method):
         if not hasattr(handler, method.lower()) \

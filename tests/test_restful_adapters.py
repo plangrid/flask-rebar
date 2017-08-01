@@ -14,12 +14,12 @@ class TestRestfulApiAdapter(TestCase):
         Toolbox(app)
         blueprint = Blueprint('test', __name__)
         adapter = RestfulApiAdapter(blueprint)
-        adapter.add_resource(SimpleHandler, '/thing', ['GET', 'POST'])
-        adapter.add_resource(EmptyResponseHandler, '/nothing', ['GET'])
-        adapter.add_resource(KwargsHandler, '/exclaim/<string:word>', ['GET'])
-        adapter.add_resource(ErrorThrowingHandler, '/error', ['GET'])
-        adapter.add_resource(SingleReturnHandler, '/single_return', ['GET'])
-        adapter.add_resource(FlaskResponseHandler, '/flask_response', ['GET'])
+        adapter.add_resource(SimpleHandler, '/thing', methods=['GET', 'POST'])
+        adapter.add_resource(EmptyResponseHandler, '/nothing', methods=['GET'])
+        adapter.add_resource(KwargsHandler, '/exclaim/<string:word>', methods=['GET'])
+        adapter.add_resource(ErrorThrowingHandler, '/error', methods=['GET'])
+        adapter.add_resource(SingleReturnHandler, '/single_return', methods=['GET'])
+        adapter.add_resource(FlaskResponseHandler, '/flask_response', methods=['GET'])
         app.register_blueprint(blueprint)
         return app
 
@@ -63,12 +63,29 @@ class TestRestfulApiAdapter(TestCase):
         adapter = RestfulApiAdapter(blueprint)
         self.assertRaises(
             NotImplementedError,
-            lambda: adapter.add_resource(SimpleHandler, '/thing', ['GET', 'DELETE'])
+            lambda: adapter.add_resource(SimpleHandler, '/thing', methods=['GET', 'DELETE'])
         )
 
     def test_endpoint_returns_a_flask_response(self):
         resp = self.app.test_client().get('/flask_response')
         self.assertEqual(resp.data.decode('utf-8'), '')
+
+    def test_multiple_url_rules(self):
+        app = Flask(__name__)
+        blueprint = Blueprint('test', __name__)
+        adapter = RestfulApiAdapter(blueprint)
+
+        adapter.add_resource(SimpleHandler, '/thing1', '/thing2', methods=['GET', 'POST'])
+        app.register_blueprint(blueprint)
+
+        resp = app.test_client().get('/thing1')
+        self.assertEqual(resp.status_code, 200)
+        resp = app.test_client().get('/thing2')
+        self.assertEqual(resp.status_code, 200)
+        resp = app.test_client().post('/thing1')
+        self.assertEqual(resp.status_code, 201)
+        resp = app.test_client().post('/thing2')
+        self.assertEqual(resp.status_code, 201)
 
 
 def gen_test_dict():
