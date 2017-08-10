@@ -1,3 +1,5 @@
+from mock import patch
+
 from flask_testing import TestCase
 from flask import Blueprint
 from flask import Flask
@@ -86,6 +88,11 @@ class TestRestfulApiAdapter(TestCase):
         self.assertEqual(resp.status_code, 201)
         resp = app.test_client().post('/thing2')
         self.assertEqual(resp.status_code, 201)
+
+    @patch('newrelic.agent.set_transaction_name')
+    def test_sets_newrelic_transaction_name(self, mock_set_transaction_name):
+        self.app.test_client().get('/thing')
+        mock_set_transaction_name.assert_called_once_with('/tests.test_restful_adapters:simplehandler')
 
 
 def gen_test_dict():

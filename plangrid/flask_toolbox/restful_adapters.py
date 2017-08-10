@@ -1,6 +1,7 @@
 """
 Tools for making old apps that use Flask-RESTful work with Flask-Toolbox instead.
 """
+from newrelic import agent as newrelic_agent
 from werkzeug.wrappers import Response
 
 from plangrid.flask_toolbox import response
@@ -38,6 +39,13 @@ class RestfulApiAdapter(object):
             )
 
         def view_func(*args, **kwargs):
+            # Manually set the New Relic transaction name, otherwise it will
+            # be '/plangrid.flask_toolbox.restful_adapters:view_func' for all
+            # routes, which is less than helpful
+            module_name = handler.__module__
+            handler_name = handler.__name__.lower()
+            newrelic_agent.set_transaction_name('/{}:{}'.format(module_name, handler_name))
+
             instance = handler()
             func = getattr(instance, method.lower())
             result = func(*args, **kwargs)
