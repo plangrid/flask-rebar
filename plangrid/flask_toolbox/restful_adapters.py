@@ -15,7 +15,7 @@ class RestfulApiAdapter(object):
     def add_resource(self, handler, *rules, **kwargs):
         for rule in rules:
             for method in kwargs['methods']:
-                view_func = self._make_view_func(handler, method)
+                view_func = self._make_view_func(handler, method, rule)
                 endpoint = method + ' ' + rule
                 self.blueprint.add_url_rule(
                     rule=rule,
@@ -24,7 +24,7 @@ class RestfulApiAdapter(object):
                     methods=[method]
                 )
 
-    def _make_view_func(self, handler, method):
+    def _make_view_func(self, handler, method, rule):
         if not hasattr(handler, method.lower()) \
                 or not callable(getattr(handler, method.lower())):
             err = 'Handler {class_name} claims to accept the {http_method} ' \
@@ -42,9 +42,7 @@ class RestfulApiAdapter(object):
             # Manually set the New Relic transaction name, otherwise it will
             # be '/plangrid.flask_toolbox.restful_adapters:view_func' for all
             # routes, which is less than helpful
-            module_name = handler.__module__
-            handler_name = handler.__name__.lower()
-            newrelic_agent.set_transaction_name('/{}:{}'.format(module_name, handler_name))
+            newrelic_agent.set_transaction_name('{}:{}'.format(rule, method))
 
             instance = handler()
             func = getattr(instance, method.lower())

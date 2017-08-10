@@ -92,7 +92,7 @@ class TestRestfulApiAdapter(TestCase):
     @patch('newrelic.agent.set_transaction_name')
     def test_sets_newrelic_transaction_name(self, mock_set_transaction_name):
         self.app.test_client().get('/thing')
-        mock_set_transaction_name.assert_called_once_with('/tests.test_restful_adapters:simplehandler')
+        mock_set_transaction_name.assert_called_once_with('/thing:GET')
 
 
 def gen_test_dict():
