@@ -76,13 +76,13 @@ class ObjectId(fields.Str):
     ERROR_MSG = messages.invalid_object_id
 
     def _deserialize(self, val, attr, data):
-        if not _is_oid(val):
+        if val and not _is_oid(val):
             raise ValidationError(self.ERROR_MSG)
 
         return super(ObjectId, self)._deserialize(val, attr, data)
 
     def _serialize(self, val, attr, obj):
-        if not _is_oid(val):
+        if val and not _is_oid(val):
             raise ValidationError(self.ERROR_MSG)
 
         return super(ObjectId, self)._serialize(val, attr, obj)

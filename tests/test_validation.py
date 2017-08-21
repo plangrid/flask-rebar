@@ -207,7 +207,7 @@ class TestQueryParamList(TestCase):
 
 
 class ObjectWithUUID(Schema):
-    id = UUID()
+    id = UUID(allow_none=True)
 
 
 class TestUUID(TestCase):
@@ -231,9 +231,17 @@ class TestUUID(TestCase):
         _, errs = ObjectWithUUID().dump({'id': id})
         self.assertEqual(errs['id'], [messages.invalid_uuid])
 
+    def test_deserialize_null(self):
+        data, _ = ObjectWithUUID().load({'id': None})
+        self.assertEqual(data['id'], None)
+
+    def test_serialize_null(self):
+        data, _ = ObjectWithUUID().dump({'id': None})
+        self.assertEqual(data['id'], None)
+
 
 class ObjectWithObjectID(Schema):
-    id = ObjectId()
+    id = ObjectId(allow_none=True)
 
 
 class TestObjectId(TestCase):
@@ -256,6 +264,14 @@ class TestObjectId(TestCase):
         id = '123456'
         _, errs = ObjectWithObjectID().dump({'id': id})
         self.assertEqual(errs['id'], [messages.invalid_object_id])
+
+    def test_deserialize_null(self):
+        data, _ = ObjectWithObjectID().load({'id': None})
+        self.assertEqual(data['id'], None)
+
+    def test_serialize_null(self):
+        data, _ = ObjectWithObjectID().dump({'id': None})
+        self.assertEqual(data['id'], None)
 
 
 class ObjectWithSkip(Schema):
