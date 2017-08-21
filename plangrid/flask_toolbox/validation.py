@@ -92,13 +92,13 @@ class UUID(fields.Str):
     ERROR_MSG = messages.invalid_uuid
 
     def _deserialize(self, val, attr, data):
-        if not _is_uuid(val):
+        if val and not _is_uuid(val):
             raise ValidationError(self.ERROR_MSG)
 
         return super(UUID, self)._deserialize(val, attr, data)
 
     def _serialize(self, val, attr, obj):
-        if not _is_uuid(val):
+        if val and not _is_uuid(val):
             raise ValidationError(self.ERROR_MSG)
 
         return super(UUID, self)._serialize(val, attr, obj)
