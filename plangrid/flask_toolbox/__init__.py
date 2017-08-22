@@ -544,6 +544,7 @@ def authenticated(handler):
             raise http_errors.Unauthorized(messages.missing_user_id)
 
         bugsnag.configure_request(user={"id": user_id})
+        newrelic_agent.add_custom_parameter('userId', user_id)
 
         return handler(*args, **kwargs)
 
