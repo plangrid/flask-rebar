@@ -207,6 +207,9 @@ class TestQueryParamList(TestCase):
 
 
 class ObjectWithUUID(Schema):
+    id = UUID()
+
+class ObjectWithUUIDAllowNone(Schema):
     id = UUID(allow_none=True)
 
 
@@ -232,15 +235,20 @@ class TestUUID(TestCase):
         self.assertEqual(errs['id'], [messages.invalid_uuid])
 
     def test_deserialize_null(self):
-        data, _ = ObjectWithUUID().load({'id': None})
+        _, errs = ObjectWithUUID().load({'id': None})
+        self.assertEqual(errs, {'id': ['Field may not be null.']})
+        data, _ = ObjectWithUUIDAllowNone().load({'id': None})
         self.assertEqual(data['id'], None)
 
     def test_serialize_null(self):
-        data, _ = ObjectWithUUID().dump({'id': None})
+        data, _ = ObjectWithUUIDAllowNone().dump({'id': None})
         self.assertEqual(data['id'], None)
 
 
 class ObjectWithObjectID(Schema):
+    id = ObjectId()
+
+class ObjectWithObjectIDAllowNone(Schema):
     id = ObjectId(allow_none=True)
 
 
@@ -266,11 +274,13 @@ class TestObjectId(TestCase):
         self.assertEqual(errs['id'], [messages.invalid_object_id])
 
     def test_deserialize_null(self):
-        data, _ = ObjectWithObjectID().load({'id': None})
+        _, errs = ObjectWithObjectID().load({'id': None})
+        self.assertEqual(errs, {'id': ['Field may not be null.']})
+        data, _ = ObjectWithObjectIDAllowNone().load({'id': None})
         self.assertEqual(data['id'], None)
 
     def test_serialize_null(self):
-        data, _ = ObjectWithObjectID().dump({'id': None})
+        data, _ = ObjectWithObjectIDAllowNone().dump({'id': None})
         self.assertEqual(data['id'], None)
 
 
