@@ -2,7 +2,7 @@ body_validation_failed = 'JSON body parameters are invalid.'
 
 empty_json_body = 'Fields must be in JSON body.'
 
-health_check_response = "I'm doing OK, thanks for asking."
+health_check_response = "I'm doing OK. Thanks for asking."
 
 internal_server_error = "Sorry, PlanGrid's system had an error and the team has been notified. If this happens again, please contact developers@plangrid.com."
 
