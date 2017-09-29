@@ -13,14 +13,18 @@ from flask import Request
 from flask import current_app
 from flask import jsonify
 from flask import request
+from marshmallow import ValidationError
 from newrelic import agent as newrelic_agent
 from six.moves.urllib.parse import urlencode
+from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
+from werkzeug.routing import BaseConverter
 from werkzeug.security import safe_str_cmp
 
 from plangrid.flask_toolbox import http_errors
 from plangrid.flask_toolbox import messages
 from plangrid.flask_toolbox.toolbox_proxy import toolbox_proxy
 from plangrid.flask_toolbox.validation import ObjectId
+from plangrid.flask_toolbox.validation import UUID
 
 DEFAULT_PAGINATION_LIMIT_MAX = 100
 HEADER_AUTH_TOKEN = 'X-PG-Auth'
@@ -166,6 +170,7 @@ class Toolbox(object):
         self._register_healthcheck(app)
         if self.bugsnag_api_key:
             self._configure_bugsnag(app)
+        self._register_custom_converters(app)
 
         # Set the flask.request proxy to our extended type
         app.request_class = ToolboxRequest
@@ -244,6 +249,9 @@ class Toolbox(object):
             release_stage=self.bugsnag_release_stage
         )
         bugsnag.flask.handle_exceptions(app)
+
+    def _register_custom_converters(self, app):
+        app.url_map.converters['uuid_string'] = UUIDStringConverter
 
 
 def scope_app(app, required_scope):
@@ -569,3 +577,19 @@ def scoped(required_scope):
         return wrapper
 
     return decorator
+
+
+class UUIDStringConverter(BaseConverter):
+    def to_python(self, value):
+        try:
+            validated = UUID().deserialize(value)
+        except ValidationError:
+            # This is happening during routing, before our Flask handlers are
+            # invoked, so our normal HttpJsonError objects will not be caught.
+            # Instead, we need to raise a Werkzeug error.
+            raise WerkzeugBadRequest(
+                response=response({'message': messages.invalid_uuid}, 400)
+            )
+        return validated
+
+    to_url = to_python
