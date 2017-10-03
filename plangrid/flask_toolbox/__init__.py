@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import copy
+import json
 import os
 import sys
 import uuid
@@ -19,6 +20,7 @@ from six.moves.urllib.parse import urlencode
 from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
 from werkzeug.routing import BaseConverter
 from werkzeug.security import safe_str_cmp
+from werkzeug.wrappers import Response as WerkzeugResponse
 
 from plangrid.flask_toolbox import http_errors
 from plangrid.flask_toolbox import messages
@@ -587,8 +589,13 @@ class UUIDStringConverter(BaseConverter):
             # This is happening during routing, before our Flask handlers are
             # invoked, so our normal HttpJsonError objects will not be caught.
             # Instead, we need to raise a Werkzeug error.
+            body = json.dumps({'message': messages.invalid_uuid})
             raise WerkzeugBadRequest(
-                response=response({'message': messages.invalid_uuid}, 400)
+                response=WerkzeugResponse(
+                    response=body,
+                    status=400,
+                    content_type="application/json"
+                )
             )
         return validated
 
