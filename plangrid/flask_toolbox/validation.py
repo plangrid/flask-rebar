@@ -165,6 +165,22 @@ class DisallowExtraFieldsMixin(object):
             raise ValidationError(message=messages.unsupported_fields(unsupported_fields))
 
 
+def ListOf(schema):
+    class_name = 'ListOf' + schema.__name__
+
+    data = fields.Nested(schema, many=True)
+    klass = type(class_name, (marshmallow.Schema,), {'data': data})
+
+    if hasattr(schema, '__swagger_title__'):
+        setattr(
+            klass,
+            '__swagger_title__',
+            'ListOf' + getattr(schema, '__swagger_title__')
+        )
+
+    return klass
+
+
 def add_custom_error_message(base_class, field_validation_error_function):
     """
     Creates a Marshmallow field class that returns a custom
@@ -191,9 +207,16 @@ def add_custom_error_message(base_class, field_validation_error_function):
     return CustomErrorMessageClass
 
 
-class RequestSchema(marshmallow.Schema, DisallowExtraFieldsMixin):
+class RequestSchema(DisallowExtraFieldsMixin, marshmallow.Schema):
     pass
 
 
-class ResponseSchema(marshmallow.Schema, ActuallyRequireOnDumpMixin):
+class ResponseSchema(ActuallyRequireOnDumpMixin, marshmallow.Schema):
     pass
+
+
+class Error(ResponseSchema):
+    message = fields.String(required=True)
+    code = fields.String(required=False)
+    details = fields.Dict(required=False)
+    errors = fields.Dict(required=False)

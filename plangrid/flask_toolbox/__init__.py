@@ -27,6 +27,7 @@ from plangrid.flask_toolbox import messages
 from plangrid.flask_toolbox.toolbox_proxy import toolbox_proxy
 from plangrid.flask_toolbox.validation import ObjectId
 from plangrid.flask_toolbox.validation import UUID
+from plangrid.flask_toolbox.validation import Error
 
 DEFAULT_PAGINATION_LIMIT_MAX = 100
 HEADER_AUTH_TOKEN = 'X-PG-Auth'
@@ -263,7 +264,7 @@ def scope_app(app, required_scope):
 
     :param flask.Flask|flask.Blueprint app:
 
-    :param str required_scope: 
+    :param str required_scope:
       The extension will verify that all requests have this scope in the headers
     """
 
@@ -487,6 +488,20 @@ def get_query_string_params_or_400(schema):
     return query_string_params
 
 
+def get_header_params_or_400(schema):
+    schema = _normalize_schema(schema)
+
+    header_params, errs = schema.load(data=request.headers)
+
+    if errs:
+        _raise_400_for_marshmallow_errors(
+            errs=errs,
+            msg=messages.header_validation_failed
+        )
+
+    return header_params
+
+
 def get_user_id_from_header_or_400():
     """
     Retrieves the user ID from the header of a request, validating it as an
@@ -512,7 +527,7 @@ def verify_scope_or_403(required_scope):
     isn't, this will raise a 403 error.
 
     :param str required_scope:
-    :raises: https_errors.Forbidden 
+    :raises: https_errors.Forbidden
     """
     if required_scope not in request.scopes:
         raise http_errors.Forbidden(messages.missing_required_scope)
@@ -564,10 +579,10 @@ def authenticated(handler):
 def scoped(required_scope):
     """
     Verifies that the request to the target endpoint has the proper scope.
-    
+
     Scope is included as a space separated list in a header.
-    
-    :param str required_scope: The scope required to access this resource 
+
+    :param str required_scope: The scope required to access this resource
     """
     def decorator(handler):
         @wraps(handler)

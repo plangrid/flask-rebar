@@ -30,6 +30,8 @@ query_string_validation_failed = 'Query string parameters are invalid.'
 
 unsupported_content_type = "Only payloads with 'content-type' 'application/json' are supported."
 
+header_validation_failed = 'Header parameters are invalid'
+
 
 def limit_over_max(max_limit):
     return 'Maximum limit is {}'.format(max_limit)
@@ -45,3 +47,7 @@ def required_field_missing(field_name):
 
 def unsupported_fields(field_names):
     return 'Unexpected field: {}'.format(','.join(field_names))
+
+
+def missing_header_parameter(name):
+    return 'Missing {} header'.format(name)
