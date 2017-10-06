@@ -15,6 +15,7 @@ from plangrid.flask_toolbox.validation import ActuallyRequireOnDumpMixin
 from plangrid.flask_toolbox.validation import CommaSeparatedList
 from plangrid.flask_toolbox.validation import DisallowExtraFieldsMixin
 from plangrid.flask_toolbox.validation import Limit
+from plangrid.flask_toolbox.validation import ListOf
 from plangrid.flask_toolbox.validation import ObjectId
 from plangrid.flask_toolbox.validation import QueryParamList
 from plangrid.flask_toolbox.validation import Skip
@@ -248,6 +249,7 @@ class TestUUID(TestCase):
 class ObjectWithObjectID(Schema):
     id = ObjectId()
 
+
 class ObjectWithObjectIDAllowNone(Schema):
     id = ObjectId(allow_none=True)
 
@@ -282,6 +284,16 @@ class TestObjectId(TestCase):
     def test_serialize_null(self):
         data, _ = ObjectWithObjectIDAllowNone().dump({'id': None})
         self.assertEqual(data['id'], None)
+
+
+class TestListOf(TestCase):
+    def test_list_of(self):
+        ListOfObjectWithUUID = ListOf(ObjectWithUUID)
+
+        id = str(uuid.uuid4())
+        data = ListOfObjectWithUUID(strict=True).load({'data': [{'id': id}]}).data
+
+        self.assertEqual(data, {'data': [{'id': id}]})
 
 
 class ObjectWithSkip(Schema):

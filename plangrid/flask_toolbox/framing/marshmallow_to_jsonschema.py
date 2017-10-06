@@ -1,5 +1,6 @@
 import copy
 import inspect
+import sys
 import warnings
 from collections import namedtuple
 
@@ -13,6 +14,22 @@ from plangrid.flask_toolbox.validation import QueryParamList
 from plangrid.flask_toolbox.validation import CommaSeparatedList
 from plangrid.flask_toolbox.validation import DisallowExtraFieldsMixin
 from plangrid.flask_toolbox.framing import swagger_words as sw
+
+
+# Still a number of basic fields to cover:
+# TODO: fields.Decimal
+# TODO: fields.FormattedString
+# TODO: fields.Float
+# TODO: fields.LocalDateTime
+# TODO: fields.Time
+# TODO: fields.TimeDelta
+# TODO: fields.URL
+# TODO: fields.Email
+# TODO: fields.Constant
+
+# And some plangrid.flask_toolbox specific ones:
+# TODO: Skip
+# TODO: Limit
 
 
 marshmallow_version = tuple(int(v) for v in m.__version__.split('.'))
@@ -81,20 +98,20 @@ def _normalize_validate(validate):
         return validate
 
 
-def get_schema_title(schema):
+def get_swagger_title(obj):
     """
-    Gets a title for the given Marshmallow schema. This title will be used
+    Gets a title for the given object. This title will be used
     as a name/key for the object in swagger.
 
-    :param m.Schema schema:
+    :param obj:
     :rtype: str
     """
-    if hasattr(schema, '__swagger_title__'):
-        return schema.__swagger_title__
-    elif hasattr(schema, '__name__'):
-        return schema.__name__
+    if hasattr(obj, '__swagger_title__'):
+        return obj.__swagger_title__
+    elif hasattr(obj, '__name__'):
+        return obj.__name__
     else:
-        return schema.__class__.__name__
+        return obj.__class__.__name__
 
 
 def sets_jsonschema_attr(attr):
@@ -226,7 +243,7 @@ class SchemaConverter(MarshmallowConverter):
     @sets_jsonschema_attr(sw.title)
     def get_title(self, obj, context):
         if not obj.many:
-            return get_schema_title(obj)
+            return get_swagger_title(obj)
         else:
             return UNSET
 
@@ -412,25 +429,13 @@ class MethodConverter(FieldConverter):
 
     @sets_jsonschema_attr(sw.type_)
     def get_type(self, obj, context):
-        err_msg = (
-            '__rtype__ attribute is required '
-            'for swagger generation to work'
-        )
-
-        if context.direction is IN:
-            meth = getattr(context.schema, obj.deserialize_method_name)
-
-            if not hasattr(meth, '__rtype__'):
-                raise ValueError(err_msg)
-
-            return meth.__rtype__
+        if 'swagger_type' in obj.metadata:
+            return obj.metadata['swagger_type']
         else:
-            meth = getattr(context.schema, obj.serialize_method_name)
-
-            if not hasattr(meth, '__rtype__'):
-                raise ValueError(err_msg)
-
-            return meth.__rtype__
+            raise ValueError(
+                'Must include "swagger_type" '
+                'keyword argument in Method field'
+            )
 
 
 class FunctionConverter(FieldConverter):
@@ -438,21 +443,13 @@ class FunctionConverter(FieldConverter):
 
     @sets_jsonschema_attr(sw.type_)
     def get_type(self, obj, context):
-        err_msg = (
-            '__rtype__ attribute is required '
-            'for swagger generation to work'
-        )
-
-        if context.direction is IN:
-            if not hasattr(obj.deserialize_func, '__rtype__'):
-                raise ValueError(err_msg)
-
-            return obj.deserialize_func.__rtype__
+        if 'swagger_type' in obj.metadata:
+            return obj.metadata['swagger_type']
         else:
-            if not hasattr(obj.serialize_func, '__rtype__'):
-                raise ValueError(err_msg)
-
-            return obj.serialize_func.__rtype__
+            raise ValueError(
+                'Must include "swagger_type" '
+                'keyword argument in Function field'
+            )
 
 
 class CsvArrayConverter(ListConverter):
@@ -541,7 +538,7 @@ class ConverterRegistry(object):
     This registry also allows for additional converters to be added for custom
     Marshmallow types.
 
-    :param direction:
+    :param Type(IN)|Type(OUT) direction:
         OUT if this registry is used to convert output schemas (e.g. response
         schemas) and IN if tis registry is used to convert input schemas
         (e.g. request body schemas).
@@ -613,82 +610,90 @@ class ConverterRegistry(object):
             )
         )
 
-
-def convert_jsonschema_to_list_of_parameters(obj, in_='query'):
-    """
-    Swagger is only _based_ on JSONSchema. Query string and header parameters
-    are represented as list, not as an object. This converts a JSONSchema
-    object (as return by the converters) to a list of parameters suitable for
-    swagger.
-
-    :param dict obj:
-    :param str in_: 'query' or 'header'
-    :rtype: list[dict]
-    """
-    parameters = []
-
-    assert obj['type'] == 'object'
-
-    required = obj.get('required', [])
-
-    for name, prop in obj['properties'].items():
-        parameter = copy.deepcopy(prop)
-        parameter['required'] = name in required
-        parameter['in'] = in_
-        parameter['name'] = name
-        parameters.append(parameter)
-
-    return parameters
-
-
-COMMON_CONVERTERS = (
-    SchemaConverter(),
-    IntegerConverter(),
-    NumberConverter(),
-    StringConverter(),
-    DateConverter(),
-    DateTimeConverter(),
-    BooleanConverter(),
-    UUIDConverter(),
-    ListConverter(),
-    RangeConverter(),
-    LengthConverter(),
-    OneOfConverter(),
-    MethodConverter(),
-    FunctionConverter()
-)
-
-QUERY_STRING_CONVERTERS = COMMON_CONVERTERS + (
-    CsvArrayConverter(),
-    MultiArrayConverter()
-)
-
-REQUEST_BODY_CONVERTERS = COMMON_CONVERTERS + (
-    NestedConverter(),
-    DictConverter(),
-    DisallowExtraFieldsConverter()
-)
-
-HEADER_CONVERTERS = QUERY_STRING_CONVERTERS
-
-RESPONSE_CONVERTERS = REQUEST_BODY_CONVERTERS
-
-ALL_CONVERTERS = COMMON_CONVERTERS + (
-    CsvArrayConverter(),
-    MultiArrayConverter(),
-    NestedConverter(),
-    DictConverter(),
-    DisallowExtraFieldsConverter()
-)
+ALL_CONVERTERS = tuple([
+    klass()
+    for _, klass in inspect.getmembers(sys.modules[__name__], inspect.isclass)
+    if issubclass(klass, MarshmallowConverter)
+])
 
 query_string_converter_registry = ConverterRegistry(direction=IN)
-query_string_converter_registry.register_types(QUERY_STRING_CONVERTERS)
-
-request_body_converter_registry = ConverterRegistry(direction=IN)
-request_body_converter_registry.register_types(REQUEST_BODY_CONVERTERS)
+query_string_converter_registry.register_types([
+    BooleanConverter(),
+    CsvArrayConverter(),
+    DateConverter(),
+    DateTimeConverter(),
+    FunctionConverter(),
+    IntegerConverter(),
+    LengthConverter(),
+    ListConverter(),
+    MethodConverter(),
+    MultiArrayConverter(),
+    NumberConverter(),
+    OneOfConverter(),
+    RangeConverter(),
+    SchemaConverter(),
+    StringConverter(),
+    UUIDConverter(),
+])
 
 headers_converter_registry = ConverterRegistry(direction=IN)
-headers_converter_registry.register_types(HEADER_CONVERTERS)
+headers_converter_registry.register_types([
+    BooleanConverter(),
+    CsvArrayConverter(),
+    DateConverter(),
+    DateTimeConverter(),
+    FunctionConverter(),
+    IntegerConverter(),
+    LengthConverter(),
+    ListConverter(),
+    MethodConverter(),
+    MultiArrayConverter(),
+    NumberConverter(),
+    OneOfConverter(),
+    RangeConverter(),
+    SchemaConverter(),
+    StringConverter(),
+    UUIDConverter(),
+])
+
+request_body_converter_registry = ConverterRegistry(direction=IN)
+request_body_converter_registry.register_types([
+    BooleanConverter(),
+    DateConverter(),
+    DateTimeConverter(),
+    DictConverter(),
+    DisallowExtraFieldsConverter(),
+    FunctionConverter(),
+    IntegerConverter(),
+    LengthConverter(),
+    ListConverter(),
+    MethodConverter(),
+    NestedConverter(),
+    NumberConverter(),
+    OneOfConverter(),
+    RangeConverter(),
+    SchemaConverter(),
+    StringConverter(),
+    UUIDConverter(),
+])
 
 response_converter_registry = ConverterRegistry(direction=OUT)
-response_converter_registry.register_types(RESPONSE_CONVERTERS)
+response_converter_registry.register_types([
+    BooleanConverter(),
+    DateConverter(),
+    DateTimeConverter(),
+    DictConverter(),
+    DisallowExtraFieldsConverter(),
+    FunctionConverter(),
+    IntegerConverter(),
+    LengthConverter(),
+    ListConverter(),
+    MethodConverter(),
+    NestedConverter(),
+    NumberConverter(),
+    OneOfConverter(),
+    RangeConverter(),
+    SchemaConverter(),
+    StringConverter(),
+    UUIDConverter(),
+])

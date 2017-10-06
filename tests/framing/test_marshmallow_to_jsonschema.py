@@ -40,6 +40,8 @@ class TestConverterRegistry(unittest.TestCase):
             (m.fields.String(validate=v.Length(max=9)), {'type': 'string', 'maxLength': 9}),
             (m.fields.String(validate=v.OneOf(['a', 'b'])), {'type': 'string', 'enum': ['a', 'b']}),
             (m.fields.Dict(), {'type': 'object'}),
+            (m.fields.Method(serialize='x', deserialize='y', swagger_type='integer'), {'type': 'integer'}),
+            (m.fields.Function(serialize=lambda _: _, deserialize=lambda _: _, swagger_type='string'), {'type': 'string'}),
         ]:
             class Foo(m.Schema):
                 a = field
@@ -216,70 +218,6 @@ class TestConverterRegistry(unittest.TestCase):
             }
         )
 
-    def test_method(self):
-        class Foo(m.Schema):
-            a = m.fields.Method(
-                serialize='_get_on_dump',
-                deserialize='_get_on_load'
-            )
-
-            def _get_on_dump(self, obj):
-                pass
-            _get_on_dump.__rtype__ = 'string'
-
-            def _get_on_load(self, val):
-                pass
-            _get_on_load.__rtype__ = 'integer'
-
-        for direction, expected_type in [(OUT, 'string'), (IN, 'integer')]:
-            registry = ConverterRegistry(direction=direction)
-            registry.register_types(ALL_CONVERTERS)
-            schema = Foo()
-            json_schema = registry.convert(schema)
-
-            self.assertEqual(
-                json_schema,
-                {
-                    'type': 'object',
-                    'title': 'Foo',
-                    'properties': {
-                        'a': {'type': expected_type}
-                    }
-                }
-            )
-
-    def test_function(self):
-        def _get_on_dump(obj):
-            pass
-        _get_on_dump.__rtype__ = 'string'
-
-        def _get_on_load(val):
-            pass
-        _get_on_load.__rtype__ = 'integer'
-
-        class Foo(m.Schema):
-            a = m.fields.Function(
-                serialize=_get_on_dump,
-                deserialize=_get_on_load
-            )
-
-        for direction, expected_type in [(OUT, 'string'), (IN, 'integer')]:
-            registry = ConverterRegistry(direction=direction)
-            registry.register_types(ALL_CONVERTERS)
-            schema = Foo()
-            json_schema = registry.convert(schema)
-
-            self.assertEqual(
-                json_schema,
-                {
-                    'type': 'object',
-                    'title': 'Foo',
-                    'properties': {
-                        'a': {'type': expected_type}
-                    }
-                }
-            )
-
     def test_inheritance(self):
         class Foo(m.Schema):
             a = m.fields.Integer()
@@ -298,6 +236,27 @@ class TestConverterRegistry(unittest.TestCase):
                 'properties': {
                     'a': {'type': 'integer'},
                     'b': {'type': 'integer'}
+                }
+            }
+        )
+
+    def test_converters_are_checked_up_the_mro_chain(self):
+        class CustomString(m.fields.String):
+            pass
+
+        class Foo(m.Schema):
+            a = CustomString()
+
+        schema = Foo()
+        json_schema = self.registry.convert(schema)
+
+        self.assertEqual(
+            json_schema,
+            {
+                'type': 'object',
+                'title': 'Foo',
+                'properties': {
+                    'a': {'type': 'string'}
                 }
             }
         )

@@ -1,84 +1,90 @@
-import abc
-import copy
-import unittest
+from collections import defaultdict
+from collections import namedtuple
+from functools import wraps
 
-import marshmallow as m
+from flask import request
 from werkzeug.security import safe_str_cmp
 
-import re
-import json
-from flask_testing import TestCase
-from collections import defaultdict, namedtuple
-from functools import wraps, reduce
-from flask import Flask, Blueprint, request
-from plangrid.flask_toolbox import get_query_string_params_or_400
-from plangrid.flask_toolbox import get_json_body_params_or_400
 from plangrid.flask_toolbox import get_header_params_or_400
-from plangrid.flask_toolbox import marshal
-from plangrid.flask_toolbox import response
+from plangrid.flask_toolbox import get_json_body_params_or_400
+from plangrid.flask_toolbox import get_query_string_params_or_400
 from plangrid.flask_toolbox import http_errors
-from plangrid.flask_toolbox import Toolbox
-from plangrid.flask_toolbox.framing import swagger_words as sw
-from plangrid.flask_toolbox.http_errors import BadRequest
-from plangrid.flask_toolbox.messages import missing_header_parameter
+from plangrid.flask_toolbox import marshal
 from plangrid.flask_toolbox import messages
+from plangrid.flask_toolbox import response
+
+# Still some functionality to cover:
+# TODO: Default Headers
+# TODO: Can we move error handling here, so we don't have to provide a
+#   default response to the swagger generator?
+# TODO: Adapters for popular auth mechanism (if we want to open source this)
+# TODO: HATEOAS reference to endpoint documentation inside each endpoint
+# TODO: Endpoint to fetch entire swagger document
+# TODO: Support for multiple URL rules per handler
+# TODO: Support for multiple methods per handler
+# TODO: Support multiple authenticators per handler
+# TODO: documentation!
 
 
+# Metadata about a declared handler function. This can be used to both
+# declare the flask routing and to autogenerate swagger.
 PathDefinition = namedtuple('PathDefinition', [
     'func',
     'path',
     'method',
-    'marshal',
-    'query_string',
-    'request_body',
-    'headers',
-    'authenticate'
+    'endpoint',
+    'marshal_schemas',
+    'query_string_schema',
+    'request_body_schema',
+    'headers_schema',
+    'authenticator'
 ])
 
 
-ErrorHandlerDefinition = namedtuple('ErrorHandlerDefinition', [
-    'code_or_exception',
-    'func',
-    'schema'
-])
+class USE_DEFAULT(object):
+    pass
 
 
-USE_DEFAULT = object()
-
-
-class Authenticator(abc.ABC):
-    # @abc.abstractmethod
-    # @property
-    # def type(self):
-    #     pass
-
-    @abc.abstractmethod
+class Authenticator(object):
+    """
+    Abstract authenticator class. Custom authentication methods should
+    extend this class.
+    """
     def authenticate(self):
-        pass
-
-#
-# class ApiKeyAuthenticator(Authenticator):
-#
-#     def __init__(self, name):
-#         self.name = name
-#     @property
-#     def type(self):
-#         return sw.api_key
-#
-#
+        raise NotImplemented
 
 
 class HeaderApiKeyAuthenticator(Authenticator):
+    """
+    Authenticates based on a small set of shared secrets, passed via a header.
+
+    This allows multiple client applications to be registered with their own
+    keys.
+    This also allows multiple keys to be registered for a single client
+    application.
+
+    :param str header:
+        The header where clients where client applications must include
+        their secret.
+    :param str name:
+        A name for this authenticator. This should be unique across
+        authenticators.
+    """
     def __init__(self, header, name='sharedSecret'):
         self.header = header
         self.keys = {}
         self.name = name
 
-    # @property
-    # def type(self):
-    #     return sw.api_key
-
     def register_key(self, app_name, key):
+        """
+        Register a client application's shared secret.
+
+        :param str app_name:
+            Name for the application. Since an application can have multiple
+            shared secrets, this does not need to be unique.
+        :param str key:
+            The shared secret.
+        """
         self.keys[key] = app_name
 
     def authenticate(self):
@@ -92,109 +98,53 @@ class HeaderApiKeyAuthenticator(Authenticator):
                 setattr(request, 'authenticated_app_name', app_name)
                 break
         else:
-
             raise http_errors.Unauthorized(messages.invalid_auth_token)
 
-#
-#
-# class AbstractParameter(abc.ABC):
-#     @abc.abstractmethod
-#     def retrieve(self):
-#         pass
-#
-#
-# class RequestBody(AbstractParameter):
-#     def __init__(self, schema):
-#         self.schema = schema
-#
-#     def retrieve(self):
-#         data = get_json_body_params_or_400(self.schema)
-#         setattr(request, 'validated_body', data)
-#
-#
-# class QueryString(AbstractParameter):
-#     def __init__(self, schema):
-#         self.schema = schema
-#
-#     def retrieve(self):
-#         data = get_query_string_params_or_400(self.schema)
-#         setattr(request, 'validated_args', data)
-#
-#
-# class Header(AbstractParameter):
-#     def __init__(
-#             self,
-#             name,
-#             dest,
-#             required=False,
-#             default=None
-#     ):
-#         self.name = name
-#         self.dest = dest
-#         self.required = required
-#         self.default = default
-#
-#     def retrieve(self):
-#         if not self.in_header() and not self.default and self.required:
-#             self.on_required_but_missing()
-#
-#         elif not self.in_header():
-#             val = self.get_default()
-#             self.set_value(val)
-#
-#         elif self.in_header():
-#             val = request.headers[self.name]
-#             self.set_value(val)
-#
-#     def get_default(self):
-#         return self.default() if callable(self.default) else self.default
-#
-#     def in_header(self):
-#         return self.name in request.headers
-#
-#     def set_value(self, val):
-#         setattr(request, self.dest, val)
-#
-#     def on_required_but_missing(self):
-#         raise BadRequest(missing_header_parameter(self.name))
-#
-#
-# class UserIdHeaderParam(Header):
-#     def set_value(self, val):
-#         super(UserIdHeaderParam, self).set_value(val)
 
+def _wrap_handler(
+        f,
+        authenticator=None,
+        query_string_schema=None,
+        request_body_schema=None,
+        headers_schema=None,
+        marshal_schemas=None
+):
+    """
+    Wraps a handler function before registering it with a Flask application.
 
-def _wrap_handler(f, definition):
+    :param f:
+    :returns: a new, wrapped handler function
+    """
     @wraps(f)
     def wrapped(*args, **kwargs):
-        if definition.authenticate:
-            definition.authenticate.authenticate()
+        if authenticator:
+            authenticator.authenticate()
 
-        if definition.query_string:
+        if query_string_schema:
             request.validated_args = get_query_string_params_or_400(
-                schema=definition.query_string
+                schema=query_string_schema
             )
 
-        if definition.request_body:
+        if request_body_schema:
             request.validated_body = get_json_body_params_or_400(
-                schema=definition.request_body
+                schema=request_body_schema
             )
 
-        if definition.headers:
+        if headers_schema:
             request.validated_headers = get_header_params_or_400(
-                schema=definition.headers
+                schema=headers_schema
             )
 
         rv = f(*args, **kwargs)
 
-        if definition.marshal:
+        if marshal_schemas:
             if isinstance(rv, tuple):
                 data, status_code = rv[0], rv[1]
             else:
                 data, status_code = rv, 200
 
             try:
-                marshal_schema = definition.marshal[status_code]
+                marshal_schema = marshal_schemas[status_code]
             except KeyError:
                 raise
 
@@ -214,122 +164,125 @@ def _wrap_handler(f, definition):
     return wrapped
 
 
-# def _wrap_error_handler(f, schema):
-#     @wraps(f)
-#     def wrapped(error):
-#         data, status_code = f(error)
-#
-#         marshaled = marshal(
-#             data=data,
-#             schema=schema
-#         )
-#
-#         return response(
-#             data=marshaled,
-#             status_code=status_code
-#         )
-#
-#     return wrapped
-
-
 class Framer(object):
+    """
+    Declaratively constructs a REST API.
+
+    Similar to a Flask Blueprint, but intentionally kept separate.
+    """
     def __init__(self):
         self.paths = defaultdict(dict)
-        self.error_handlers = []
-        self.definitions = {}
-        self.authenticators = {}
+        self.default_authenticator = None
 
-    def add_global_parameter(self):
-        pass
+    def set_default_authenticator(self, authenticator):
+        """
+        Sets a handler authenticator to be used by default.
+
+        :param Authenticator authenticator:
+        """
+        self.default_authenticator = authenticator
 
     def add_handler(
             self,
             func,
             path,
             method,
-            marshal=None,
-            query_string=None,
-            request_body=None,
-            headers=None,
-            authenticate=None
+            endpoint=None,
+            marshal_schemas=None,
+            query_string_schema=None,
+            request_body_schema=None,
+            headers_schema=None,
+            authenticator=USE_DEFAULT
     ):
-        # TODO: support multiple paths
+        """
+        Registers a function as a request handler.
+
+        :param func:
+            The Flask "view_func"
+        :param str path:
+            The Flask "rule"
+        :param str method:
+            The HTTP method this handler accepts
+        :param str endpoint:
+        :param dict[int, marshmallow.Schema] marshal_schemas:
+            Dictionary mapping response codes to schemas to use to marshal
+            the response. For now this assumes everything is JSON.
+        :param marshmallow.Schema query_string_schema:
+            Schema to use to deserialize query string arguments.
+        :param marshmallow.Schema request_body_schema:
+            Schema to use to deserialize the request body. For now this
+            assumes everything is JSON.
+        :param marshmallow.Schema headers_schema:
+            Schema to use to grab and validate headers.
+        :param Type[USE_DEFAULT]|Authenticator authenticator:
+            An authenticator object to authenticate incoming requests.
+            If left as USE_DEFAULT, the Framer's default will be used.
+            Set to None to make this an unauthenticated handler.
+        """
         self.paths[path][method] = PathDefinition(
             func=func,
             path=path,
             method=method,
-            marshal=marshal,
-            query_string=query_string,
-            request_body=request_body,
-            headers=headers,
-            authenticate=authenticate
+            endpoint=endpoint,
+            marshal_schemas=marshal_schemas,
+            query_string_schema=query_string_schema,
+            request_body_schema=request_body_schema,
+            headers_schema=headers_schema,
+            authenticator=authenticator,
         )
 
     def handles(
             self,
             path,
             method,
-            marshal=None,
-            query_string=None,
-            request_body=None,
-            headers=None,
-            authenticate=None
+            endpoint=None,
+            marshal_schemas=None,
+            query_string_schema=None,
+            request_body_schema=None,
+            headers_schema=None,
+            authenticator=USE_DEFAULT
     ):
+        """
+        Same arguments as `add_handler`, except this can be used as a decorator.
+        """
         def wrapper(f):
             self.add_handler(
                 func=f,
                 path=path,
                 method=method,
-                marshal=marshal,
-                query_string=query_string,
-                request_body=request_body,
-                headers=headers,
-                authenticate=authenticate
+                endpoint=endpoint,
+                marshal_schemas=marshal_schemas,
+                query_string_schema=query_string_schema,
+                request_body_schema=request_body_schema,
+                headers_schema=headers_schema,
+                authenticator=authenticator
             )
             return f
         return wrapper
 
-    # def add_error_handler(
-    #         self,
-    #         func,
-    #         code_or_exception,
-    #         schema
-    # ):
-    #     self.error_handlers.append(
-    #         ErrorHandlerDefinition(
-    #             code_or_exception=code_or_exception,
-    #             func=func,
-    #             schema=schema
-    #         )
-    #     )
-    #
-    # def handles_error(self, code_or_exception, schema):
-    #     def wrapper(f):
-    #         self.add_error_handler(
-    #             func=f,
-    #             code_or_exception=code_or_exception,
-    #             schema=schema
-    #         )
-    #         return f
-    #     return wrapper
-
     def register(self, app):
         """
+        Registers all the handlers with a Flask application.
 
-        :param flask.Flask app:
-        :return:
+        :param flask.Flask|flask.Blueprint app:
         """
 
         for path, methods in self.paths.items():
             for method, definition_ in methods.items():
                 app.add_url_rule(
                     rule=definition_.path,
-                    view_func=_wrap_handler(definition_.func, definition_),
-                    methods=[definition_.method]
+                    view_func=_wrap_handler(
+                        f=definition_.func,
+                        authenticator=(
+                            self.default_authenticator
+                            if definition_.authenticator is USE_DEFAULT
+                            else definition_.authenticator
+                        ),
+                        query_string_schema=definition_.query_string_schema,
+                        request_body_schema=definition_.request_body_schema,
+                        headers_schema=definition_.headers_schema,
+                        marshal_schemas=definition_.marshal_schemas
+                    ),
+                    methods=[definition_.method],
+                    endpoint=definition_.endpoint
                 )
-
-        # for definition_ in self.error_handlers:
-        #     app.register_error_handler(
-        #         code_or_exception=definition_.code_or_exception,
-        #         f=_wrap_error_handler(definition_.func, definition_.schema)
-        #     )

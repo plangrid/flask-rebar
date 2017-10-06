@@ -1,4 +1,3 @@
-import unittest
 import json
 
 import marshmallow as m
@@ -11,6 +10,10 @@ from plangrid.flask_toolbox.framing.framer import Framer
 from plangrid.flask_toolbox.framing.framer import HeaderApiKeyAuthenticator
 from plangrid.flask_toolbox.validation import ListOf
 
+
+# Still some things to test:
+# TODO: This works with blueprints
+# TODO: Failure scenarios!
 
 class FlaskToSwaggerTest(TestCase):
     def create_app(self):
@@ -35,12 +38,17 @@ class FlaskToSwaggerTest(TestCase):
             user_name = m.fields.String()
 
         authenticator = HeaderApiKeyAuthenticator(header='x-auth')
+        default_authenticator = HeaderApiKeyAuthenticator(
+            header='x-another',
+            name='default'
+        )
         authenticator.register_key(app_name='internal', key='SECRET!')
+        default_authenticator.register_key(app_name='internal', key='SECRET!')
 
         @framer.handles(
             path='/foos/<foo_uid>',
             method='GET',
-            marshal={
+            marshal_schemas={
                 200: FooSchema()
             }
         )
@@ -50,10 +58,11 @@ class FlaskToSwaggerTest(TestCase):
         @framer.handles(
             path='/foos/<foo_uid>',
             method='PATCH',
-            marshal={
+            marshal_schemas={
                 200: FooSchema()
             },
-            request_body=FooUpdateSchema()
+            request_body_schema=FooUpdateSchema(),
+            authenticator=None
         )
         def update_foo(foo_uid):
             return {'uid': foo_uid, 'name': request.validated_body['name']}
@@ -61,10 +70,11 @@ class FlaskToSwaggerTest(TestCase):
         @framer.handles(
             path='/foos',
             method='GET',
-            marshal={
+            marshal_schemas={
                 200: ListOf(FooSchema)()
             },
-            query_string=FooListSchema()
+            query_string_schema=FooListSchema(),
+            authenticator=None
         )
         def list_foos():
             return {
@@ -74,11 +84,11 @@ class FlaskToSwaggerTest(TestCase):
         @framer.handles(
             path='/me',
             method='GET',
-            marshal={
+            marshal_schemas={
                 200: MeSchema(),
             },
-            headers=HeadersSchema(),
-            authenticate=authenticator
+            headers_schema=HeadersSchema(),
+            authenticator=authenticator
         )
         def get_me():
             return {
@@ -86,19 +96,7 @@ class FlaskToSwaggerTest(TestCase):
                 'user_name': request.validated_headers['name']
             }
 
-        # @framer.handles(
-        #     path='/errors',
-        #     method='GET'
-        # )
-        # def error():
-        #     raise ArithmeticError
-        #
-        # @framer.handles_error(
-        #     code_or_exception=ArithmeticError,
-        #     schema=Error()
-        # )
-        # def handle_arithmetic_error(error):
-        #     return {'message': 'MATH!'}, 409
+        framer.set_default_authenticator(default_authenticator)
 
         Toolbox(app)
         framer.register(app)
@@ -107,7 +105,8 @@ class FlaskToSwaggerTest(TestCase):
 
     def test_get_foo(self):
         resp = self.app.test_client().get(
-            path='/foos/1'
+            path='/foos/1',
+            headers={'x-another': 'SECRET!'}
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json, {'uid': '1', 'name': 'sam'})
@@ -135,7 +134,3 @@ class FlaskToSwaggerTest(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json, {'app_name': 'internal', 'user_name': 'hello'})
-    # def test_error_handling(self):
-    #     resp = self.app.test_client().get(path='/errors')
-    #     self.assertEqual(resp.status_code, 409)
-    #     self.assertEqual(resp.json, {'message': 'MATH!'})

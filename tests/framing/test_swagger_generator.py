@@ -137,6 +137,10 @@ class TestSwaggerV2Generator(TestCase):
         framer = Framer()
 
         authenticator = HeaderApiKeyAuthenticator(header='x-auth')
+        default_authenticator = HeaderApiKeyAuthenticator(
+            header='x-another',
+            name='default'
+        )
 
         class HeaderSchema(m.Schema):
             user_id = m.fields.String(load_from='x-userid', required=True)
@@ -155,14 +159,11 @@ class TestSwaggerV2Generator(TestCase):
         class FooListSchema(m.Schema):
             name = m.fields.String()
 
-        # class Error(m.Schema):
-        #     message = m.fields.String()
-
         @framer.handles(
             path='/foos/<foo_uid>',
             method='GET',
-            marshal={200: FooSchema()},
-            headers=HeaderSchema()
+            marshal_schemas={200: FooSchema()},
+            headers_schema=HeaderSchema()
         )
         def get_foo(foo_uid):
             """helpful description"""
@@ -171,9 +172,9 @@ class TestSwaggerV2Generator(TestCase):
         @framer.handles(
             path='/foos/<foo_uid>',
             method='PATCH',
-            marshal={200: FooSchema()},
-            request_body=FooUpdateSchema(),
-            authenticate=authenticator
+            marshal_schemas={200: FooSchema()},
+            request_body_schema=FooUpdateSchema(),
+            authenticator=authenticator
         )
         def update_foo(foo_uid):
             pass
@@ -181,18 +182,14 @@ class TestSwaggerV2Generator(TestCase):
         @framer.handles(
             path='/foos',
             method='GET',
-            marshal={200: ListOf(FooSchema)()},
-            query_string=FooListSchema()
+            marshal_schemas={200: ListOf(FooSchema)()},
+            query_string_schema=FooListSchema(),
+            authenticator=None  # Override the default!
         )
         def list_foos():
             pass
 
-        # @framer.handles_error(
-        #     code_or_exception=ArithmeticError,
-        #     schema=Error()
-        # )
-        # def handle_arithmetic_error(error):
-        #     pass
+        framer.set_default_authenticator(default_authenticator)
 
         Toolbox(app)
         framer.register(app)
@@ -220,9 +217,6 @@ class TestSwaggerV2Generator(TestCase):
 
         swagger = generator.generate(self.framer)
 
-        # TODO: security definitions
-        # TODO: header arguments?
-
         expected_swagger = {
             'swagger': '2.0',
             'host': host,
@@ -230,24 +224,21 @@ class TestSwaggerV2Generator(TestCase):
             'schemes': schemes,
             'consumes': consumes,
             'produces': produces,
-            # 'security': {             # TODO this is the global
-            #     'sharedSecret': []
-            # },
+            'security': {
+                'default': []
+            },
             'securityDefinitions': {
                 'sharedSecret': {
                     'type': 'apiKey',
                     'in': 'header',
                     'name': 'x-auth'
+                },
+                'default': {
+                    'type': 'apiKey',
+                    'in': 'header',
+                    'name': 'x-another'
                 }
             },
-            # 'parameters': {
-            #     'userId': {
-            #         'name': 'x-pg-userid',
-            #         'in': 'header',
-            #         'required': True,
-            #         'type': 'string'
-            #     }
-            # },
             'paths': {
                 '/foos/{foo_uid}': {
                     'parameters': [{
@@ -268,7 +259,6 @@ class TestSwaggerV2Generator(TestCase):
                             }
                         },
                         'parameters': [
-                            # {'$ref': '#/parameters/userId'}
                             {
                                 'name': 'x-userid',
                                 'in': 'header',
@@ -316,7 +306,8 @@ class TestSwaggerV2Generator(TestCase):
                                 'required': False,
                                 'type': 'string'
                             }
-                        ]
+                        ],
+                        'security': {}
                     }
                 }
             },
