@@ -1,17 +1,20 @@
+from __future__ import unicode_literals
+
 from collections import defaultdict
 from collections import namedtuple
 from functools import wraps
 
+import marshmallow
 from flask import request
 from werkzeug.security import safe_str_cmp
 
-from plangrid.flask_toolbox import get_header_params_or_400
-from plangrid.flask_toolbox import get_json_body_params_or_400
-from plangrid.flask_toolbox import get_query_string_params_or_400
+from plangrid.flask_toolbox.request_utils import response
+from plangrid.flask_toolbox.request_utils import get_json_body_params_or_400
+from plangrid.flask_toolbox.request_utils import get_query_string_params_or_400
+from plangrid.flask_toolbox.request_utils import marshal
+from plangrid.flask_toolbox.request_utils import get_header_params_or_400
 from plangrid.flask_toolbox import http_errors
-from plangrid.flask_toolbox import marshal
 from plangrid.flask_toolbox import messages
-from plangrid.flask_toolbox import response
 
 # Still some functionality to cover:
 # TODO: Default Headers
@@ -70,12 +73,17 @@ class HeaderApiKeyAuthenticator(Authenticator):
         A name for this authenticator. This should be unique across
         authenticators.
     """
+
+    # This authenticator allows multiple applications to have different keys.
+    # This is the default name, if someone doesn't need about this feature.
+    DEFAULT_APP_NAME = 'default'
+
     def __init__(self, header, name='sharedSecret'):
         self.header = header
         self.keys = {}
         self.name = name
 
-    def register_key(self, app_name, key):
+    def register_key(self, key, app_name=DEFAULT_APP_NAME):
         """
         Register a client application's shared secret.
 
@@ -148,6 +156,13 @@ def _wrap_handler(
             except KeyError:
                 raise
 
+            if marshal_schema is None:
+                # Allow for the schema to be declared as None, which allows
+                # for status codes with no bodies (i.e. a 204 status code)
+                return response(
+                    data=data, status_code=status_code
+                )
+
             marshaled = marshal(
                 data=data,
                 schema=marshal_schema
@@ -170,9 +185,9 @@ class Framer(object):
 
     Similar to a Flask Blueprint, but intentionally kept separate.
     """
-    def __init__(self):
+    def __init__(self, default_authenticator=None):
         self.paths = defaultdict(dict)
-        self.default_authenticator = None
+        self.default_authenticator = default_authenticator
 
     def set_default_authenticator(self, authenticator):
         """
@@ -186,7 +201,7 @@ class Framer(object):
             self,
             func,
             path,
-            method,
+            method='GET',
             endpoint=None,
             marshal_schemas=None,
             query_string_schema=None,
@@ -219,6 +234,9 @@ class Framer(object):
             If left as USE_DEFAULT, the Framer's default will be used.
             Set to None to make this an unauthenticated handler.
         """
+        if isinstance(marshal_schemas, marshmallow.Schema):
+            marshal_schemas = {200: marshal_schemas}
+
         self.paths[path][method] = PathDefinition(
             func=func,
             path=path,
@@ -234,7 +252,7 @@ class Framer(object):
     def handles(
             self,
             path,
-            method,
+            method='GET',
             endpoint=None,
             marshal_schemas=None,
             query_string_schema=None,

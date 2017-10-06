@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import copy
 import re
 from collections import namedtuple
@@ -39,6 +41,21 @@ def _get_ref(key, path=('#', sw.definitions)):
     :rtype: str
     """
     return '/'.join(list(path) + [key])
+
+
+def _get_response_description(schema):
+    """
+    Retrieves a response description from a Marshmallow schema.
+
+    This is a required field, so we _have_ to give something back.
+
+    :param marshmallow.Schema schema:
+    :rtype: str
+    """
+    if schema.__doc__:
+        return schema.__doc__
+    else:
+        return get_swagger_title(schema)
 
 
 def _flatten(schema):
@@ -99,10 +116,17 @@ def _flatten(schema):
 
 
 def _flatten_object(schema, definitions):
+    if sw.title not in schema:
+        # No need to flatten an object that doesn't have a title.
+        # These are probably super simple objects that don't need
+        # to be flattened.
+        return
+
     for field, obj in schema[sw.properties].items():
         if obj[sw.type_] == sw.object_:
             obj_key = _flatten_object(schema=obj, definitions=definitions)
-            schema[sw.properties][field] = {sw.ref: _get_ref(obj_key)}
+            if obj_key:
+                schema[sw.properties][field] = {sw.ref: _get_ref(obj_key)}
         elif obj[sw.type_] == sw.array:
             _flatten_array(schema=obj, definitions=definitions)
 
@@ -115,7 +139,8 @@ def _flatten_object(schema, definitions):
 def _flatten_array(schema, definitions):
     if schema[sw.items][sw.type_] == sw.object_:
         obj_key = _flatten_object(schema=schema[sw.items], definitions=definitions)
-        schema[sw.items] = {sw.ref: _get_ref(obj_key)}
+        if obj_key:
+            schema[sw.items] = {sw.ref: _get_ref(obj_key)}
     elif schema[sw.items][sw.type_] == sw.array:
         _flatten_array(schema=schema[sw.items], definitions=definitions)
 
@@ -222,10 +247,12 @@ class SwaggerV2Generator(object):
     """
     def __init__(
             self,
-            host='http://default.dev.planfront.net',
+            host='swag.com',
             schemes=('http',),
             consumes=('application/json',),
             produces=('application/vnd.plangrid+json',),
+            version='1.0.0',
+            title='My API',
             query_string_converter_registry=None,
             request_body_converter_registry=None,
             headers_converter_registry=None,
@@ -241,6 +268,8 @@ class SwaggerV2Generator(object):
         self.schemes = schemes
         self.consumes = consumes
         self.produces = produces
+        self.title = title
+        self.version = version
 
         self._query_string_converter = (
             query_string_converter_registry
@@ -343,7 +372,10 @@ class SwaggerV2Generator(object):
 
     def _get_info(self):
         # TODO: add all the parameters for populating info
-        return {}
+        return {
+            sw.version: self.version,
+            sw.title: self.title
+        }
 
     def _get_schemes(self):
         return list(self.schemes)
@@ -358,7 +390,7 @@ class SwaggerV2Generator(object):
         klass = authenticator.__class__
         converter = self.authenticator_converters[klass]
         name, _ = converter(authenticator)
-        return {name: []}
+        return [{name: []}]
 
     def _get_security_definitions(self, paths, default_authenticator):
         security_definitions = {}
@@ -405,6 +437,7 @@ class SwaggerV2Generator(object):
             for method, d in methods.items():
                 responses_definition = {
                     sw.default: {
+                        sw.description: _get_response_description(self.default_response_schema),
                         sw.schema: {
                             sw.ref: _get_ref(get_swagger_title(self.default_response_schema))
                         }
@@ -414,6 +447,7 @@ class SwaggerV2Generator(object):
                 if d.marshal_schemas:
                     for status_code, schema in d.marshal_schemas.items():
                         response_definition = {
+                            sw.description: _get_response_description(schema),
                             sw.schema: {sw.ref: _get_ref(get_swagger_title(schema))}
                         }
 
@@ -460,7 +494,7 @@ class SwaggerV2Generator(object):
                     path_definition[method_lower][sw.parameters] = parameters_definition
 
                 if d.authenticator is None:
-                    path_definition[method_lower][sw.security] = {}
+                    path_definition[method_lower][sw.security] = []
                 elif d.authenticator is not USE_DEFAULT:
                     security = self._get_security(d.authenticator)
                     path_definition[method_lower][sw.security] = security

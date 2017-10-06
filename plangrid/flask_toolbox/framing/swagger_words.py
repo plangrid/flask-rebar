@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 additional_properties = 'additionalProperties'
 all_of = 'allOf'
 allow_empty_value = 'allowEmptyValue'
@@ -60,3 +62,4 @@ title = 'title'
 type_ = 'type'
 unique_items = 'uniqueItems'
 uuid = 'uuid'
+version = 'version'

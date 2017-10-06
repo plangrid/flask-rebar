@@ -1,9 +1,11 @@
 import unittest
 
+import jsonschema
 import marshmallow as m
 from flask import Flask
 from flask_testing import TestCase
 
+from tests.fixtures.swagger_jsonschema import SWAGGER_JSONSCHEMA
 from plangrid.flask_toolbox import Toolbox
 from plangrid.flask_toolbox.framing.framer import Framer
 from plangrid.flask_toolbox.framing.framer import HeaderApiKeyAuthenticator
@@ -199,19 +201,24 @@ class TestSwaggerV2Generator(TestCase):
         return app
 
     def test_generate_swagger(self):
-        host = 'http://SWAG.planfront.net'
+        host = 'swag.com'
         schemes = ['http']
         consumes = ['application/json']
         produces = ['application/vnd.plangrid+json']
+        title = 'Test API'
+        version = '2.1.0'
 
         class Error(m.Schema):
             message = m.fields.String()
+            details = m.fields.Dict()
 
         generator = SwaggerV2Generator(
             host=host,
             schemes=schemes,
             consumes=consumes,
             produces=produces,
+            title=title,
+            version=version,
             default_response_schema=Error()
         )
 
@@ -220,13 +227,16 @@ class TestSwaggerV2Generator(TestCase):
         expected_swagger = {
             'swagger': '2.0',
             'host': host,
-            'info': {},
+            'info': {
+                'title': title,
+                'version': version
+            },
             'schemes': schemes,
             'consumes': consumes,
             'produces': produces,
-            'security': {
-                'default': []
-            },
+            'security': [
+                {'default': []}
+            ],
             'securityDefinitions': {
                 'sharedSecret': {
                     'type': 'apiKey',
@@ -252,9 +262,11 @@ class TestSwaggerV2Generator(TestCase):
                         'description': 'helpful description',
                         'responses': {
                             '200': {
+                                'description': 'Foo',
                                 'schema': {'$ref': '#/definitions/Foo'}
                             },
                             'default': {
+                                'description': 'Error',
                                 'schema': {'$ref': '#/definitions/Error'}
                             }
                         },
@@ -271,9 +283,11 @@ class TestSwaggerV2Generator(TestCase):
                         'operationId': 'update_foo',
                         'responses': {
                             '200': {
+                                'description': 'Foo',
                                 'schema': {'$ref': '#/definitions/Foo'}
                             },
                             'default': {
+                                'description': 'Error',
                                 'schema': {'$ref': '#/definitions/Error'}
                             }
                         },
@@ -285,7 +299,7 @@ class TestSwaggerV2Generator(TestCase):
                                 'schema': {'$ref': '#/definitions/FooUpdateSchema'}
                             }
                         ],
-                        'security': {'sharedSecret': []}
+                        'security': [{'sharedSecret': []}]
                     }
                 },
                 '/foos': {
@@ -293,9 +307,11 @@ class TestSwaggerV2Generator(TestCase):
                         'operationId': 'list_foos',
                         'responses': {
                             '200': {
+                                'description': 'ListOfFoo',
                                 'schema': {'$ref': '#/definitions/ListOfFoo'}
                             },
                             'default': {
+                                'description': 'Error',
                                 'schema': {'$ref': '#/definitions/Error'}
                             }
                         },
@@ -307,7 +323,7 @@ class TestSwaggerV2Generator(TestCase):
                                 'type': 'string'
                             }
                         ],
-                        'security': {}
+                        'security': []
                     }
                 }
             },
@@ -341,7 +357,8 @@ class TestSwaggerV2Generator(TestCase):
                     'type': 'object',
                     'title': 'Error',
                     'properties': {
-                        'message': {'type': 'string'}
+                        'message': {'type': 'string'},
+                        'details': {'type': 'object'}
                     }
                 }
             }
@@ -352,6 +369,12 @@ class TestSwaggerV2Generator(TestCase):
         # import json
         # print(json.dumps(swagger, indent=2))
         # self.assertTrue(False)
+
+        # This will raise an error if validation fails
+        jsonschema.validate(
+            instance=expected_swagger,
+            schema=SWAGGER_JSONSCHEMA
+        )
 
         self.assertEqual(swagger, expected_swagger)
 
