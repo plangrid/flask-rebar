@@ -5,10 +5,10 @@ from flask import Flask
 from flask import request
 from flask_testing import TestCase
 
-from plangrid.flask_toolbox import Toolbox
+from plangrid.flask_toolbox import Toolbox, HeaderApiKeyAuthenticator
 from plangrid.flask_toolbox.framing.framer import Framer
-from plangrid.flask_toolbox.framing.framer import HeaderApiKeyAuthenticator
 from plangrid.flask_toolbox.validation import ListOf
+from plangrid.flask_toolbox.testing import validate_swagger
 
 
 # Still some things to test:
@@ -134,3 +134,10 @@ class FlaskToSwaggerTest(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json, {'app_name': 'internal', 'user_name': 'hello'})
+
+    def test_swagger(self):
+        resp = self.app.test_client().get('/swagger')
+
+        self.assertEqual(resp.status_code, 200)
+
+        validate_swagger(resp.json)

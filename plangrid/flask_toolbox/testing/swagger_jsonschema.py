@@ -1,7 +1,7 @@
 # This is a JSONSchema document that validates a Swagger spec
 # We can use this to quickly check if the swagger we are producing is valid
 
-SWAGGER_JSONSCHEMA = {
+SWAGGER_V2_JSONSCHEMA = {
   "title": "A JSON Schema for Swagger 2.0 API.",
   "id": "http://swagger.io/v2/schema.json#",
   "$schema": "http://json-schema.org/draft-04/schema#",

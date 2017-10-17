@@ -6,15 +6,14 @@ from functools import wraps
 
 import marshmallow
 from flask import request
-from werkzeug.security import safe_str_cmp
 
-from plangrid.flask_toolbox.request_utils import response
+from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
+from plangrid.flask_toolbox.framing.swagger_generator import SwaggerV2Generator
+from plangrid.flask_toolbox.request_utils import get_header_params_or_400
 from plangrid.flask_toolbox.request_utils import get_json_body_params_or_400
 from plangrid.flask_toolbox.request_utils import get_query_string_params_or_400
 from plangrid.flask_toolbox.request_utils import marshal
-from plangrid.flask_toolbox.request_utils import get_header_params_or_400
-from plangrid.flask_toolbox import http_errors
-from plangrid.flask_toolbox import messages
+from plangrid.flask_toolbox.request_utils import response
 
 # Still some functionality to cover:
 # TODO: Default Headers
@@ -42,71 +41,6 @@ PathDefinition = namedtuple('PathDefinition', [
     'headers_schema',
     'authenticator'
 ])
-
-
-class USE_DEFAULT(object):
-    pass
-
-
-class Authenticator(object):
-    """
-    Abstract authenticator class. Custom authentication methods should
-    extend this class.
-    """
-    def authenticate(self):
-        raise NotImplemented
-
-
-class HeaderApiKeyAuthenticator(Authenticator):
-    """
-    Authenticates based on a small set of shared secrets, passed via a header.
-
-    This allows multiple client applications to be registered with their own
-    keys.
-    This also allows multiple keys to be registered for a single client
-    application.
-
-    :param str header:
-        The header where clients where client applications must include
-        their secret.
-    :param str name:
-        A name for this authenticator. This should be unique across
-        authenticators.
-    """
-
-    # This authenticator allows multiple applications to have different keys.
-    # This is the default name, if someone doesn't need about this feature.
-    DEFAULT_APP_NAME = 'default'
-
-    def __init__(self, header, name='sharedSecret'):
-        self.header = header
-        self.keys = {}
-        self.name = name
-
-    def register_key(self, key, app_name=DEFAULT_APP_NAME):
-        """
-        Register a client application's shared secret.
-
-        :param str app_name:
-            Name for the application. Since an application can have multiple
-            shared secrets, this does not need to be unique.
-        :param str key:
-            The shared secret.
-        """
-        self.keys[key] = app_name
-
-    def authenticate(self):
-        if self.header not in request.headers:
-            raise http_errors.Unauthorized(messages.missing_auth_token)
-
-        token = request.headers[self.header]
-
-        for key, app_name in self.keys.items():
-            if safe_str_cmp(str(token), key):
-                setattr(request, 'authenticated_app_name', app_name)
-                break
-        else:
-            raise http_errors.Unauthorized(messages.invalid_auth_token)
 
 
 def _wrap_handler(
@@ -185,15 +119,16 @@ class Framer(object):
 
     Similar to a Flask Blueprint, but intentionally kept separate.
     """
-    def __init__(self, default_authenticator=None):
+    def __init__(self, default_authenticator=None, swagger_generator=None):
         self.paths = defaultdict(dict)
         self.default_authenticator = default_authenticator
+        self.swagger_generator = swagger_generator or SwaggerV2Generator()
 
     def set_default_authenticator(self, authenticator):
         """
         Sets a handler authenticator to be used by default.
 
-        :param Authenticator authenticator:
+        :param plangrid.flask_toolbox.framing.authenticators.Authenticator authenticator:
         """
         self.default_authenticator = authenticator
 
@@ -229,7 +164,7 @@ class Framer(object):
             assumes everything is JSON.
         :param marshmallow.Schema headers_schema:
             Schema to use to grab and validate headers.
-        :param Type[USE_DEFAULT]|Authenticator authenticator:
+        :param Type[USE_DEFAULT]|plangrid.flask_toolbox.framing.authenticators.Authenticator authenticator:
             An authenticator object to authenticate incoming requests.
             If left as USE_DEFAULT, the Framer's default will be used.
             Set to None to make this an unauthenticated handler.
@@ -304,3 +239,11 @@ class Framer(object):
                     methods=[definition_.method],
                     endpoint=definition_.endpoint
                 )
+
+        @app.route('/swagger', methods=['GET'])
+        def get_swagger():
+            swagger = self.swagger_generator.generate(
+                framer=self,
+                host=request.host
+            )
+            return response(data=swagger)

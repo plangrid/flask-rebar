@@ -1,19 +1,17 @@
 import unittest
 
-import jsonschema
 import marshmallow as m
 from flask import Flask
 from flask_testing import TestCase
 
-from tests.fixtures.swagger_jsonschema import SWAGGER_JSONSCHEMA
-from plangrid.flask_toolbox import Toolbox
+from plangrid.flask_toolbox import Toolbox, HeaderApiKeyAuthenticator
 from plangrid.flask_toolbox.framing.framer import Framer
-from plangrid.flask_toolbox.framing.framer import HeaderApiKeyAuthenticator
 from plangrid.flask_toolbox.framing.swagger_generator import SwaggerV2Generator
 from plangrid.flask_toolbox.framing.swagger_generator import _PathArgument as PathArgument
 from plangrid.flask_toolbox.framing.swagger_generator import _flatten as flatten
 from plangrid.flask_toolbox.framing.swagger_generator import _format_path_for_swagger as format_path_for_swagger
 from plangrid.flask_toolbox.validation import ListOf
+from plangrid.flask_toolbox.testing import validate_swagger
 
 
 class TestFlatten(unittest.TestCase):
@@ -371,10 +369,7 @@ class TestSwaggerV2Generator(TestCase):
         # self.assertTrue(False)
 
         # This will raise an error if validation fails
-        jsonschema.validate(
-            instance=expected_swagger,
-            schema=SWAGGER_JSONSCHEMA
-        )
+        validate_swagger(expected_swagger)
 
         self.assertEqual(swagger, expected_swagger)
 

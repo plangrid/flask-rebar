@@ -5,8 +5,8 @@ import re
 from collections import namedtuple
 
 from plangrid.flask_toolbox.framing import swagger_words as sw
-from plangrid.flask_toolbox.framing.framer import USE_DEFAULT
-from plangrid.flask_toolbox.framing.framer import HeaderApiKeyAuthenticator
+from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
+from plangrid.flask_toolbox.framing.authenticators import HeaderApiKeyAuthenticator
 from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import get_swagger_title
 from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import headers_converter_registry as global_headers_converter_registry
 from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import query_string_converter_registry as global_query_string_converter_registry
@@ -332,11 +332,22 @@ class SwaggerV2Generator(object):
         """
         self.authenticator_converters[authenticator_class] = converter
 
-    def generate(self, framer):
+    def generate(
+            self,
+            framer,
+            host=None,
+            schemes=None,
+            consumes=None,
+            produces=None
+    ):
         """
         Generates a Swagger specification from a Framer instance.
 
         :param Framer framer:
+        :param str host: Overrides the initialized host
+        :param iterable(str) schemes: Overrides the initialized schemas
+        :param iterable(str) consumes: Overrides the initialized consumes
+        :param iterable(str) produces: Overrides the initialized produces
         :rtype: dict
         """
         default_authenticator = framer.default_authenticator
@@ -350,10 +361,10 @@ class SwaggerV2Generator(object):
         swagger = {
             sw.swagger: self._get_version(),
             sw.info: self._get_info(),
-            sw.host: self._get_host(),
-            sw.schemes: self._get_schemes(),
-            sw.consumes: self._get_consumes(),
-            sw.produces: self._get_produces(),
+            sw.host: host or self.host,
+            sw.schemes: list(schemes or self.schemes),
+            sw.consumes: list(consumes or self.consumes),
+            sw.produces: list(produces or self.produces),
             sw.security_definitions: security_definitions,
             sw.paths: paths,
             sw.definitions: definitions
@@ -367,24 +378,12 @@ class SwaggerV2Generator(object):
     def _get_version(self):
         return '2.0'
 
-    def _get_host(self):
-        return self.host
-
     def _get_info(self):
         # TODO: add all the parameters for populating info
         return {
             sw.version: self.version,
             sw.title: self.title
         }
-
-    def _get_schemes(self):
-        return list(self.schemes)
-
-    def _get_consumes(self):
-        return list(self.consumes)
-
-    def _get_produces(self):
-        return list(self.produces)
 
     def _get_security(self, authenticator):
         klass = authenticator.__class__
@@ -446,12 +445,17 @@ class SwaggerV2Generator(object):
 
                 if d.marshal_schemas:
                     for status_code, schema in d.marshal_schemas.items():
-                        response_definition = {
-                            sw.description: _get_response_description(schema),
-                            sw.schema: {sw.ref: _get_ref(get_swagger_title(schema))}
-                        }
+                        if schema is not None:
+                            response_definition = {
+                                sw.description: _get_response_description(schema),
+                                sw.schema: {sw.ref: _get_ref(get_swagger_title(schema))}
+                            }
 
-                        responses_definition[str(status_code)] = response_definition
+                            responses_definition[str(status_code)] = response_definition
+                        else:
+                            responses_definition[str(status_code)] = {
+                                sw.description: 'No response body.'
+                            }
 
                 parameters_definition = []
 
@@ -483,7 +487,7 @@ class SwaggerV2Generator(object):
 
                 method_lower = method.lower()
                 path_definition[method_lower] = {
-                    sw.operation_id: get_swagger_title(d.func),
+                    sw.operation_id: d.endpoint or get_swagger_title(d.func),
                     sw.responses: responses_definition
                 }
 
@@ -512,6 +516,11 @@ class SwaggerV2Generator(object):
         for d in self._iterate_path_definitions(paths=paths):
             if d.marshal_schemas:
                 for schema in d.marshal_schemas.values():
+                    if schema is None:
+                        # Responses that don't have a response body have None
+                        # for a schema
+                        continue
+
                     if schema not in all_schemas:
                         converted.append(self._response_converter(schema))
                     all_schemas.add(schema)

@@ -34,9 +34,10 @@ from plangrid.flask_toolbox.toolbox import (
 )
 
 from plangrid.flask_toolbox.framing.framer import (
-    Framer,
-    HeaderApiKeyAuthenticator
+    Framer
 )
+from plangrid.flask_toolbox.framing.authenticators import\
+    HeaderApiKeyAuthenticator
 
 
 class ToolboxFramer(Framer):
