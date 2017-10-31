@@ -253,6 +253,7 @@ class SwaggerV2Generator(object):
             produces=('application/vnd.plangrid+json',),
             version='1.0.0',
             title='My API',
+            description='',
             query_string_converter_registry=None,
             request_body_converter_registry=None,
             headers_converter_registry=None,
@@ -269,6 +270,7 @@ class SwaggerV2Generator(object):
         self.consumes = consumes
         self.produces = produces
         self.title = title
+        self.description = description
         self.version = version
 
         self._query_string_converter = (
@@ -382,7 +384,8 @@ class SwaggerV2Generator(object):
         # TODO: add all the parameters for populating info
         return {
             sw.version: self.version,
-            sw.title: self.title
+            sw.title: self.title,
+            sw.description: self.description,
         }
 
     def _get_security(self, authenticator):
