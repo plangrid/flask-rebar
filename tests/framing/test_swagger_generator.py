@@ -227,7 +227,8 @@ class TestSwaggerV2Generator(TestCase):
             'host': host,
             'info': {
                 'title': title,
-                'version': version
+                'version': version,
+                'description': '',
             },
             'schemes': schemes,
             'consumes': consumes,
