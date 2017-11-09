@@ -5,6 +5,7 @@ import sys
 import uuid
 
 import bugsnag
+import bugsnag.flask
 from flask import Request, jsonify, current_app
 from marshmallow import ValidationError
 from newrelic import agent as newrelic_agent
