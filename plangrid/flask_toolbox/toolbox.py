@@ -15,7 +15,6 @@ from werkzeug.routing import BaseConverter
 from werkzeug.wrappers import Response as WerkzeugResponse
 
 from plangrid.flask_toolbox import http_errors, messages
-from plangrid.flask_toolbox.request_utils import response
 from plangrid.flask_toolbox.validation import UUID
 
 

@@ -141,3 +141,8 @@ class FlaskToSwaggerTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
         validate_swagger(resp.json)
+
+    def test_swagger_ui(self):
+        resp = self.app.test_client().get('/swagger/ui/')
+
+        self.assertEqual(resp.status_code, 200)

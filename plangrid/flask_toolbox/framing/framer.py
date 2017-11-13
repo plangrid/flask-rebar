@@ -6,6 +6,7 @@ from functools import wraps
 
 import marshmallow
 from flask import request
+from flask_swagger_ui import get_swaggerui_blueprint
 
 from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
 from plangrid.flask_toolbox.framing.swagger_generator import SwaggerV2Generator
@@ -19,13 +20,11 @@ from plangrid.flask_toolbox.request_utils import response
 # TODO: Default Headers
 # TODO: Can we move error handling here, so we don't have to provide a
 #   default response to the swagger generator?
-# TODO: Adapters for popular auth mechanism (if we want to open source this)
-# TODO: HATEOAS reference to endpoint documentation inside each endpoint
-# TODO: Endpoint to fetch entire swagger document
 # TODO: Support for multiple URL rules per handler
 # TODO: Support for multiple methods per handler
 # TODO: Support multiple authenticators per handler
 # TODO: documentation!
+# TODO: tests!
 
 
 # Metadata about a declared handler function. This can be used to both
@@ -119,10 +118,20 @@ class Framer(object):
 
     Similar to a Flask Blueprint, but intentionally kept separate.
     """
-    def __init__(self, default_authenticator=None, swagger_generator=None):
+    def __init__(
+            self,
+            default_authenticator=None,
+            swagger_generator=None,
+            swagger_path='/swagger',
+            swagger_ui_path='/swagger/ui',
+            swagger_ui_config=None
+    ):
         self.paths = defaultdict(dict)
         self.default_authenticator = default_authenticator
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
+        self.swagger_ui_config = swagger_ui_config or {}
+        self.swagger_path = swagger_path
+        self.swagger_ui_path = swagger_ui_path
 
     def set_default_authenticator(self, authenticator):
         """
@@ -240,10 +249,22 @@ class Framer(object):
                     endpoint=definition_.endpoint
                 )
 
-        @app.route('/swagger', methods=['GET'])
+        @app.route(self.swagger_path, methods=['GET'])
         def get_swagger():
             swagger = self.swagger_generator.generate(
                 framer=self,
                 host=request.host
             )
             return response(data=swagger)
+
+        swagger_ui_blueprint = get_swaggerui_blueprint(
+            base_url=self.swagger_ui_path,
+            api_url=self.swagger_path,
+            config=self.swagger_ui_config,
+        )
+        app.register_blueprint(
+            blueprint=swagger_ui_blueprint,
+            url_prefix=self.swagger_ui_path,
+        )
+
+
