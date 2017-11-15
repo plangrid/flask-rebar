@@ -163,7 +163,7 @@ def _format_marshmallow_errors_for_response_in_place(errs):
             _format_marshmallow_errors_for_response_in_place(value)
 
 
-def _raise_400_for_marshmallow_errors(errs, msg):
+def raise_400_for_marshmallow_errors(errs, msg):
     """
     Throws a 400 error properly formatted from the given marshmallow errors.
 
@@ -212,7 +212,7 @@ def get_json_body_params_or_400(schema):
     json_body_params, errs = schema.load(data=body)
 
     if errs:
-        _raise_400_for_marshmallow_errors(
+        raise_400_for_marshmallow_errors(
             errs=errs,
             msg=messages.body_validation_failed
         )
@@ -238,7 +238,7 @@ def get_query_string_params_or_400(schema):
     query_string_params, errs = schema.load(data=query_multidict)
 
     if errs:
-        _raise_400_for_marshmallow_errors(
+        raise_400_for_marshmallow_errors(
             errs=errs,
             msg=messages.query_string_validation_failed
         )
@@ -252,7 +252,7 @@ def get_header_params_or_400(schema):
     header_params, errs = schema.load(data=request.headers)
 
     if errs:
-        _raise_400_for_marshmallow_errors(
+        raise_400_for_marshmallow_errors(
             errs=errs,
             msg=messages.header_validation_failed
         )
