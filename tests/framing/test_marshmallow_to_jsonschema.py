@@ -3,7 +3,7 @@ import unittest
 import marshmallow as m
 from marshmallow import validate as v
 
-from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import ALL_CONVERTERS, OUT
+from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import ALL_CONVERTERS
 from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import ConverterRegistry
 from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import IN
 from plangrid.flask_toolbox.validation import CommaSeparatedList
@@ -42,6 +42,7 @@ class TestConverterRegistry(unittest.TestCase):
             (m.fields.Dict(), {'type': 'object'}),
             (m.fields.Method(serialize='x', deserialize='y', swagger_type='integer'), {'type': 'integer'}),
             (m.fields.Function(serialize=lambda _: _, deserialize=lambda _: _, swagger_type='string'), {'type': 'string'}),
+            (m.fields.Integer(validate=lambda value: True), {'type': 'integer'}),
         ]:
             class Foo(m.Schema):
                 a = field

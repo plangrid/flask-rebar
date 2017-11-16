@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import copy
 import inspect
+import logging
 import sys
 import warnings
 from collections import namedtuple
@@ -82,6 +83,10 @@ _Context = namedtuple('_Context', [
     # The current schema being converted.
     'schema'
 ])
+
+
+class UnregisteredType(Exception):
+    pass
 
 
 def _normalize_validate(validate):
@@ -266,17 +271,25 @@ class FieldConverter(MarshmallowConverter):
             validators = _normalize_validate(obj.validate)
 
             for validator in validators:
-                jsonschema_obj.update(
-                    context.convert(
-                        obj=validator,
-                        context=_Context(
-                            convert=context.convert,
-                            direction=context.direction,
-                            memo=jsonschema_obj,
-                            schema=context.schema
+                try:
+                    jsonschema_obj.update(
+                        context.convert(
+                            obj=validator,
+                            context=_Context(
+                                convert=context.convert,
+                                direction=context.direction,
+                                memo=jsonschema_obj,
+                                schema=context.schema
+                            )
                         )
                     )
-                )
+                except UnregisteredType as e:
+                    logging.debug(
+                        'Unable to convert validator {validator}: {err}'.format(
+                            validator=validator,
+                            err=e
+                        )
+                    )
 
         return jsonschema_obj
 
@@ -586,7 +599,7 @@ class ConverterRegistry(object):
             if cls in self._type_map:
                 return self._type_map[cls].convert(obj=obj, context=context)
         else:
-            raise ValueError(
+            raise UnregisteredType(
                 'No registered type found in method resolution order: {mro}\n'
                 'Registered types: {types}'.format(
                     mro=method_resolution_order,

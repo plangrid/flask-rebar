@@ -1,7 +1,10 @@
 from __future__ import unicode_literals
 
 import copy
-from urllib.parse import urlencode
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode
 
 import marshmallow
 from flask import request
