@@ -153,6 +153,11 @@ class ActuallyRequireOnDumpMixin(object):
 class DisallowExtraFieldsMixin(object):
     @validates_schema(pass_original=True)
     def disallow_extra_fields(self, processed_data, original_data):
+        # If the input data isn't a dict just short-circuit and let the Marshmallow unmarshaller
+        # raise an error.
+        if not isinstance(original_data, dict):
+            return
+
         input_fields = original_data.keys()
         expected_fields = list(self.fields) + [
             field.load_from

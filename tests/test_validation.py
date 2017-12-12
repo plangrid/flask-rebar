@@ -59,6 +59,11 @@ class TestDisallowExtraFieldsMixin(TestCase):
         self.assertEqual(errors, {})
         self.assertEqual(data, {})
 
+    def test_doesnt_break_for_non_object_schema(self):
+        data, errors = DisallowExtraFieldsSchema().load(['im not supposed to be a list :)'])
+        self.assertEqual(errors, {'_schema': [fields.Field.default_error_messages['type']]})
+        self.assertEqual(data, {})
+
 
 class ActuallyRequireOnDumpMixinSchema(Schema, ActuallyRequireOnDumpMixin):
     optional = fields.Str()
