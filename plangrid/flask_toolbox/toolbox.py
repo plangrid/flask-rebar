@@ -1,22 +1,16 @@
 from __future__ import unicode_literals
 
 import os
-import json
 import sys
 import uuid
 
 import bugsnag
 import bugsnag.flask
-from flask import Request, jsonify, current_app
-from marshmallow import ValidationError
+from flask import Request, current_app, jsonify
 from newrelic import agent as newrelic_agent
-from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
-from werkzeug.routing import BaseConverter
-from werkzeug.wrappers import Response as WerkzeugResponse
 
 from plangrid.flask_toolbox import http_errors, messages
-from plangrid.flask_toolbox.validation import UUID
-
+from plangrid.flask_toolbox.converters import UUIDStringConverter
 
 DEFAULT_PAGINATION_LIMIT_MAX = 100
 HEADER_AUTH_TOKEN = 'X-PG-Auth'
@@ -244,24 +238,3 @@ class Toolbox(object):
 
     def _register_custom_converters(self, app):
         app.url_map.converters['uuid_string'] = UUIDStringConverter
-
-
-class UUIDStringConverter(BaseConverter):
-    def to_python(self, value):
-        try:
-            validated = UUID().deserialize(value)
-        except ValidationError:
-            # This is happening during routing, before our Flask handlers are
-            # invoked, so our normal HttpJsonError objects will not be caught.
-            # Instead, we need to raise a Werkzeug error.
-            body = json.dumps({'message': messages.invalid_uuid})
-            raise WerkzeugBadRequest(
-                response=WerkzeugResponse(
-                    response=body,
-                    status=400,
-                    content_type='application/json'
-                )
-            )
-        return validated
-
-    to_url = to_python

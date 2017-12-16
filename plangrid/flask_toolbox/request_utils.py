@@ -133,7 +133,7 @@ def _get_json_body_or_400():
     body = request.get_json()
 
     if not isinstance(body, list) and not isinstance(body, dict):
-        # request.get_json() treats strings as valid JSON, which is technically
+        # request.get_json_from_resp() treats strings as valid JSON, which is technically
         # true... but they're not valid objects. So let's throw an error on
         # primitive types.
         raise http_errors.BadRequest(messages.invalid_json)

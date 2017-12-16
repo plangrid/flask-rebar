@@ -1,11 +1,12 @@
 import json
+import unittest
 
 import marshmallow as m
 from flask import Flask
 from flask import request
-from flask_testing import TestCase
 
 from plangrid.flask_toolbox import Toolbox, HeaderApiKeyAuthenticator
+from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
 from plangrid.flask_toolbox.framing.framer import Framer
 from plangrid.flask_toolbox.validation import ListOf
 from plangrid.flask_toolbox.testing import validate_swagger
@@ -15,45 +16,163 @@ from plangrid.flask_toolbox.testing import validate_swagger
 # TODO: This works with blueprints
 # TODO: Failure scenarios!
 
-class FlaskToSwaggerTest(TestCase):
-    def create_app(self):
-        app = Flask('FlaskToSwaggerTest')
+
+DEFAULT_AUTH_HEADER = 'x-default-auth'
+DEFAULT_AUTH_SECRET = 'SECRET!'
+DEFAULT_RESPONSE = {'uid': '0', 'name': "I'm the default for testing!"}
+
+
+class FooSchema(m.Schema):
+    uid = m.fields.String()
+    name = m.fields.String()
+
+
+class FooUpdateSchema(m.Schema):
+    name = m.fields.String()
+
+
+class FooListSchema(m.Schema):
+    name = m.fields.String(required=True)
+
+
+class HeadersSchema(m.Schema):
+    name = m.fields.String(load_from='x-name', required=True)
+
+
+class MeSchema(m.Schema):
+    user_name = m.fields.String()
+
+
+def get_json_from_resp(resp):
+    return json.loads(resp.data.decode('utf-8'))
+
+
+def get_swagger(test_client):
+    return get_json_from_resp(test_client.get('/swagger'))
+
+
+def auth_headers(header=DEFAULT_AUTH_HEADER, secret=DEFAULT_AUTH_SECRET):
+    return dict([(header, secret)])
+
+
+def create_framed_app(framer):
+    app = Flask('FramerTest')
+    app.testing = True
+    Toolbox(app)
+    framer.register(app)
+
+    default_authenticator = HeaderApiKeyAuthenticator(
+        header=DEFAULT_AUTH_HEADER,
+        name='default'
+    )
+    default_authenticator.register_key(
+        app_name='internal',
+        key=DEFAULT_AUTH_SECRET
+    )
+    framer.set_default_authenticator(default_authenticator)
+
+    return app
+
+
+def register_default_authenticator(framer):
+    default_authenticator = HeaderApiKeyAuthenticator(
+        header=DEFAULT_AUTH_HEADER,
+        name='default'
+    )
+    default_authenticator.register_key(
+        app_name='internal',
+        key=DEFAULT_AUTH_SECRET
+    )
+    framer.set_default_authenticator(default_authenticator)
+
+
+def register_endpoint(
+        framer,
+        func=None,
+        path='/foos/<foo_uid>',
+        method='GET',
+        endpoint=None,
+        marshal_schemas=None,
+        query_string_schema=None,
+        request_body_schema=None,
+        headers_schema=None,
+        authenticator=USE_DEFAULT
+):
+    def default_handler_func(*args, **kwargs):
+        return DEFAULT_RESPONSE
+
+    framer.add_handler(
+        func=func or default_handler_func,
+        path=path,
+        method=method,
+        endpoint=endpoint,
+        marshal_schemas=marshal_schemas or {200: FooSchema()},
+        query_string_schema=query_string_schema,
+        request_body_schema=request_body_schema,
+        headers_schema=headers_schema,
+        authenticator=authenticator
+    )
+
+
+class FramerTest(unittest.TestCase):
+    def test_default_authentication(self):
+        framer = Framer()
+        register_default_authenticator(framer)
+        register_endpoint(framer)
+        app = create_framed_app(framer)
+
+        resp = app.test_client().get(
+            path='/foos/1',
+            headers=auth_headers()
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+
+        resp = app.test_client().get(
+            path='/foos/1',
+            headers=auth_headers(secret='LIES!')
+        )
+        self.assertEqual(resp.status_code, 401)
+
+    def test_override_authenticator(self):
+        auth_header = 'x-overridden-auth'
+        auth_secret = 'BLAM!'
+
         framer = Framer()
 
-        class FooSchema(m.Schema):
-            uid = m.fields.String()
-            name = m.fields.String()
+        register_default_authenticator(framer)
+        authenticator = HeaderApiKeyAuthenticator(header=auth_header)
+        authenticator.register_key(app_name='internal', key=auth_secret)
 
-        class FooUpdateSchema(m.Schema):
-            name = m.fields.String()
+        register_endpoint(framer, authenticator=authenticator)
+        app = create_framed_app(framer)
 
-        class FooListSchema(m.Schema):
-            name = m.fields.String()
-
-        class HeadersSchema(m.Schema):
-            name = m.fields.String(load_from='x-name')
-
-        class MeSchema(m.Schema):
-            app_name = m.fields.String()
-            user_name = m.fields.String()
-
-        authenticator = HeaderApiKeyAuthenticator(header='x-auth')
-        default_authenticator = HeaderApiKeyAuthenticator(
-            header='x-another',
-            name='default'
+        resp = app.test_client().get(
+            path='/foos/1',
+            headers=auth_headers(header=auth_header, secret=auth_secret)
         )
-        authenticator.register_key(app_name='internal', key='SECRET!')
-        default_authenticator.register_key(app_name='internal', key='SECRET!')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
 
-        @framer.handles(
-            path='/foos/<foo_uid>',
-            method='GET',
-            marshal_schemas={
-                200: FooSchema()
-            }
+        # The default authentication doesn't work anymore!
+        resp = app.test_client().get(
+            path='/foos/1',
+            headers=auth_headers()
         )
-        def get_foo(foo_uid):
-            return {'uid': foo_uid, 'name': 'sam'}
+        self.assertEqual(resp.status_code, 401)
+
+    def test_override_with_no_authenticator(self):
+        framer = Framer()
+        register_default_authenticator(framer)
+        register_endpoint(framer, authenticator=None)
+        app = create_framed_app(framer)
+
+        resp = app.test_client().get(path='/foos/1')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+
+    def test_validate_body_parameters(self):
+        framer = Framer()
 
         @framer.handles(
             path='/foos/<foo_uid>',
@@ -62,10 +181,32 @@ class FlaskToSwaggerTest(TestCase):
                 200: FooSchema()
             },
             request_body_schema=FooUpdateSchema(),
-            authenticator=None
         )
         def update_foo(foo_uid):
             return {'uid': foo_uid, 'name': request.validated_body['name']}
+
+        app = create_framed_app(framer)
+
+        resp = app.test_client().patch(
+            path='/foos/1',
+            data=json.dumps({'name': 'jill'}),
+            headers={'Content-Type': 'application/json'}
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            get_json_from_resp(resp),
+            {'uid': '1', 'name': 'jill'}
+        )
+
+        resp = app.test_client().patch(
+            path='/foos/1',
+            data=json.dumps({'name': 123}),  # Name should be string, not int
+            headers={'Content-Type': 'application/json'}
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_validate_query_parameters(self):
+        framer = Framer()
 
         @framer.handles(
             path='/foos',
@@ -74,12 +215,29 @@ class FlaskToSwaggerTest(TestCase):
                 200: ListOf(FooSchema)()
             },
             query_string_schema=FooListSchema(),
-            authenticator=None
         )
         def list_foos():
             return {
                 'data': [{'name': request.validated_args['name'], 'uid': '1'}]
             }
+
+        app = create_framed_app(framer)
+
+        resp = app.test_client().get(path='/foos?name=jill')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            get_json_from_resp(resp),
+            {'data': [{'uid': '1', 'name': 'jill'}]}
+        )
+
+        resp = app.test_client().get(
+            path='/foos?foo=bar'  # missing required parameter
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_validate_headers(self):
+        framer = Framer()
+        register_default_authenticator(framer)
 
         @framer.handles(
             path='/me',
@@ -87,62 +245,103 @@ class FlaskToSwaggerTest(TestCase):
             marshal_schemas={
                 200: MeSchema(),
             },
-            headers_schema=HeadersSchema(),
-            authenticator=authenticator
+            headers_schema=HeadersSchema()
         )
         def get_me():
             return {
-                'app_name': request.authenticated_app_name,
                 'user_name': request.validated_headers['name']
             }
 
-        framer.set_default_authenticator(default_authenticator)
+        app = create_framed_app(framer)
 
-        Toolbox(app)
-        framer.register(app)
+        headers = auth_headers()
+        headers['x-name'] = 'hello'
 
-        return app
-
-    def test_get_foo(self):
-        resp = self.app.test_client().get(
-            path='/foos/1',
-            headers={'x-another': 'SECRET!'}
-        )
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, {'uid': '1', 'name': 'sam'})
-
-    def test_update_foo(self):
-        resp = self.app.test_client().patch(
-            path='/foos/1',
-            data=json.dumps({'name': 'jill'}),
-            headers={'Content-Type': 'application/json'}
-        )
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, {'uid': '1', 'name': 'jill'})
-
-    def test_list_foos(self):
-        resp = self.app.test_client().get(
-            path='/foos?name=jill'
-        )
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, {'data': [{'uid': '1', 'name': 'jill'}]})
-
-    def test_get_me(self):
-        resp = self.app.test_client().get(
+        resp = app.test_client().get(
             path='/me',
-            headers={'x-name': 'hello', 'x-auth': 'SECRET!'}
+            headers=headers
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, {'app_name': 'internal', 'user_name': 'hello'})
+        self.assertEqual(
+            get_json_from_resp(resp),
+            {'user_name': 'hello'}
+        )
 
-    def test_swagger(self):
-        resp = self.app.test_client().get('/swagger')
+        resp = app.test_client().get(
+            path='/me',
+            headers=auth_headers()  # Missing the x-name header!
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_swagger_endpoint_is_automatically_created(self):
+        framer = Framer()
+        app = create_framed_app(framer)
+
+        resp = app.test_client().get('/swagger')
 
         self.assertEqual(resp.status_code, 200)
 
-        validate_swagger(resp.json)
+        validate_swagger(get_json_from_resp(resp))
 
-    def test_swagger_ui(self):
-        resp = self.app.test_client().get('/swagger/ui/')
+    def test_swagger_ui_endpoint_is_automatically_created(self):
+        framer = Framer()
+        app = create_framed_app(framer)
+
+        resp = app.test_client().get('/swagger/ui/')
 
         self.assertEqual(resp.status_code, 200)
+
+    def test_register_multiple_paths(self):
+        framer = Framer()
+
+        common_kwargs = {
+            'method': 'GET',
+            'marshal_schemas': {200: FooSchema()},
+        }
+
+        @framer.handles(path='/bars/<foo_uid>', endpoint='bar', **common_kwargs)
+        @framer.handles(path='/foos/<foo_uid>', endpoint='foo', **common_kwargs)
+        def handler_func(foo_uid):
+            return DEFAULT_RESPONSE
+        app = create_framed_app(framer)
+
+        resp = app.test_client().get(path='/foos/1')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+
+        resp = app.test_client().get(path='/bars/1')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+
+        swagger = get_swagger(test_client=app.test_client())
+        self.assertIn('/bars/{foo_uid}', swagger['paths'])
+        self.assertIn('/foos/{foo_uid}', swagger['paths'])
+
+    def test_register_multiple_methods(self):
+        framer = Framer()
+
+        common_kwargs = {
+            'path': '/foos/<foo_uid>',
+            'marshal_schemas': {200: FooSchema()},
+        }
+
+        @framer.handles(method='GET', endpoint='get_foo', **common_kwargs)
+        @framer.handles(method='PATCH', endpoint='update_foo', **common_kwargs)
+        def handler_func(foo_uid):
+            return DEFAULT_RESPONSE
+        app = create_framed_app(framer)
+
+        resp = app.test_client().get(path='/foos/1')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+
+        resp = app.test_client().patch(path='/foos/1')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+
+        resp = app.test_client().post(path='/foos/1')
+        self.assertEqual(resp.status_code, 405)
+
+        swagger = get_swagger(test_client=app.test_client())
+        self.assertIn('get', swagger['paths']['/foos/{foo_uid}'])
+        self.assertIn('patch', swagger['paths']['/foos/{foo_uid}'])

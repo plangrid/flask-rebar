@@ -47,3 +47,10 @@ class ToolboxFramer(Framer):
             default_authenticator=authenticator,
             swagger_generator=swagger_generator,
         )
+
+    def register(self, app):
+        super(ToolboxFramer, self).register(app)
+        Toolbox(app)
+
+    def register_auth_key(self, key, app_name=HeaderApiKeyAuthenticator.DEFAULT_APP_NAME):
+        self.default_authenticator.register_key(key=key, app_name=app_name)

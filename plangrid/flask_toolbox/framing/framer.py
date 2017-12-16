@@ -18,11 +18,6 @@ from plangrid.flask_toolbox.request_utils import response
 
 # Still some functionality to cover:
 # TODO: Default Headers
-# TODO: Can we move error handling here, so we don't have to provide a
-#   default response to the swagger generator?
-# TODO: Support for multiple URL rules per handler
-# TODO: Support for multiple methods per handler
-# TODO: Support multiple authenticators per handler
 # TODO: documentation!
 # TODO: tests!
 
@@ -266,5 +261,3 @@ class Framer(object):
             blueprint=swagger_ui_blueprint,
             url_prefix=self.swagger_ui_path,
         )
-
-
