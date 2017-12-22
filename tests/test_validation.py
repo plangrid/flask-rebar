@@ -2,22 +2,18 @@ import uuid
 from datetime import datetime
 from unittest import TestCase
 
-import flask_testing
-from flask import Flask
 from marshmallow import Schema
 from marshmallow import ValidationError
 from marshmallow import fields
 from werkzeug.datastructures import MultiDict
 
 from plangrid.flask_toolbox import messages
-from plangrid.flask_toolbox import Toolbox
 from plangrid.flask_toolbox.validation import ActuallyRequireOnDumpMixin
 from plangrid.flask_toolbox.validation import CommaSeparatedList
 from plangrid.flask_toolbox.validation import DisallowExtraFieldsMixin
 from plangrid.flask_toolbox.validation import ListOf
 from plangrid.flask_toolbox.validation import ObjectId
 from plangrid.flask_toolbox.validation import QueryParamList
-from plangrid.flask_toolbox.pagination.validation import Skip, Limit
 from plangrid.flask_toolbox.validation import UUID
 from plangrid.flask_toolbox.validation import add_custom_error_message
 
@@ -298,93 +294,3 @@ class TestListOf(TestCase):
         data = ListOfObjectWithUUID(strict=True).load({'data': [{'id': id}]}).data
 
         self.assertEqual(data, {'data': [{'id': id}]})
-
-
-class ObjectWithSkip(Schema):
-    skip = Skip()
-
-
-class TestSkip(TestCase):
-    def test_deserialize(self):
-        data, _ = ObjectWithSkip().load({'skip': 40})
-        self.assertEqual(data['skip'], 40)
-
-        # Works with strings
-        data, _ = ObjectWithSkip().load({'skip': '40'})
-        self.assertEqual(data['skip'], 40)
-
-        # Skip defaults to 0
-        data, _ = ObjectWithSkip().load({})
-        self.assertEqual(data['skip'], 0)
-
-    def test_serialize(self):
-        data, _ = ObjectWithSkip().dump({'skip': 40})
-        self.assertEqual(data['skip'], 40)
-
-        # Skip defaults to 0
-        data, _ = ObjectWithSkip().dump({})
-        self.assertEqual(data['skip'], 0)
-
-    def test_deserialize_errors(self):
-        _, errs = ObjectWithSkip().load({'skip': -1})
-        self.assertEqual(errs['skip'], [messages.invalid_skip_value])
-
-    def test_serialize_errors(self):
-        _, errs = ObjectWithSkip().dump({'skip': 'hello'})
-        self.assertEqual(errs['skip'], [messages.invalid_skip_value])
-
-
-class ObjectWithLimit(Schema):
-    limit = Limit()
-
-
-class TestLimit(flask_testing.TestCase):
-    PAGINATION_LIMIT_MAX = 100
-
-    def create_app(self):
-        # We need to initialize an app so we can get the default limit
-        app = Flask(__name__)
-        Toolbox(app, pagination_limit_max=self.PAGINATION_LIMIT_MAX)
-        return app
-
-    def test_deserialize(self):
-        with self.app.test_request_context():
-            # We need to do with so "before_request" callbacks are called
-            self.app.preprocess_request()
-
-            data, _ = ObjectWithLimit().load({'limit': 50})
-            self.assertEqual(data['limit'], 50)
-
-            # Works with strings
-            data, _ = ObjectWithLimit().load({'limit': '50'})
-            self.assertEqual(data['limit'], 50)
-
-            # Limit defaults to the toolbox's default
-            data, _ = ObjectWithLimit().load({})
-            self.assertEqual(data['limit'], self.PAGINATION_LIMIT_MAX)
-
-            class ObjectWithNullDefaultLimit(Schema):
-                limit = Limit(default=None)
-
-            # Limit can be made none
-            data, _ = ObjectWithNullDefaultLimit().load({})
-            self.assertIsNone(data['limit'])
-
-    def test_serialize(self):
-        data, _ = ObjectWithLimit().dump({'limit': 50})
-        self.assertEqual(data['limit'], 50)
-
-    def test_deserialize_errors(self):
-        with self.app.test_request_context():
-            # We need to do with so "before_request" callbacks are called
-            self.app.preprocess_request()
-
-            _, errs = ObjectWithLimit().load({'limit': 0})
-            self.assertEqual(errs['limit'], [messages.invalid_limit_value])
-
-            _, errs = ObjectWithLimit().load({'limit': self.PAGINATION_LIMIT_MAX + 1})
-            self.assertEqual(errs['limit'], [messages.limit_over_max(self.PAGINATION_LIMIT_MAX)])
-
-    def test_serialize_errors(self):
-        _, errs = ObjectWithLimit().dump({'limit': 'hello'})
-        self.assertEqual(errs['limit'], [messages.invalid_limit_value])

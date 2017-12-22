@@ -1,11 +1,9 @@
 import unittest
 
 import marshmallow as m
-from flask import Flask
-from flask_testing import TestCase
 
-from plangrid.flask_toolbox import Toolbox, HeaderApiKeyAuthenticator
-from plangrid.flask_toolbox.framing.framer import Framer
+from plangrid.flask_toolbox import HeaderApiKeyAuthenticator
+from plangrid.flask_toolbox.framing import Framer
 from plangrid.flask_toolbox.framing.swagger_generator import SwaggerV2Generator
 from plangrid.flask_toolbox.framing.swagger_generator import _PathArgument as PathArgument
 from plangrid.flask_toolbox.framing.swagger_generator import _flatten as flatten
@@ -127,13 +125,10 @@ class TestFormatPathForSwagger(unittest.TestCase):
         self.assertEqual(args, tuple())
 
 
-class TestSwaggerV2Generator(TestCase):
-    def setUp(self):
+class TestSwaggerV2Generator(unittest.TestCase):
+    def test_generate_swagger(self):
         super(TestSwaggerV2Generator, self).setUp()
         self.maxDiff = None
-
-    def create_app(self):
-        app = Flask('TestSwaggerV2Generator')
         framer = Framer()
 
         authenticator = HeaderApiKeyAuthenticator(header='x-auth')
@@ -191,14 +186,6 @@ class TestSwaggerV2Generator(TestCase):
 
         framer.set_default_authenticator(default_authenticator)
 
-        Toolbox(app)
-        framer.register(app)
-
-        self.framer = framer
-
-        return app
-
-    def test_generate_swagger(self):
         host = 'swag.com'
         schemes = ['http']
         consumes = ['application/json']
@@ -220,7 +207,7 @@ class TestSwaggerV2Generator(TestCase):
             default_response_schema=Error()
         )
 
-        swagger = generator.generate(self.framer)
+        swagger = generator.generate(framer)
 
         expected_swagger = {
             'swagger': '2.0',

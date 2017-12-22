@@ -2,27 +2,12 @@ import copy
 
 import marshmallow
 from flask import request
+from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
 
-from plangrid.flask_toolbox import messages
+from plangrid.flask_toolbox import messages, constants
 from plangrid.flask_toolbox.errors import http_errors
 from plangrid.flask_toolbox.request_utils import normalize_schema
 from plangrid.flask_toolbox.validation import ObjectId
-
-
-def scope_app(app, required_scope):
-    """
-    Extends an application (or blueprint) to only accept requests that
-    have the proper scope set in the headers.
-
-    :param flask.Flask|flask.Blueprint app:
-
-    :param str required_scope:
-      The extension will verify that all requests have this scope in the headers
-    """
-
-    @app.before_request
-    def verify_scope():
-        verify_scope_or_403(required_scope=required_scope)
 
 
 def _get_json_body_or_400():
@@ -36,8 +21,10 @@ def _get_json_body_or_400():
     if (not request.data) or (len(request.data) == 0):
         raise http_errors.BadRequest(messages.empty_json_body)
 
-    # JSON decoding errors will be handled in ToolboxRequest.on_json_loading_failed
-    body = request.get_json()
+    try:
+        body = request.get_json()
+    except WerkzeugBadRequest:
+        raise http_errors.BadRequest(messages.invalid_json)
 
     if not isinstance(body, list) and not isinstance(body, dict):
         # request.get_json_from_resp() treats strings as valid JSON, which is technically
@@ -166,7 +153,7 @@ def get_user_id_from_header_or_400():
 
     :rtype: str
     """
-    user_id = request.user_id
+    user_id = request.headers.get(constants.HEADER_USER_ID)
     if not user_id:
         raise http_errors.BadRequest(msg=messages.missing_user_id)
 
@@ -176,15 +163,3 @@ def get_user_id_from_header_or_400():
         raise http_errors.BadRequest(msg=messages.invalid_user_id)
 
     return user_id
-
-
-def verify_scope_or_403(required_scope):
-    """
-    Verifies that the given scope is included in the request headers. If it
-    isn't, this will raise a 403 error.
-
-    :param str required_scope:
-    :raises: https_errors.Forbidden
-    """
-    if required_scope not in request.scopes:
-        raise http_errors.Forbidden(messages.missing_required_scope)

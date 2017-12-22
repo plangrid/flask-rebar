@@ -19,13 +19,11 @@ class Extension(object):
     def __init__(self, app=None, config=None):
         self.config = config or {}
 
-        if app is not None:
-            self.init_app(app, self.config)
-
-    @property
-    def name(self):
         if not self.NAME:
             raise Exception('Extension must have a NAME!')
+
+        if app is not None:
+            self.init_app(app, self.config)
 
     def add_params_to_parser(self, parser):
         """
@@ -68,18 +66,18 @@ class Extension(object):
 
     def _check_extension_dependencies(self, app):
         missing_dependencies = \
-            set(d.name for d in self.DEPENDENCIES) - _extensions[app]
+            set(d.NAME for d in self.DEPENDENCIES) - _extensions.get(app, set())
 
         if missing_dependencies:
             raise DependencyError(
                 'The {} extension depends on the following extensions: {}'.format(
-                    self.name,
+                    self.NAME,
                     ', '.join(missing_dependencies)
                 )
             )
 
     def _register_extension(self, app):
-        _extensions[app].add(self.name)
+        _extensions.setdefault(app, set()).add(self.NAME)
 
     def init_app(self, app, config=None):
         resolved_config = self._resolve_config(

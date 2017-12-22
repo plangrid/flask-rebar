@@ -5,9 +5,9 @@ import marshmallow as m
 from flask import Flask
 
 from plangrid.flask_toolbox import HeaderApiKeyAuthenticator
-from plangrid.flask_toolbox.extensions.errors import Errors
+from plangrid.flask_toolbox.errors import Errors
 from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
-from plangrid.flask_toolbox.framing.framer import Framer
+from plangrid.flask_toolbox.framing import Framer
 from plangrid.flask_toolbox.validation import ListOf
 from plangrid.flask_toolbox.testing import validate_swagger
 
@@ -53,8 +53,8 @@ def auth_headers(header=DEFAULT_AUTH_HEADER, secret=DEFAULT_AUTH_SECRET):
 def create_framed_app(framer):
     app = Flask('FramerTest')
     app.testing = True
-    framer.register(app)
     Errors(app)
+    framer.init_app(app)
 
     default_authenticator = HeaderApiKeyAuthenticator(
         header=DEFAULT_AUTH_HEADER,

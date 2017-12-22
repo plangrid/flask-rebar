@@ -1,13 +1,11 @@
 from flask import Flask
 from marshmallow import fields
 
-from plangrid.flask_toolbox import ToolboxFramer, http_errors
+from plangrid.flask_toolbox import Framer, bootstrap_app_with_framer, http_errors
 from plangrid.flask_toolbox.validation import ListOf, RequestSchema, ResponseSchema
 
 
-# Instantiate a Framer instance. The "ToolboxFramer" includes some more
-# opinionated configuration specific to PlanGrid.
-framer = ToolboxFramer()
+framer = Framer()
 
 # Just a mock database, for demonstration purposes
 todo_id_sequence = 0
@@ -119,12 +117,12 @@ def update_todo(todo_id):
 def create_app(name):
     app = Flask(name)
 
-    framer.register(app)
+    bootstrap_app_with_framer(app=app, framer=framer)
 
     # The ToolboxFramer includes a default authenticator, which does super
     # simple service-to-service authentication by looking for a shared secret
     # in the X-PG-Auth header. Here we define what that shared secret is.
-    framer.register_auth_key(key='my-api-key')
+    framer.default_authenticator.register_key(key='my-api-key')
 
     return app
 

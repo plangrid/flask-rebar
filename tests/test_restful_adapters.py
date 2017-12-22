@@ -5,7 +5,7 @@ from flask import Blueprint
 from flask import Flask
 from flask import Response
 
-from plangrid.flask_toolbox import Toolbox
+from plangrid.flask_toolbox import bootstrap_app_with_toolbox
 from plangrid.flask_toolbox.restful_adapters import RestfulApiAdapter
 from plangrid.flask_toolbox.errors.http_errors import BadRequest
 
@@ -13,7 +13,7 @@ from plangrid.flask_toolbox.errors.http_errors import BadRequest
 class TestRestfulApiAdapter(TestCase):
     def create_app(self):
         app = Flask(__name__)
-        Toolbox(app)
+        bootstrap_app_with_toolbox(app)
         blueprint = Blueprint('test', __name__)
         adapter = RestfulApiAdapter(blueprint)
         adapter.add_resource(SimpleHandler, '/thing', methods=['GET', 'POST'])

@@ -9,6 +9,8 @@ DEFAULT_PAGINATION_LIMIT_MAX = 100
 
 
 class Pagination(Extension):
+    NAME = 'ToolboxExtension::Pagination'
+
     def add_params_to_parser(self, parser):
         parser.add_param(
             name='TOOLBOX_PAGINATION_LIMIT_MAX',

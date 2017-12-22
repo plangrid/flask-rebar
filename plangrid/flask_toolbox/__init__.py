@@ -28,13 +28,10 @@ from plangrid.flask_toolbox.pagination import (
 from plangrid.flask_toolbox.errors import (
     Errors,
     http_errors,
-    scope_app,
     get_json_body_params_or_400,
     get_query_string_params_or_400,
     get_header_params_or_400,
     get_user_id_from_header_or_400,
-    verify_scope_or_403,
-    scoped,
 )
 
 from plangrid.flask_toolbox.constants import (
@@ -50,7 +47,7 @@ from plangrid.flask_toolbox.framing import (
     HeaderApiKeyAuthenticator,
 )
 
-from plangrid.flask_toolbox.factories import (
-    init_toolbox,
-    init_framer,
+from plangrid.flask_toolbox.bootstrap import (
+    bootstrap_app_with_toolbox,
+    bootstrap_app_with_framer,
 )
