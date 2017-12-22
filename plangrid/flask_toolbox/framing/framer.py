@@ -16,9 +16,6 @@ from plangrid.flask_toolbox.request_utils import get_query_string_params_or_400
 from plangrid.flask_toolbox.request_utils import marshal
 from plangrid.flask_toolbox.request_utils import response
 
-# Still some functionality to cover:
-# TODO: Default Headers
-
 
 # Metadata about a declared handler function. This can be used to both
 # declare the flask routing and to autogenerate swagger.
@@ -114,6 +111,7 @@ class Framer(object):
     def __init__(
             self,
             default_authenticator=None,
+            default_headers_schema=None,
             swagger_generator=None,
             swagger_path='/swagger',
             swagger_ui_path='/swagger/ui',
@@ -125,6 +123,7 @@ class Framer(object):
         self.swagger_ui_config = swagger_ui_config or {}
         self.swagger_path = swagger_path
         self.swagger_ui_path = swagger_ui_path
+        self.default_headers_schema = default_headers_schema
 
     def set_default_authenticator(self, authenticator):
         """
@@ -133,6 +132,14 @@ class Framer(object):
         :param plangrid.flask_toolbox.framing.authenticators.Authenticator authenticator:
         """
         self.default_authenticator = authenticator
+
+    def set_default_headers_schema(self, headers_schema):
+        """
+        Sets the schema to be used by default to validate incoming headers.
+
+        :param marshmallow.Schema headers_schema:
+        """
+        self.default_headers_schema = headers_schema
 
     def add_handler(
             self,
@@ -143,7 +150,7 @@ class Framer(object):
             marshal_schemas=None,
             query_string_schema=None,
             request_body_schema=None,
-            headers_schema=None,
+            headers_schema=USE_DEFAULT,
             authenticator=USE_DEFAULT
     ):
         """
@@ -164,9 +171,9 @@ class Framer(object):
         :param marshmallow.Schema request_body_schema:
             Schema to use to deserialize the request body. For now this
             assumes everything is JSON.
-        :param marshmallow.Schema headers_schema:
+        :param Type[USE_DEFAULT]|None|marshmallow.Schema headers_schema:
             Schema to use to grab and validate headers.
-        :param Type[USE_DEFAULT]|plangrid.flask_toolbox.framing.authenticators.Authenticator authenticator:
+        :param Type[USE_DEFAULT]|None|plangrid.flask_toolbox.framing.authenticators.Authenticator authenticator:
             An authenticator object to authenticate incoming requests.
             If left as USE_DEFAULT, the Framer's default will be used.
             Set to None to make this an unauthenticated handler.
@@ -194,7 +201,7 @@ class Framer(object):
             marshal_schemas=None,
             query_string_schema=None,
             request_body_schema=None,
-            headers_schema=None,
+            headers_schema=USE_DEFAULT,
             authenticator=USE_DEFAULT
     ):
         """
@@ -235,7 +242,11 @@ class Framer(object):
                         ),
                         query_string_schema=definition_.query_string_schema,
                         request_body_schema=definition_.request_body_schema,
-                        headers_schema=definition_.headers_schema,
+                        headers_schema=(
+                            self.default_headers_schema
+                            if definition_.headers_schema is USE_DEFAULT
+                            else definition_.headers_schema
+                        ),
                         marshal_schemas=definition_.marshal_schemas
                     ),
                     methods=[definition_.method],

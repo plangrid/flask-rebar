@@ -358,7 +358,10 @@ class SwaggerV2Generator(object):
             default_authenticator=default_authenticator
         )
         definitions = self._get_definitions(paths=framer.paths)
-        paths = self._get_paths(paths=framer.paths)
+        paths = self._get_paths(
+            paths=framer.paths,
+            default_headers_schema=framer.default_headers_schema
+        )
 
         swagger = {
             sw.swagger: self._get_version(),
@@ -415,7 +418,7 @@ class SwaggerV2Generator(object):
 
         return security_definitions
 
-    def _get_paths(self, paths):
+    def _get_paths(self, paths, default_headers_schema):
         path_definitions = {}
 
         for path, methods in paths.items():
@@ -480,7 +483,14 @@ class SwaggerV2Generator(object):
                         sw.schema: {sw.ref: _get_ref(get_swagger_title(schema))}
                     })
 
-                if d.headers_schema:
+                if d.headers_schema is USE_DEFAULT and default_headers_schema:
+                    parameters_definition.extend(
+                        _convert_jsonschema_to_list_of_parameters(
+                            self._headers_converter(default_headers_schema),
+                            in_=sw.header
+                        )
+                    )
+                elif d.headers_schema is not USE_DEFAULT and d.headers_schema is not None:
                     parameters_definition.extend(
                         _convert_jsonschema_to_list_of_parameters(
                             self._headers_converter(d.headers_schema),

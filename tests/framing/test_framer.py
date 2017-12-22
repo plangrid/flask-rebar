@@ -5,16 +5,12 @@ import marshmallow as m
 from flask import Flask
 from flask import request
 
-from plangrid.flask_toolbox import Toolbox, HeaderApiKeyAuthenticator
+from plangrid.flask_toolbox import HeaderApiKeyAuthenticator
+from plangrid.flask_toolbox.extensions.errors import Errors
 from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
 from plangrid.flask_toolbox.framing.framer import Framer
 from plangrid.flask_toolbox.validation import ListOf
 from plangrid.flask_toolbox.testing import validate_swagger
-
-
-# Still some things to test:
-# TODO: This works with blueprints
-# TODO: Failure scenarios!
 
 
 DEFAULT_AUTH_HEADER = 'x-default-auth'
@@ -58,8 +54,8 @@ def auth_headers(header=DEFAULT_AUTH_HEADER, secret=DEFAULT_AUTH_SECRET):
 def create_framed_app(framer):
     app = Flask('FramerTest')
     app.testing = True
-    Toolbox(app)
     framer.register(app)
+    Errors(app)
 
     default_authenticator = HeaderApiKeyAuthenticator(
         header=DEFAULT_AUTH_HEADER,
@@ -345,3 +341,60 @@ class FramerTest(unittest.TestCase):
         swagger = get_swagger(test_client=app.test_client())
         self.assertIn('get', swagger['paths']['/foos/{foo_uid}'])
         self.assertIn('patch', swagger['paths']['/foos/{foo_uid}'])
+
+    def test_default_headers(self):
+        framer = Framer()
+        framer.set_default_headers_schema(HeadersSchema())
+
+        @framer.handles(
+            path='/me',
+            method='GET',
+            marshal_schemas=MeSchema()
+        )
+        def get_me():
+            return {
+                'user_name': request.validated_headers['name']
+            }
+
+        @framer.handles(
+            path='/myself',
+            method='GET',
+            marshal_schemas=MeSchema(),
+
+            # Let's make sure this can be overridden
+            headers_schema=None
+        )
+        def get_myself():
+            return DEFAULT_RESPONSE
+
+        app = create_framed_app(framer)
+
+        resp = app.test_client().get(
+            path='/me',
+            headers={'x-name': 'hello'}
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            get_json_from_resp(resp),
+            {'user_name': 'hello'}
+        )
+
+        resp = app.test_client().get(
+            path='/me',
+        )
+        self.assertEqual(resp.status_code, 400)
+
+        resp = app.test_client().get(
+            path='/myself',
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        swagger = get_swagger(test_client=app.test_client())
+        self.assertEqual(
+            swagger['paths']['/me']['get']['parameters'][0]['name'],
+            'x-name'
+        )
+        self.assertNotIn(
+            'parameters',
+            swagger['paths']['/myself']['get']
+        )
