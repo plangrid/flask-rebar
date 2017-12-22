@@ -9,6 +9,7 @@ from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import IN
 from plangrid.flask_toolbox.validation import CommaSeparatedList
 from plangrid.flask_toolbox.validation import QueryParamList
 from plangrid.flask_toolbox.validation import DisallowExtraFieldsMixin
+from plangrid.flask_toolbox.pagination.validation import Skip, Limit
 
 
 class TestConverterRegistry(unittest.TestCase):
@@ -25,6 +26,9 @@ class TestConverterRegistry(unittest.TestCase):
             (m.fields.Date(), {'type': 'string', 'format': 'date'}),
             (m.fields.UUID(), {'type': 'string', 'format': 'uuid'}),
             (m.fields.Boolean(), {'type': 'boolean'}),
+            (m.fields.URL(), {'type': 'string'}),
+            (m.fields.Email(), {'type': 'string'}),
+            (m.fields.Constant('foo'), {'enum': ['foo'], 'default': 'foo'}),
             (m.fields.Integer(missing=5), {'type': 'integer', 'default': 5}),
             (m.fields.Integer(allow_none=True), {'type': 'integer', 'x-nullable': True}),
             (m.fields.List(m.fields.Integer()), {'type': 'array', 'items': {'type': 'integer'}}),
@@ -43,6 +47,8 @@ class TestConverterRegistry(unittest.TestCase):
             (m.fields.Method(serialize='x', deserialize='y', swagger_type='integer'), {'type': 'integer'}),
             (m.fields.Function(serialize=lambda _: _, deserialize=lambda _: _, swagger_type='string'), {'type': 'string'}),
             (m.fields.Integer(validate=lambda value: True), {'type': 'integer'}),
+            (Skip(), {'type': 'integer', 'default': 0}),
+            (Limit(), {'type': 'integer'}),
         ]:
             class Foo(m.Schema):
                 a = field

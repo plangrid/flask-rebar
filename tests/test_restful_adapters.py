@@ -7,7 +7,7 @@ from flask import Response
 
 from plangrid.flask_toolbox import Toolbox
 from plangrid.flask_toolbox.restful_adapters import RestfulApiAdapter
-from plangrid.flask_toolbox.http_errors import BadRequest
+from plangrid.flask_toolbox.errors.http_errors import BadRequest
 
 
 class TestRestfulApiAdapter(TestCase):

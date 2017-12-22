@@ -52,7 +52,7 @@ pip install plangrid.flask-toolbox
 Example Usage
 -------------
 
-Check out the example app at [examples/todo.py](examples/todo.py). Some example requests to this example app can be found at [example_output.md](example_output.py).
+Check out the example app at [examples/todo.py](examples/todo.py). Some example requests to this example app can be found at [examples/todo_output.md](examples/todo_output.py).
 
 
 Configuration

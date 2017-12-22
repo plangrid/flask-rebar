@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from flask import Flask
 from flask_testing import TestCase
 
-from plangrid.flask_toolbox.extensions.healthcheck import Healthcheck
+from plangrid.flask_toolbox.healthcheck import Healthcheck
 
 
 class TestHealthcheck(TestCase):

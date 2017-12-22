@@ -16,23 +16,8 @@ from marshmallow.validate import Validator
 from plangrid.flask_toolbox.validation import QueryParamList
 from plangrid.flask_toolbox.validation import CommaSeparatedList
 from plangrid.flask_toolbox.validation import DisallowExtraFieldsMixin
+from plangrid.flask_toolbox.pagination.validation import Limit
 from plangrid.flask_toolbox.framing import swagger_words as sw
-
-
-# Still a number of basic fields to cover:
-# TODO: fields.Decimal
-# TODO: fields.FormattedString
-# TODO: fields.Float
-# TODO: fields.LocalDateTime
-# TODO: fields.Time
-# TODO: fields.TimeDelta
-# TODO: fields.URL
-# TODO: fields.Email
-# TODO: fields.Constant
-
-# And some plangrid.flask_toolbox specific ones:
-# TODO: Skip
-# TODO: Limit
 
 
 marshmallow_version = tuple(int(v) for v in m.__version__.split('.'))
@@ -467,6 +452,24 @@ class FunctionConverter(FieldConverter):
             )
 
 
+class ConstantConverter(FieldConverter):
+    MARSHMALLOW_TYPE = m.fields.Constant
+
+    @sets_jsonschema_attr(sw.enum)
+    def get_enum(self, obj, context):
+        return [obj.constant]
+
+
+class LimitConverter(IntegerConverter):
+    MARSHMALLOW_TYPE = Limit
+
+    @sets_jsonschema_attr(sw.default)
+    def get_default(self, obj, context):
+        # This is a tricky value to get declaratively, since its configured
+        # at runtime. Punting on this for now.
+        return UNSET
+
+
 class CsvArrayConverter(ListConverter):
     MARSHMALLOW_TYPE = CommaSeparatedList
 
@@ -649,6 +652,7 @@ query_string_converter_registry.register_types([
     SchemaConverter(),
     StringConverter(),
     UUIDConverter(),
+    ConstantConverter(),
 ])
 
 headers_converter_registry = ConverterRegistry(direction=IN)
@@ -669,6 +673,7 @@ headers_converter_registry.register_types([
     SchemaConverter(),
     StringConverter(),
     UUIDConverter(),
+    ConstantConverter(),
 ])
 
 request_body_converter_registry = ConverterRegistry(direction=IN)
@@ -690,6 +695,7 @@ request_body_converter_registry.register_types([
     SchemaConverter(),
     StringConverter(),
     UUIDConverter(),
+    ConstantConverter(),
 ])
 
 response_converter_registry = ConverterRegistry(direction=OUT)
@@ -711,4 +717,5 @@ response_converter_registry.register_types([
     SchemaConverter(),
     StringConverter(),
     UUIDConverter(),
+    ConstantConverter(),
 ])

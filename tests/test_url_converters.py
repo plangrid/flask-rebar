@@ -7,7 +7,7 @@ from flask_testing import TestCase
 
 from plangrid import flask_toolbox
 from plangrid.flask_toolbox import messages
-from plangrid.flask_toolbox.extensions.url_converters import UrlConverters
+from plangrid.flask_toolbox.url_converters import UrlConverters
 
 
 class TestCustomConverters(TestCase):

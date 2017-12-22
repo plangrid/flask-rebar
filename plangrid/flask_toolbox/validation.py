@@ -7,69 +7,6 @@ from marshmallow import post_dump
 from marshmallow import validates_schema
 
 from plangrid.flask_toolbox import messages
-from plangrid.flask_toolbox.toolbox_proxy import toolbox_proxy
-
-
-class Skip(fields.Field):
-    ERROR_MSG = messages.invalid_skip_value
-
-    def __init__(self, default=0, **kwargs):
-        # "missing" is used on deserialize
-        super(Skip, self).__init__(default=default, missing=default, **kwargs)
-
-    def _deserialize(self, val, attr, obj):
-        try:
-            val = int(val)
-        except ValueError:
-            raise ValidationError(self.ERROR_MSG)
-        return super(Skip, self)._deserialize(val, attr, obj)
-
-    def _serialize(self, val, attr, obj):
-        try:
-            val = int(val)
-        except ValueError:
-            raise ValidationError(self.ERROR_MSG)
-        return super(Skip, self)._serialize(val, attr, obj)
-
-    def _validate(self, val):
-        if val < 0:
-            raise ValidationError(self.ERROR_MSG)
-        return super(Skip, self)._validate(val)
-
-
-class USE_APPLICATION_DEFAULT(object):
-    pass
-
-
-class Limit(fields.Field):
-    ERROR_MSG = messages.invalid_limit_value
-
-    def __init__(self, default=USE_APPLICATION_DEFAULT, **kwargs):
-        super(Limit, self).__init__(missing=default, **kwargs)
-
-    def _deserialize(self, val, attr, obj):
-        if isinstance(val, USE_APPLICATION_DEFAULT):
-            val = toolbox_proxy.pagination_limit_max
-        try:
-            val = int(val)
-        except ValueError:
-            raise ValidationError(self.ERROR_MSG)
-        return super(Limit, self)._deserialize(val, attr, obj)
-
-    def _serialize(self, val, attr, obj):
-        try:
-            val = int(val)
-        except ValueError:
-            raise ValidationError(self.ERROR_MSG)
-        return super(Limit, self)._serialize(val, attr, obj)
-
-    def _validate(self, val):
-        if val <= 0:
-            raise ValidationError(self.ERROR_MSG)
-        limit_max = toolbox_proxy.pagination_limit_max
-        if val > limit_max:
-            raise ValidationError(messages.limit_over_max(limit_max))
-        return super(Limit, self)._validate(val)
 
 
 class ObjectId(fields.Str):

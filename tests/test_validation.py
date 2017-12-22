@@ -14,11 +14,10 @@ from plangrid.flask_toolbox import Toolbox
 from plangrid.flask_toolbox.validation import ActuallyRequireOnDumpMixin
 from plangrid.flask_toolbox.validation import CommaSeparatedList
 from plangrid.flask_toolbox.validation import DisallowExtraFieldsMixin
-from plangrid.flask_toolbox.validation import Limit
 from plangrid.flask_toolbox.validation import ListOf
 from plangrid.flask_toolbox.validation import ObjectId
 from plangrid.flask_toolbox.validation import QueryParamList
-from plangrid.flask_toolbox.validation import Skip
+from plangrid.flask_toolbox.pagination.validation import Skip, Limit
 from plangrid.flask_toolbox.validation import UUID
 from plangrid.flask_toolbox.validation import add_custom_error_message
 
@@ -349,34 +348,42 @@ class TestLimit(flask_testing.TestCase):
         return app
 
     def test_deserialize(self):
-        data, _ = ObjectWithLimit().load({'limit': 50})
-        self.assertEqual(data['limit'], 50)
+        with self.app.test_request_context():
+            # We need to do with so "before_request" callbacks are called
+            self.app.preprocess_request()
 
-        # Works with strings
-        data, _ = ObjectWithLimit().load({'limit': '50'})
-        self.assertEqual(data['limit'], 50)
+            data, _ = ObjectWithLimit().load({'limit': 50})
+            self.assertEqual(data['limit'], 50)
 
-        # Limit defaults to the toolbox's default
-        data, _ = ObjectWithLimit().load({})
-        self.assertEqual(data['limit'], self.PAGINATION_LIMIT_MAX)
+            # Works with strings
+            data, _ = ObjectWithLimit().load({'limit': '50'})
+            self.assertEqual(data['limit'], 50)
 
-        class ObjectWithNullDefaultLimit(Schema):
-            limit = Limit(default=None)
+            # Limit defaults to the toolbox's default
+            data, _ = ObjectWithLimit().load({})
+            self.assertEqual(data['limit'], self.PAGINATION_LIMIT_MAX)
 
-        # Limit can be made none
-        data, _ = ObjectWithNullDefaultLimit().load({})
-        self.assertIsNone(data['limit'])
+            class ObjectWithNullDefaultLimit(Schema):
+                limit = Limit(default=None)
+
+            # Limit can be made none
+            data, _ = ObjectWithNullDefaultLimit().load({})
+            self.assertIsNone(data['limit'])
 
     def test_serialize(self):
         data, _ = ObjectWithLimit().dump({'limit': 50})
         self.assertEqual(data['limit'], 50)
 
     def test_deserialize_errors(self):
-        _, errs = ObjectWithLimit().load({'limit': 0})
-        self.assertEqual(errs['limit'], [messages.invalid_limit_value])
+        with self.app.test_request_context():
+            # We need to do with so "before_request" callbacks are called
+            self.app.preprocess_request()
 
-        _, errs = ObjectWithLimit().load({'limit': self.PAGINATION_LIMIT_MAX + 1})
-        self.assertEqual(errs['limit'], [messages.limit_over_max(self.PAGINATION_LIMIT_MAX)])
+            _, errs = ObjectWithLimit().load({'limit': 0})
+            self.assertEqual(errs['limit'], [messages.invalid_limit_value])
+
+            _, errs = ObjectWithLimit().load({'limit': self.PAGINATION_LIMIT_MAX + 1})
+            self.assertEqual(errs['limit'], [messages.limit_over_max(self.PAGINATION_LIMIT_MAX)])
 
     def test_serialize_errors(self):
         _, errs = ObjectWithLimit().dump({'limit': 'hello'})

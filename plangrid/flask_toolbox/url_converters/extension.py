@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import json
 
 from marshmallow import ValidationError
@@ -6,6 +8,7 @@ from werkzeug.routing import BaseConverter
 from werkzeug.wrappers import Response as WerkzeugResponse
 
 from plangrid.flask_toolbox import messages
+from plangrid.flask_toolbox.extension import Extension
 from plangrid.flask_toolbox.validation import UUID
 
 
@@ -28,3 +31,10 @@ class UUIDStringConverter(BaseConverter):
         return validated
 
     to_url = to_python
+
+
+class UrlConverters(Extension):
+    NAME = 'ToolboxExtension::UrlConverters'
+
+    def init_extension(self, app, config):
+        app.url_map.converters['uuid_string'] = UUIDStringConverter

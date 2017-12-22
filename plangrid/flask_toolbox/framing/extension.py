@@ -6,15 +6,17 @@ from functools import wraps
 
 import marshmallow
 from flask import request
+from flask import g
 from flask_swagger_ui import get_swaggerui_blueprint
 
 from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
 from plangrid.flask_toolbox.framing.swagger_generator import SwaggerV2Generator
-from plangrid.flask_toolbox.request_utils import get_header_params_or_400
-from plangrid.flask_toolbox.request_utils import get_json_body_params_or_400
-from plangrid.flask_toolbox.request_utils import get_query_string_params_or_400
+from plangrid.flask_toolbox import get_json_body_params_or_400,\
+    get_query_string_params_or_400, get_header_params_or_400
 from plangrid.flask_toolbox.request_utils import marshal
 from plangrid.flask_toolbox.request_utils import response
+from plangrid.flask_toolbox.extension import Extension
+from plangrid.flask_toolbox.errors import Errors
 
 
 # Metadata about a declared handler function. This can be used to both
@@ -52,17 +54,17 @@ def _wrap_handler(
             authenticator.authenticate()
 
         if query_string_schema:
-            request.validated_args = get_query_string_params_or_400(
+            g.validated_args = get_query_string_params_or_400(
                 schema=query_string_schema
             )
 
         if request_body_schema:
-            request.validated_body = get_json_body_params_or_400(
+            g.validated_body = get_json_body_params_or_400(
                 schema=request_body_schema
             )
 
         if headers_schema:
-            request.validated_headers = get_header_params_or_400(
+            g.validated_headers = get_header_params_or_400(
                 schema=headers_schema
             )
 
@@ -102,28 +104,46 @@ def _wrap_handler(
     return wrapped
 
 
-class Framer(object):
+class Framer(Extension):
     """
     Declaratively constructs a REST API.
 
     Similar to a Flask Blueprint, but intentionally kept separate.
     """
+    NAME = 'ToolboxExtension::Framer'
+    DEPENDENCIES = (Errors,)
+
+    def add_params_to_parser(self, parser):
+        parser.add_param(name='TOOLBOX_FRAMER_SWAGGER_PATH', default='/swagger')
+        parser.add_param(name='TOOLBOX_FRAMER_SWAGGER_UI_PATH', default='/swagger/ui')
+
     def __init__(
             self,
             default_authenticator=None,
             default_headers_schema=None,
             swagger_generator=None,
-            swagger_path='/swagger',
-            swagger_ui_path='/swagger/ui',
-            swagger_ui_config=None
+            swagger_ui_config=None,
+            config=None
     ):
         self.paths = defaultdict(dict)
         self.default_authenticator = default_authenticator
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.swagger_ui_config = swagger_ui_config or {}
-        self.swagger_path = swagger_path
-        self.swagger_ui_path = swagger_ui_path
         self.default_headers_schema = default_headers_schema
+
+        super(Framer, self).__init__(config=config)
+
+    @property
+    def validated_body(self):
+        return g.validated_body
+
+    @property
+    def validated_args(self):
+        return g.validated_args
+
+    @property
+    def validated_headers(self):
+        return g.validated_headers
 
     def set_default_authenticator(self, authenticator):
         """
@@ -222,12 +242,8 @@ class Framer(object):
             return f
         return wrapper
 
-    def register(self, app):
-        """
-        Registers all the handlers with a Flask application.
-
-        :param flask.Flask|flask.Blueprint app:
-        """
+    def init_extension(self, app, config):
+        """Registers all the handlers with a Flask application."""
 
         for path, methods in self.paths.items():
             for method, definition_ in methods.items():
@@ -253,7 +269,10 @@ class Framer(object):
                     endpoint=definition_.endpoint
                 )
 
-        @app.route(self.swagger_path, methods=['GET'])
+        swagger_path = config['TOOLBOX_FRAMER_SWAGGER_PATH']
+        swagger_ui_path = config['TOOLBOX_FRAMER_SWAGGER_UI_PATH']
+
+        @app.route(swagger_path, methods=['GET'])
         def get_swagger():
             swagger = self.swagger_generator.generate(
                 framer=self,
@@ -262,11 +281,11 @@ class Framer(object):
             return response(data=swagger)
 
         swagger_ui_blueprint = get_swaggerui_blueprint(
-            base_url=self.swagger_ui_path,
-            api_url=self.swagger_path,
+            base_url=swagger_ui_path,
+            api_url=swagger_path,
             config=self.swagger_ui_config,
         )
         app.register_blueprint(
             blueprint=swagger_ui_blueprint,
-            url_prefix=self.swagger_ui_path,
+            url_prefix=swagger_ui_path,
         )

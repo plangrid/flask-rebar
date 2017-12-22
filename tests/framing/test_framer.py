@@ -3,7 +3,6 @@ import unittest
 
 import marshmallow as m
 from flask import Flask
-from flask import request
 
 from plangrid.flask_toolbox import HeaderApiKeyAuthenticator
 from plangrid.flask_toolbox.extensions.errors import Errors
@@ -179,7 +178,7 @@ class FramerTest(unittest.TestCase):
             request_body_schema=FooUpdateSchema(),
         )
         def update_foo(foo_uid):
-            return {'uid': foo_uid, 'name': request.validated_body['name']}
+            return {'uid': foo_uid, 'name': framer.validated_body['name']}
 
         app = create_framed_app(framer)
 
@@ -214,7 +213,7 @@ class FramerTest(unittest.TestCase):
         )
         def list_foos():
             return {
-                'data': [{'name': request.validated_args['name'], 'uid': '1'}]
+                'data': [{'name': framer.validated_args['name'], 'uid': '1'}]
             }
 
         app = create_framed_app(framer)
@@ -245,7 +244,7 @@ class FramerTest(unittest.TestCase):
         )
         def get_me():
             return {
-                'user_name': request.validated_headers['name']
+                'user_name': framer.validated_headers['name']
             }
 
         app = create_framed_app(framer)
@@ -353,7 +352,7 @@ class FramerTest(unittest.TestCase):
         )
         def get_me():
             return {
-                'user_name': request.validated_headers['name']
+                'user_name': framer.validated_headers['name']
             }
 
         @framer.handles(

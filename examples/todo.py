@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask
 from marshmallow import fields
 
 from plangrid.flask_toolbox import ToolboxFramer, http_errors
@@ -54,7 +54,7 @@ def create_todo():
 
     # The body is eagerly validated with the `request_body_schema` provided in
     # the decorator. The resulting parameters are now available here:
-    todo = request.validated_body
+    todo = framer.validated_body
 
     todo_id_sequence += 1
 
@@ -84,7 +84,7 @@ def get_todos():
     # and made available here. Flask-toolbox does treats a request body and
     # query string parameters as two separate sources, and currently does not
     # implement any abstraction on top of them.
-    args = request.validated_args
+    args = framer.validated_args
 
     todos = todo_database.values()
 
@@ -107,7 +107,7 @@ def update_todo(todo_id):
     if todo_id not in todo_database:
         raise http_errors.NotFound()
 
-    params = request.validated_body
+    params = framer.validated_body
 
     todo_database[todo_id].update(params)
 

@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 from flask import Flask
 from flask_testing import TestCase
 
-from plangrid.flask_toolbox import http_errors
 from plangrid.flask_toolbox import messages
-from plangrid.flask_toolbox.extensions.errors import Errors
+from plangrid.flask_toolbox .errors import http_errors
+from plangrid.flask_toolbox.errors import Errors
 
 
 class TestErrors(TestCase):

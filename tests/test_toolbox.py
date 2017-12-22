@@ -9,12 +9,16 @@ from flask import Blueprint
 from flask import Flask
 from flask import request
 from flask_testing import TestCase
+
+import plangrid.flask_toolbox.pagination
+
+import plangrid.flask_toolbox.errors.request_utils
 from plangrid.flask_toolbox import validation
 from marshmallow import ValidationError
 from marshmallow import fields
 
 from plangrid import flask_toolbox
-from plangrid.flask_toolbox import http_errors
+from plangrid.flask_toolbox.errors import http_errors
 from plangrid.flask_toolbox import messages
 
 
@@ -171,7 +175,7 @@ class TestJsonBodyValidation(TestCase):
 
         @app.route('/stuffs', methods=['POST'])
         def json_body_handler():
-            data = flask_toolbox.get_json_body_params_or_400(schema=Schema)
+            data = plangrid.flask_toolbox.errors.request_utils.get_json_body_params_or_400(schema=Schema)
             return flask_toolbox.response(data)
 
         @app.route('/route_using_get_json', methods=['POST'])
@@ -313,7 +317,7 @@ class TestQueryStringValidation(TestCase):
 
         @app.route('/stuffs', methods=['GET'])
         def query_string_handler():
-            params = flask_toolbox.get_query_string_params_or_400(schema=Schema())
+            params = plangrid.flask_toolbox.errors.request_utils.get_query_string_params_or_400(schema=Schema())
             return flask_toolbox.response(data=params)
 
         return app
@@ -362,7 +366,7 @@ class TestQueryStringValidation(TestCase):
 
 
 class TestResponseFormatting(TestCase):
-    BASE_URL = 'https://io.plangrid.com'
+    BASE_URL = 'http://localhost'
     PAGINATION_LIMIT_MAX = 100
 
     def create_app(self):
@@ -418,7 +422,7 @@ class TestResponseFormatting(TestCase):
 
         @self.app.route('/paginated_response')
         def handler():
-            return flask_toolbox.paginated_response(
+            return plangrid.flask_toolbox.extensions.pagination.paginated_response(
                 data=data,
                 total_count=total_count,
                 additional_data={
@@ -462,7 +466,7 @@ class TestResponseFormatting(TestCase):
 
         @self.app.route('/no_next_page')
         def handler():
-            return flask_toolbox.paginated_response(
+            return plangrid.flask_toolbox.extensions.pagination.paginated_response(
                 data=data,
                 total_count=total_count
             )
@@ -590,7 +594,7 @@ class TestRetrieveUserID(TestCase):
 
         @app.route('/whoami')
         def route():
-            user_id = flask_toolbox.get_user_id_from_header_or_400()
+            user_id = plangrid.flask_toolbox.errors.request_utils.get_user_id_from_header_or_400()
             return flask_toolbox.response({'user_id': user_id})
 
         return app
@@ -623,7 +627,7 @@ class TestVerifyScopeOr403(TestCase):
 
         @app.route('/scoped')
         def route():
-            flask_toolbox.verify_scope_or_403(self.SCOPE_FOO)
+            plangrid.flask_toolbox.errors.request_utils.verify_scope_or_403(self.SCOPE_FOO)
             return flask_toolbox.response(data={}, status_code=200)
 
         return app
@@ -676,7 +680,7 @@ class TestScopedBlueprint(TestCase):
         def scoped():
             return flask_toolbox.response(data={}, status_code=200)
 
-        flask_toolbox.scope_app(required_scope=self.SCOPE_FOO, app=blueprint)
+        plangrid.flask_toolbox.errors.request_utils.scope_app(required_scope=self.SCOPE_FOO, app=blueprint)
 
         app = Flask(__name__)
         app.register_blueprint(blueprint)
@@ -714,7 +718,7 @@ class TestScopedApplication(TestCase):
         def unscoped():
             return flask_toolbox.response(data={}, status_code=200)
 
-        flask_toolbox.scope_app(required_scope=self.SCOPE_FOO, app=app)
+        plangrid.flask_toolbox.errors.request_utils.scope_app(required_scope=self.SCOPE_FOO, app=app)
 
         return app
 

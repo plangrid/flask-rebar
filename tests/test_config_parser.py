@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from plangrid.flask_toolbox.extensions.config_parser import ConfigParser
-from plangrid.flask_toolbox.extensions.config_parser import MissingConfiguration
+from plangrid.flask_toolbox.config_parser import ConfigParser
+from plangrid.flask_toolbox.config_parser import MissingConfiguration
 
 
 class TestConfigParser(TestCase):

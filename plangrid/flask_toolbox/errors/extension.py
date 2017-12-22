@@ -6,11 +6,14 @@ import bugsnag
 from flask import current_app, jsonify
 from newrelic import agent as newrelic_agent
 
-from plangrid.flask_toolbox import http_errors, messages
-from plangrid.flask_toolbox.extensions.extension import Extension
+from plangrid.flask_toolbox import messages
+from plangrid.flask_toolbox.errors import http_errors
+from plangrid.flask_toolbox.extension import Extension
 
 
 class Errors(Extension):
+    NAME = 'ToolboxExtension::Errors'
+
     def _create_json_error_response(
             self,
             message,

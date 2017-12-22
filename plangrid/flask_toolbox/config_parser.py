@@ -13,6 +13,8 @@ class MissingConfiguration(Exception):
 
 
 class ConfigParser(object):
+    """Resolves configuration parameters for extensions"""
+
     def __init__(self):
         self.params = []
 
@@ -23,6 +25,21 @@ class ConfigParser(object):
             default=None,
             required=False,
     ):
+        """
+        Adds parameter for the parser.
+
+        :param str name:
+            The name of the parameter. This will be the name the parser looks
+            for in sources
+        :param Callable coerce:
+            If this is included, call this function on the resulting value
+            after finding it in a source
+        :param default:
+            Default value to use for this parameter if it is not found in any
+            source
+        :param bool required:
+            If True, throw an error if this parameter is not found in any source
+        """
         self.params.append(
             _ConfigParserParam(
                 name=name,
@@ -33,6 +50,18 @@ class ConfigParser(object):
         )
 
     def resolve(self, sources):
+        """
+        Resolves the parameters from the provided sources, in order.
+
+        This will look look through each source in order until a parameter
+        is found. This is super handy when there is a long chain of fallback
+        sources
+        (e.g. extension object -> application config -> environment variables)
+
+        :param list[dict]|tuple[dict] sources:
+        :rtype: dict
+        :returns: dictionary including all the added parameters
+        """
         resolved = {}
 
         for param in self.params:
