@@ -36,21 +36,7 @@ from plangrid.flask_toolbox.toolbox import (
 from plangrid.flask_toolbox.framing.framer import (
     Framer
 )
-from plangrid.flask_toolbox.framing.authenticators import\
+from plangrid.flask_toolbox.framing.authenticators import \
     HeaderApiKeyAuthenticator
 
-
-class ToolboxFramer(Framer):
-    def __init__(self, swagger_generator=None):
-        authenticator = HeaderApiKeyAuthenticator(header=HEADER_AUTH_TOKEN)
-        super(ToolboxFramer, self).__init__(
-            default_authenticator=authenticator,
-            swagger_generator=swagger_generator,
-        )
-
-    def register(self, app):
-        super(ToolboxFramer, self).register(app)
-        Toolbox(app)
-
-    def register_auth_key(self, key, app_name=HeaderApiKeyAuthenticator.DEFAULT_APP_NAME):
-        self.default_authenticator.register_key(key=key, app_name=app_name)
+from plangrid.flask_toolbox.toolbox_framer import ToolboxFramer

@@ -18,8 +18,6 @@ from plangrid.flask_toolbox.request_utils import response
 
 # Still some functionality to cover:
 # TODO: Default Headers
-# TODO: documentation!
-# TODO: tests!
 
 
 # Metadata about a declared handler function. This can be used to both

@@ -116,8 +116,8 @@ def update_todo(todo_id):
     return todo
 
 
-if __name__ == '__main__':
-    app = Flask(__name__)
+def create_app(name):
+    app = Flask(name)
 
     framer.register(app)
 
@@ -126,4 +126,8 @@ if __name__ == '__main__':
     # in the X-PG-Auth header. Here we define what that shared secret is.
     framer.register_auth_key(key='my-api-key')
 
-    app.run()
+    return app
+
+
+if __name__ == '__main__':
+    create_app(__name__).run()

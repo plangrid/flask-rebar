@@ -1,16 +1,17 @@
 from __future__ import unicode_literals
 
 import os
-import sys
 import uuid
 
-import bugsnag
-import bugsnag.flask
-from flask import Request, current_app, jsonify
-from newrelic import agent as newrelic_agent
+from flask import Request
 
 from plangrid.flask_toolbox import http_errors, messages
-from plangrid.flask_toolbox.converters import UUIDStringConverter
+from plangrid.flask_toolbox.extensions.healthcheck import Healthcheck
+from plangrid.flask_toolbox.extensions.healthcheck import HEALTHCHECK_ENDPOINT as _HEALTHCHECK_ENDPOINT
+from plangrid.flask_toolbox.extensions.errors import Errors
+from plangrid.flask_toolbox.extensions.bugsnag import Bugsnag
+from plangrid.flask_toolbox.extensions.url_converters import UrlConverters
+
 
 DEFAULT_PAGINATION_LIMIT_MAX = 100
 HEADER_AUTH_TOKEN = 'X-PG-Auth'
@@ -18,7 +19,9 @@ HEADER_USER_ID = 'X-PG-UserId'
 HEADER_REQUEST_ID = 'X-PG-RequestId'
 HEADER_SCOPES = 'X-PG-Scopes'
 HEADER_APPLICATION_ID = 'X-PG-AppId'
-HEALTHCHECK_ENDPOINT = 'health'
+
+# Alias this for backwards compatibility reasons
+HEALTHCHECK_ENDPOINT = _HEALTHCHECK_ENDPOINT
 
 
 class ToolboxRequest(Request):
@@ -151,90 +154,19 @@ class Toolbox(object):
                                   default='production')
         )
 
-        self._register_custom_error_handler(app)
-        self._register_werkzeug_error_handler(app)
-        self._register_healthcheck(app)
-        if self.bugsnag_api_key:
-            self._configure_bugsnag(app)
-        self._register_custom_converters(app)
+        Bugsnag(
+            app=app,
+            config={
+                'BUGSNAG_RELEASE_STAGE': self.bugsnag_release_stage,
+                'BUGSNAG_API_KEY': self.bugsnag_api_key
+            }
+        )
+        Errors(app=app)
+        Healthcheck(app=app)
+        UrlConverters(app=app)
 
         # Set the flask.request proxy to our extended type
         app.request_class = ToolboxRequest
 
         # Add a reference to this Toolbox instance in the app context
         app.app_ctx_globals_class.toolbox = self
-
-    def _create_json_error_response(
-            self,
-            message,
-            http_status_code,
-            error_code=None,
-            additional_data=None
-    ):
-        """
-        Compiles a response object for an error.
-
-        :param str message:
-        :param int http_status_code:
-        :param error_code:
-          An optional, application-specific error code to add to the response.
-        :param additional_data:
-          Additional JSON data to attach to the response.
-        :rtype: flask.Response
-        """
-        body = {'message': message}
-        if error_code:
-            body['error_code'] = error_code
-        if additional_data:
-            body.update(additional_data)
-        resp = jsonify(body)
-        resp.status_code = http_status_code
-        return resp
-
-    def _register_custom_error_handler(self, app):
-        """Registers an error handler for our flask_toolbox.http_errors."""
-        @app.errorhandler(http_errors.HttpJsonError)
-        def handle_http_error(error):
-            return self._create_json_error_response(
-                message=error.error_message,
-                http_status_code=error.http_status_code,
-                additional_data=error.additional_data
-            )
-
-    def _register_werkzeug_error_handler(self, app):
-        """Registers handlers to change built-in Flask errors to JSON errors."""
-        @app.errorhandler(404)
-        @app.errorhandler(405)
-        def handle_werkzeug_http_error(error):
-            return self._create_json_error_response(
-                message=error.description,
-                http_status_code=error.code
-            )
-
-        @app.errorhandler(Exception)
-        def handle_werkzeug_http_error(error):
-            exc_info = sys.exc_info()
-            current_app.log_exception(exc_info=exc_info)
-            bugsnag.notify(error)
-            newrelic_agent.record_exception(*exc_info)
-            return self._create_json_error_response(
-                message=messages.internal_server_error,
-                http_status_code=500
-            )
-
-    def _register_healthcheck(self, app):
-        """Adds a /health endpoint to the application."""
-        @app.route('/health', endpoint=HEALTHCHECK_ENDPOINT)
-        def handle_healthcheck():
-            return jsonify({'message': messages.health_check_response})
-
-    def _configure_bugsnag(self, app):
-        """Configures flask to forward uncaught exceptions to Bugsnag."""
-        bugsnag.configure(
-            api_key=self.bugsnag_api_key,
-            release_stage=self.bugsnag_release_stage
-        )
-        bugsnag.flask.handle_exceptions(app)
-
-    def _register_custom_converters(self, app):
-        app.url_map.converters['uuid_string'] = UUIDStringConverter

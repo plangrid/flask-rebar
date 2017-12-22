@@ -1,6 +1,6 @@
 # cURL and example.py
 
-Here's a snippet of playing with the application inside [example.py](example.py).
+Here's a snippet of playing with the application inside [examples/todo.py](examples/todo.py).
 
 Swagger for free!
 ```
