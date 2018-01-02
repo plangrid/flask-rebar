@@ -1,7 +1,7 @@
 from flask import Flask
 from marshmallow import fields
 
-from plangrid.flask_toolbox import Framer, bootstrap_app_with_framer, http_errors
+from plangrid.flask_toolbox import Framer, bootstrap_app_with_framer, errors
 from plangrid.flask_toolbox.validation import ListOf, RequestSchema, ResponseSchema
 
 
@@ -103,7 +103,7 @@ def update_todo(todo_id):
     global todo_database
 
     if todo_id not in todo_database:
-        raise http_errors.NotFound()
+        raise errors.NotFound()
 
     params = framer.validated_body
 

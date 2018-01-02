@@ -1,7 +1,7 @@
 from flask import request
 from werkzeug.security import safe_str_cmp
 
-from plangrid.flask_toolbox import http_errors, messages
+from plangrid.flask_toolbox import errors, messages
 
 
 class USE_DEFAULT(object):
@@ -57,7 +57,7 @@ class HeaderApiKeyAuthenticator(Authenticator):
 
     def authenticate(self):
         if self.header not in request.headers:
-            raise http_errors.Unauthorized(messages.missing_auth_token)
+            raise errors.Unauthorized(messages.missing_auth_token)
 
         token = request.headers[self.header]
 
@@ -66,4 +66,4 @@ class HeaderApiKeyAuthenticator(Authenticator):
                 setattr(request, 'authenticated_app_name', app_name)
                 break
         else:
-            raise http_errors.Unauthorized(messages.invalid_auth_token)
+            raise errors.Unauthorized(messages.invalid_auth_token)
