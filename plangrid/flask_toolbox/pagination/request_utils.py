@@ -29,20 +29,20 @@ def _make_url(resource_path, query_params):
     return '{}://{}{}?{}'.format(request.scheme, request.host, resource_path, url_params)
 
 
-def paginated_response(data, total_count, additional_data=None, status_code=200):
+def paginated_data(data, total_count, additional_data=None):
     """
-    Constructs a flask.Response for paginated endpoint.
+    Constructs a dictionary for paginated endpoint.
 
     :param list data: The current page of data to return to the client
     :param int total_count: The total amount of resources matching the query
     :param dict additional_data: Any additional data to attach to the response
-    :param int status_code: HTTP status code to use in the response
-    :rtype: flask.Response
+    :rtype: dict
     """
     if not hasattr(g, 'pagination_limit_max'):
         raise Exception(
-            'paginated_response only works with the Pagination extension!'
+            'paginated_data only works with the Pagination extension!'
         )
+
     resp = {
         'data': data,
         'total_count': total_count,
@@ -64,5 +64,24 @@ def paginated_response(data, total_count, additional_data=None, status_code=200)
 
     if additional_data:
         resp.update(additional_data)
+
+    return resp
+
+
+def paginated_response(data, total_count, additional_data=None, status_code=200):
+    """
+    Constructs a flask.Response for paginated endpoint.
+
+    :param list data: The current page of data to return to the client
+    :param int total_count: The total amount of resources matching the query
+    :param dict additional_data: Any additional data to attach to the response
+    :param int status_code: HTTP status code to use in the response
+    :rtype: flask.Response
+    """
+    resp = paginated_data(
+        data=data,
+        total_count=total_count,
+        additional_data=additional_data
+    )
 
     return response(data=resp, status_code=status_code)
