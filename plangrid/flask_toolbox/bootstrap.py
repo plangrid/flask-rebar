@@ -1,3 +1,8 @@
+import uuid
+
+from marshmallow import fields
+from marshmallow import Schema
+
 from plangrid.flask_toolbox.errors import Errors
 from plangrid.flask_toolbox.healthcheck import Healthcheck
 from plangrid.flask_toolbox.url_converters import UrlConverters
@@ -6,6 +11,20 @@ from plangrid.flask_toolbox.bugsnag import Bugsnag
 from plangrid.flask_toolbox.framing import HeaderApiKeyAuthenticator
 from plangrid.flask_toolbox.toolbox import Toolbox
 from plangrid.flask_toolbox.constants import HEADER_AUTH_TOKEN
+from plangrid.flask_toolbox.constants import HEADER_USER_ID
+from plangrid.flask_toolbox.constants import HEADER_REQUEST_ID
+from plangrid.flask_toolbox.validation import UUID
+
+
+class HeadersSchema(Schema):
+    user_id = fields.String(
+        load_from=HEADER_USER_ID,
+        required=True
+    )
+    request_id = UUID(
+        load_from=HEADER_REQUEST_ID,
+        missing=lambda: str(uuid.uuid4())
+    )
 
 
 def bootstrap_app_with_toolbox(app, config=None):
@@ -28,7 +47,13 @@ def bootstrap_app_with_toolbox(app, config=None):
     Toolbox(app=app, config=config)
 
 
-def bootstrap_app_with_framer(app, framer, config=None):
+def bootstrap_app_with_framer(
+        app,
+        framer,
+        config=None,
+        set_default_headers_schema=False,
+        set_default_authenticator=True
+):
     """
     Initializes the recommended set of flask-toolbox extensions and
     registers them with a Flask application.
@@ -63,6 +88,11 @@ def bootstrap_app_with_framer(app, framer, config=None):
     :param plangrid.flask_toolbox.Framer framer:
     :param dict config: Dictionary with configuration parameters that is passed
         to every extension, overriding the values found in environment variables
+    :param bool set_default_headers_schema: If True, add the PlanGrid prescribed
+        headers as the default for every request
+    :param bool set_default_authenticator: If True, add the PlanGrid prescribed
+        service-to-service authentication mechanism as the default for every
+        request
     """
     Errors(app=app, config=config)
     Healthcheck(app=app, config=config)
@@ -70,7 +100,11 @@ def bootstrap_app_with_framer(app, framer, config=None):
     Pagination(app=app, config=config)
     Bugsnag(app=app, config=config)
 
-    authenticator = HeaderApiKeyAuthenticator(header=HEADER_AUTH_TOKEN)
-    framer.set_default_authenticator(authenticator=authenticator)
+    if set_default_authenticator:
+        authenticator = HeaderApiKeyAuthenticator(header=HEADER_AUTH_TOKEN)
+        framer.set_default_authenticator(authenticator=authenticator)
+
+    if set_default_headers_schema:
+        framer.set_default_headers_schema(HeadersSchema())
 
     framer.init_app(app=app, config=config)

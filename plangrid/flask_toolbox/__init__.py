@@ -49,6 +49,7 @@ from plangrid.flask_toolbox.framing import (
 from plangrid.flask_toolbox.bootstrap import (
     bootstrap_app_with_toolbox,
     bootstrap_app_with_framer,
+    HeadersSchema,
 )
 
 from plangrid.flask_toolbox.validation import (

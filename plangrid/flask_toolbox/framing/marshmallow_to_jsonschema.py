@@ -280,7 +280,13 @@ class FieldConverter(MarshmallowConverter):
 
     @sets_jsonschema_attr(sw.default)
     def get_default(self, obj, context):
-        if obj.missing is not m.missing:
+        if (
+                obj.missing is not m.missing
+
+                # Marshmallow accepts a callable for the default. This is tricky
+                # to handle, so let's just ignore this for now.
+                and not callable(obj.missing)
+        ):
             return obj.missing
         else:
             return UNSET
