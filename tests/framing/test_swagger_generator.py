@@ -126,9 +126,11 @@ class TestFormatPathForSwagger(unittest.TestCase):
 
 
 class TestSwaggerV2Generator(unittest.TestCase):
-    def test_generate_swagger(self):
+    def setUp(self):
         super(TestSwaggerV2Generator, self).setUp()
         self.maxDiff = None
+
+    def test_generate_swagger(self):
         framer = Framer()
 
         authenticator = HeaderApiKeyAuthenticator(header='x-auth')
@@ -155,7 +157,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
             name = m.fields.String()
 
         @framer.handles(
-            path='/foos/<foo_uid>',
+            path='/foos/<uuid_string:foo_uid>',
             method='GET',
             marshal_schemas={200: FooSchema()},
             headers_schema=HeaderSchema()
@@ -360,6 +362,28 @@ class TestSwaggerV2Generator(unittest.TestCase):
         validate_swagger(expected_swagger)
 
         self.assertEqual(swagger, expected_swagger)
+
+    def test_path_parameter_types_must_be_the_same_for_same_path(self):
+        framer = Framer()
+
+        @framer.handles(
+            path='/foos/<string:foo_uid>',
+            method='GET'
+        )
+        def get_foo(foo_uid):
+            pass
+
+        @framer.handles(
+            path='/foos/<int:foo_uid>',
+            method='PATCH'
+        )
+        def update_foo(foo_uid):
+            pass
+
+        generator = SwaggerV2Generator()
+
+        with self.assertRaises(ValueError):
+            generator.generate(framer)
 
 
 if __name__ == '__main__':

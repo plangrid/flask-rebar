@@ -220,6 +220,21 @@ def _convert_header_api_key_authenticator(authenticator):
     return key, definition
 
 
+def _verify_parameters_are_the_same(a, b):
+    def get_sort_key(parameter):
+        return parameter[sw.name]
+
+    sorted_a = sorted(a, key=get_sort_key)
+    sorted_b = sorted(b, key=get_sort_key)
+
+    if sorted_a != sorted_b:
+        msg = (
+            'Swagger generation does not support Flask url '
+            'converters that map to different Swagger types!'
+        )
+        raise ValueError(msg)
+
+
 class SwaggerV2Generator(object):
     """
     Generates a v2.0 Swagger specification from a Framer object.
@@ -292,6 +307,7 @@ class SwaggerV2Generator(object):
 
         self.flask_converters_to_swagger_types = {
             'uuid': sw.string,
+            'uuid_string': sw.string,
             'string': sw.string,
             'int': sw.integer,
             'float': sw.number
@@ -422,13 +438,18 @@ class SwaggerV2Generator(object):
         path_definitions = {}
 
         for path, methods in paths.items():
-            path_definition = {}
-
             swagger_path, path_args = _format_path_for_swagger(path)
-            path_definitions[swagger_path] = path_definition
+
+            # Different Flask paths might correspond to the same Swagger path
+            # because of Flask URL path converters. In this case, let's just
+            # work off the same path definitions.
+            if swagger_path in path_definitions:
+                path_definition = path_definitions[swagger_path]
+            else:
+                path_definitions[swagger_path] = path_definition = {}
 
             if path_args:
-                path_definition[sw.parameters] = [
+                path_params = [
                     {
                         sw.name: path_arg.name,
                         sw.required: True,
@@ -438,6 +459,18 @@ class SwaggerV2Generator(object):
                     }
                     for path_arg in path_args
                 ]
+
+                # We have to check for an ugly case here. If different Flask
+                # paths that map to the same Swagger path use different URL
+                # converters for the same parameter, we have a problem. Let's
+                # just throw an error in this case.
+                if sw.parameters in path_definition:
+                    _verify_parameters_are_the_same(
+                        path_definition[sw.parameters],
+                        path_params
+                    )
+
+                path_definition[sw.parameters] = path_params
 
             for method, d in methods.items():
                 responses_definition = {
