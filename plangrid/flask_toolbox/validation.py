@@ -1,54 +1,84 @@
-import re
-
 import marshmallow
 from marshmallow import ValidationError
 from marshmallow import fields
 from marshmallow import post_dump
 from marshmallow import validates_schema
+from marshmallow.base import FieldABC, SchemaABC
+from marshmallow.validate import Regexp
 
 from plangrid.flask_toolbox import messages
 
 
-class ObjectId(fields.Str):
-    ERROR_MSG = messages.invalid_object_id
+def ValidateBothWays(field_or_schema):
+    """Validate data on serialization.
 
-    def _deserialize(self, val, attr, data):
-        if val and not _is_oid(val):
-            raise ValidationError(self.ERROR_MSG)
+    Shortcut for inheriting from the class & wrapping the relevant method.
+    """
+    class_name = 'ValidateBothWays' + field_or_schema.__name__
+    klass = type(class_name, (field_or_schema,), {})
 
-        return super(ObjectId, self)._deserialize(val, attr, data)
+    if issubclass(field_or_schema, FieldABC):
+        def wrapped_serialize(self, value, attr, obj):
+            self.deserialize(value)
+            return super(klass, self)._serialize(value, attr, obj)
 
-    def _serialize(self, val, attr, obj):
-        if val and not _is_oid(val):
-            raise ValidationError(self.ERROR_MSG)
+        klass._serialize = wrapped_serialize
+    elif issubclass(field_or_schema, SchemaABC):
+        def wrapped_dump(self, object, **kwargs):
+            unchecked = super(klass, self).dump(object, **kwargs)
+            load = super(klass, self).load(unchecked.data)
+            unchecked.errors.update(load.errors)
+            return unchecked
 
-        return super(ObjectId, self)._serialize(val, attr, obj)
+        klass.dump = wrapped_dump
+    else:
+        raise ValueError('Unkown type for ValidateBothWays', field_or_schema)
 
-
-class UUID(fields.Str):
-    ERROR_MSG = messages.invalid_uuid
-
-    def _deserialize(self, val, attr, data):
-        if val and not _is_uuid(val):
-            raise ValidationError(self.ERROR_MSG)
-
-        return super(UUID, self)._deserialize(val, attr, data)
-
-    def _serialize(self, val, attr, obj):
-        if val and not _is_uuid(val):
-            raise ValidationError(self.ERROR_MSG)
-
-        return super(UUID, self)._serialize(val, attr, obj)
+    return klass
 
 
-REGEX_OID = re.compile('[0-9a-fA-F]{24}$')
-def _is_oid(value):
-    return REGEX_OID.match(value) is not None
+class IsObjectId(Regexp):
+    def __init__(self):
+        super(IsObjectId, self).__init__(
+            regex='[0-9a-fA-F]{24}$',
+            flags=0,
+            error=messages.invalid_object_id
+        )
+
+    def __call__(self, value):
+        super(IsObjectId, self).__call__(str(value))
 
 
-REGEX_UUID = re.compile('[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}$')
-def _is_uuid(value):
-    return REGEX_UUID.match(value) is not None
+class ObjectId(ValidateBothWays(fields.String)):
+    """A string ObjectId field.
+
+    Honors the inherited allow_none keyword argument, but raises an error if you
+    try to specify the validate keyword argument.
+    """
+    def __init__(self, **kwargs):
+        super(ObjectId, self).__init__(validate=IsObjectId(), **kwargs)
+
+
+class IsUUID(Regexp):
+    def __init__(self):
+        super(IsUUID, self).__init__(
+            regex='[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}$',
+            flags=0,
+            error=messages.invalid_uuid
+        )
+
+    def __call__(self, value):
+        super(IsUUID, self).__call__(str(value))
+
+
+class UUID(ValidateBothWays(fields.String)):
+    """A string UUID field.
+
+    Honors the inherited allow_none keyword argument, but raises an error if you
+    try to specify the validate keyword argument.
+    """
+    def __init__(self, **kwargs):
+        super(UUID, self).__init__(validate=IsUUID(), **kwargs)
 
 
 class CommaSeparatedList(fields.List):

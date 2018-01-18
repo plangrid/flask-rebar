@@ -56,6 +56,7 @@ src
 
 # virtualenv
 .venv
+venv
 .Python
 include/
 man/

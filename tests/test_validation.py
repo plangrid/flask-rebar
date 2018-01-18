@@ -236,6 +236,16 @@ class TestUUID(TestCase):
         _, errs = ObjectWithUUID().dump({'id': id})
         self.assertEqual(errs['id'], [messages.invalid_uuid])
 
+    def test_deserialize_empty_string_errors(self):
+        id = ''
+        _, errs = ObjectWithUUID().load({'id': id})
+        self.assertEqual(errs['id'], [messages.invalid_uuid])
+
+    def test_serialize_empty_string_errors(self):
+        id = ''
+        _, errs = ObjectWithUUID().dump({'id': id})
+        self.assertEqual(errs['id'], [messages.invalid_uuid])
+
     def test_deserialize_null(self):
         _, errs = ObjectWithUUID().load({'id': None})
         self.assertEqual(errs, {'id': ['Field may not be null.']})
@@ -273,6 +283,16 @@ class TestObjectId(TestCase):
 
     def test_serialize_errors(self):
         id = '123456'
+        _, errs = ObjectWithObjectID().dump({'id': id})
+        self.assertEqual(errs['id'], [messages.invalid_object_id])
+
+    def test_deserialize_empty_string_errors(self):
+        id = ''
+        _, errs = ObjectWithObjectID().load({'id': id})
+        self.assertEqual(errs['id'], [messages.invalid_object_id])
+
+    def test_serialize_empty_string_errors(self):
+        id = ''
         _, errs = ObjectWithObjectID().dump({'id': id})
         self.assertEqual(errs['id'], [messages.invalid_object_id])
 
