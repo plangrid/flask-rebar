@@ -14,7 +14,7 @@ if __name__ == '__main__':
         name='plangrid.flask-toolbox',
         packages=packages,
         install_requires=[
-            'bugsnag[flask]==3.1.0',
+            'bugsnag[flask]~=3.4.0',
             'Flask==0.12.1',
             'flask-swagger-ui==3.0.12a0',
             'marshmallow==2.13.5',
