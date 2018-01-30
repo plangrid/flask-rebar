@@ -13,6 +13,7 @@ from plangrid.flask_toolbox.validation import CommaSeparatedList
 from plangrid.flask_toolbox.validation import DisallowExtraFieldsMixin
 from plangrid.flask_toolbox.validation import ListOf
 from plangrid.flask_toolbox.validation import ObjectId
+from plangrid.flask_toolbox.validation import PaginatedListOf
 from plangrid.flask_toolbox.validation import QueryParamList
 from plangrid.flask_toolbox.validation import UUID
 from plangrid.flask_toolbox.validation import add_custom_error_message
@@ -294,3 +295,21 @@ class TestListOf(TestCase):
         data = ListOfObjectWithUUID(strict=True).load({'data': [{'id': id}]}).data
 
         self.assertEqual(data, {'data': [{'id': id}]})
+
+
+class TestPaginatedListOf(TestCase):
+    def test_paginated_list_of(self):
+        PaginatedListOfObjectWithUUID = PaginatedListOf(ObjectWithUUID)
+
+        value = {'data': [{'id': str(uuid.uuid4())}], 'total_count': 2, 'next_page_url': 'http://example.com'}
+        data = PaginatedListOfObjectWithUUID(strict=True).load(value).data
+
+        self.assertEqual(data, value)
+
+    def test_paginated_list_of_without_next_page(self):
+        PaginatedListOfObjectWithUUID = PaginatedListOf(ObjectWithUUID)
+
+        value = {'data': [{'id': str(uuid.uuid4())}], 'total_count': 1, 'next_page_url': None}
+        data = PaginatedListOfObjectWithUUID(strict=True).load(value).data
+
+        self.assertEqual(data, value)

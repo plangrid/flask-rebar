@@ -107,11 +107,16 @@ class DisallowExtraFieldsMixin(object):
             raise ValidationError(message=messages.unsupported_fields(unsupported_fields))
 
 
-def ListOf(schema):
+def ListOf(schema, additional_fields=None):
     class_name = 'ListOf' + schema.__name__
 
-    data = fields.Nested(schema, many=True)
-    klass = type(class_name, (marshmallow.Schema,), {'data': data})
+    schema_fields = {
+        'data': fields.Nested(schema, many=True)
+    }
+    if additional_fields:
+        schema_fields.update(additional_fields)
+
+    klass = type(class_name, (marshmallow.Schema,), schema_fields)
 
     if hasattr(schema, '__swagger_title__'):
         setattr(
@@ -121,6 +126,14 @@ def ListOf(schema):
         )
 
     return klass
+
+
+def PaginatedListOf(schema):
+    pagination_fields = {
+        'total_count': fields.Integer(),
+        'next_page_url': fields.URL(allow_none=True)
+    }
+    return ListOf(schema=schema, additional_fields=pagination_fields)
 
 
 def add_custom_error_message(base_class, field_validation_error_function):

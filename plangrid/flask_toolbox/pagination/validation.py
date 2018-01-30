@@ -2,6 +2,7 @@ from flask import g
 from marshmallow import fields, ValidationError
 
 from plangrid.flask_toolbox import messages
+from plangrid.flask_toolbox.validation import RequestSchema
 
 
 class USE_APPLICATION_DEFAULT(object):
@@ -64,3 +65,8 @@ class Limit(fields.Integer):
         if val > limit_max:
             raise ValidationError(messages.limit_over_max(limit_max))
         return super(Limit, self)._validate(val)
+
+
+class SkipLimitSchema(RequestSchema):
+    skip = Skip()
+    limit = Limit()
