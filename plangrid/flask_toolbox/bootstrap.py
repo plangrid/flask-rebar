@@ -47,6 +47,30 @@ def bootstrap_app_with_toolbox(app, config=None):
     Toolbox(app=app, config=config)
 
 
+def configure_framer_auth(
+        framer,
+        set_default_authenticator=True,
+        set_default_headers_schema=False,
+):
+    """Configure authentication for a Framer instance.
+
+    :param bool set_default_headers_schema: If True, add the PlanGrid prescribed
+        headers as the default for every request
+    :param bool set_default_authenticator: If True, add the PlanGrid prescribed
+        service-to-service authentication mechanism as the default for every
+        request
+    """
+
+    if set_default_authenticator:
+        authenticator = HeaderApiKeyAuthenticator(header=HEADER_AUTH_TOKEN)
+        framer.set_default_authenticator(authenticator=authenticator)
+
+    if set_default_headers_schema:
+        framer.set_default_headers_schema(HeadersSchema())
+
+    return framer
+
+
 def bootstrap_app_with_framer(
         app,
         framer,
@@ -100,11 +124,10 @@ def bootstrap_app_with_framer(
     Pagination(app=app, config=config)
     Bugsnag(app=app, config=config)
 
-    if set_default_authenticator:
-        authenticator = HeaderApiKeyAuthenticator(header=HEADER_AUTH_TOKEN)
-        framer.set_default_authenticator(authenticator=authenticator)
-
-    if set_default_headers_schema:
-        framer.set_default_headers_schema(HeadersSchema())
+    configure_framer_auth(
+        framer=framer,
+        set_default_authenticator=set_default_authenticator,
+        set_default_headers_schema=set_default_headers_schema,
+    )
 
     framer.init_app(app=app, config=config)
