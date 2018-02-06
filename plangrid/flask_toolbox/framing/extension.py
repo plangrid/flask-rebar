@@ -9,6 +9,7 @@ from flask import request
 from flask import g
 from flask_swagger_ui import get_swaggerui_blueprint
 
+from plangrid.flask_toolbox.config_parser import truthy
 from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
 from plangrid.flask_toolbox.framing.swagger_generator import SwaggerV2Generator
 from plangrid.flask_toolbox import get_json_body_params_or_400,\
@@ -114,6 +115,7 @@ class Framer(Extension):
     DEPENDENCIES = (Errors,)
 
     def add_params_to_parser(self, parser):
+        parser.add_param(name='TOOLBOX_FRAMER_ADD_SWAGGER_ENDPOINTS', coerce=truthy, default=True)
         parser.add_param(name='TOOLBOX_FRAMER_SWAGGER_PATH', default='/swagger')
         parser.add_param(name='TOOLBOX_FRAMER_SWAGGER_UI_PATH', default='/swagger/ui')
 
@@ -269,23 +271,24 @@ class Framer(Extension):
                     endpoint=definition_.endpoint
                 )
 
-        swagger_path = config['TOOLBOX_FRAMER_SWAGGER_PATH']
-        swagger_ui_path = config['TOOLBOX_FRAMER_SWAGGER_UI_PATH']
+        if config['TOOLBOX_FRAMER_ADD_SWAGGER_ENDPOINTS']:
+            swagger_path = config['TOOLBOX_FRAMER_SWAGGER_PATH']
+            swagger_ui_path = config['TOOLBOX_FRAMER_SWAGGER_UI_PATH']
 
-        @app.route(swagger_path, methods=['GET'])
-        def get_swagger():
-            swagger = self.swagger_generator.generate(
-                framer=self,
-                host=request.host
+            @app.route(swagger_path, methods=['GET'])
+            def get_swagger():
+                swagger = self.swagger_generator.generate(
+                    framer=self,
+                    host=request.host
+                )
+                return response(data=swagger)
+
+            swagger_ui_blueprint = get_swaggerui_blueprint(
+                base_url=swagger_ui_path,
+                api_url=swagger_path,
+                config=self.swagger_ui_config,
             )
-            return response(data=swagger)
-
-        swagger_ui_blueprint = get_swaggerui_blueprint(
-            base_url=swagger_ui_path,
-            api_url=swagger_path,
-            config=self.swagger_ui_config,
-        )
-        app.register_blueprint(
-            blueprint=swagger_ui_blueprint,
-            url_prefix=swagger_ui_path,
-        )
+            app.register_blueprint(
+                blueprint=swagger_ui_blueprint,
+                url_prefix=swagger_ui_path,
+            )

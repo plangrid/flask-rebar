@@ -12,6 +12,21 @@ class MissingConfiguration(Exception):
     pass
 
 
+def truthy(val):
+    """
+    Coerces a value that might've come from an environment variable to a boolean.
+
+    It works like this::
+
+        for val in (True, 'True', 'true', '1', 1):
+            assert truthy(val) is True
+
+        for val in (False, 'False', 'false', '0', 0, None):
+            assert truthy(val) is False
+    """
+    return str(val).lower() in ('true', '1')
+
+
 class ConfigParser(object):
     """Resolves configuration parameters for extensions"""
 

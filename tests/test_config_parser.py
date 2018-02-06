@@ -2,6 +2,17 @@ from unittest import TestCase
 
 from plangrid.flask_toolbox.config_parser import ConfigParser
 from plangrid.flask_toolbox.config_parser import MissingConfiguration
+from plangrid.flask_toolbox.config_parser import truthy
+
+
+class TestTruthy(TestCase):
+    def test_truthy_values(self):
+        for val in (True, 'True', 'true', '1', 1):
+            self.assertTrue(truthy(val))
+
+    def test_falsey_values(self):
+        for val in (False, 'False', 'false', '0', 0, None):
+            self.assertFalse(truthy(val))
 
 
 class TestConfigParser(TestCase):

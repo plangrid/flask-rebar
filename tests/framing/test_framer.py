@@ -397,3 +397,13 @@ class FramerTest(unittest.TestCase):
             'parameters',
             swagger['paths']['/myself']['get']
         )
+
+    def test_swagger_endpoints_can_be_omitted(self):
+        framer = Framer(config={'TOOLBOX_FRAMER_ADD_SWAGGER_ENDPOINTS': False})
+        app = create_framed_app(framer)
+
+        resp = app.test_client().get('/swagger')
+        self.assertEqual(resp.status_code, 404)
+
+        resp = app.test_client().get('/swagger/ui')
+        self.assertEqual(resp.status_code, 404)

@@ -1,6 +1,4 @@
 from io import BytesIO
-import sys
-from urllib3.response import HTTPResponse
 
 try:
     from unittest import mock
