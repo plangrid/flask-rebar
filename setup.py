@@ -1,18 +1,13 @@
 #!/usr/bin/env python
-try:
-    from setuptools import setup, find_packages
-except ImportError:
-    from distutils.core import setup, find_packages
+from setuptools import setup, find_packages
 
-found_packages = find_packages(where=".")
-packages = ["%s" % package for package in found_packages]
 
 if __name__ == '__main__':
     setup(
         author='PlanGrid',
         description='Tools for quickly getting a Flask service up and running',
         name='plangrid.flask-toolbox',
-        packages=packages,
+        packages=find_packages(where=".", exclude=['tests*', 'examples']),
         install_requires=[
             'bugsnag[flask]~=3.4.0',
             'Flask==0.12.1',
