@@ -65,6 +65,9 @@ Flask-toolbox looks for the following environment variables:
 | TOOLBOX_PAGINATION_LIMIT_MAX | The default page size limit for pagination requests. | `100` |
 | BUGSNAG_API_KEY | The API key to use for notifying Bugsnag of errors. | `None` |
 | BUGSNAG_RELEASE_STAGE | The release stage to use in Bugsnag notifications. | `'production'` |
+| TOOLBOX_FRAMER_ADD_SWAGGER_ENDPOINTS | Adds auto-generated swagger endpoints to the service | `True` |
+| TOOLBOX_FRAMER_SWAGGER_PATH | The path to retrieve the swagger JSON spec for the service | `'/swagger'` |
+| TOOLBOX_FRAMER_SWAGGER_UI_PATH | The path to view HTML docs for the service generated from swagger | `'/swagger/ui'` |
 
 
 Authentication
