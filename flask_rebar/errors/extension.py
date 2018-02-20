@@ -6,9 +6,9 @@ import bugsnag
 from flask import current_app, jsonify
 from newrelic import agent as newrelic_agent
 
-from plangrid.flask_toolbox import messages
-from plangrid.flask_toolbox.errors import http_errors
-from plangrid.flask_toolbox.extension import Extension
+from flask_rebar import messages
+from flask_rebar.errors import http_errors
+from flask_rebar.extension import Extension
 
 
 class Errors(Extension):

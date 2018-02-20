@@ -1,5 +1,5 @@
 import jsonschema
-from plangrid.flask_toolbox.testing. swagger_jsonschema import SWAGGER_V2_JSONSCHEMA
+from flask_rebar.testing. swagger_jsonschema import SWAGGER_V2_JSONSCHEMA
 
 
 def validate_swagger(swagger, schema=SWAGGER_V2_JSONSCHEMA):

@@ -6,7 +6,7 @@ from marshmallow import validates_schema
 from marshmallow.base import FieldABC, SchemaABC
 from marshmallow.validate import Regexp
 
-from plangrid.flask_toolbox import messages
+from flask_rebar import messages
 
 
 def ValidateBothWays(field_or_schema):

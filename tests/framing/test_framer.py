@@ -4,12 +4,12 @@ import unittest
 import marshmallow as m
 from flask import Flask
 
-from plangrid.flask_toolbox import HeaderApiKeyAuthenticator
-from plangrid.flask_toolbox.errors import Errors
-from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
-from plangrid.flask_toolbox.framing import Framer
-from plangrid.flask_toolbox.validation import ListOf
-from plangrid.flask_toolbox.testing import validate_swagger
+from flask_rebar import HeaderApiKeyAuthenticator
+from flask_rebar.errors import Errors
+from flask_rebar.framing.authenticators import USE_DEFAULT
+from flask_rebar.framing import Framer
+from flask_rebar.validation import ListOf
+from flask_rebar.testing import validate_swagger
 
 
 DEFAULT_AUTH_HEADER = 'x-default-auth'

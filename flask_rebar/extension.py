@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import os
 
-from plangrid.flask_toolbox.config_parser import ConfigParser
+from flask_rebar.config_parser import ConfigParser
 
 
 _extensions = {}

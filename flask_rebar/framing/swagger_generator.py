@@ -5,15 +5,15 @@ import re
 from collections import namedtuple
 from collections import OrderedDict
 
-from plangrid.flask_toolbox.framing import swagger_words as sw
-from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
-from plangrid.flask_toolbox.framing.authenticators import HeaderApiKeyAuthenticator
-from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import get_swagger_title
-from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import headers_converter_registry as global_headers_converter_registry
-from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import query_string_converter_registry as global_query_string_converter_registry
-from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import request_body_converter_registry as global_request_body_converter_registry
-from plangrid.flask_toolbox.framing.marshmallow_to_jsonschema import response_converter_registry as global_response_converter_registry
-from plangrid.flask_toolbox.validation import Error
+from flask_rebar.framing import swagger_words as sw
+from flask_rebar.framing.authenticators import USE_DEFAULT
+from flask_rebar.framing.authenticators import HeaderApiKeyAuthenticator
+from flask_rebar.framing.marshmallow_to_jsonschema import get_swagger_title
+from flask_rebar.framing.marshmallow_to_jsonschema import headers_converter_registry as global_headers_converter_registry
+from flask_rebar.framing.marshmallow_to_jsonschema import query_string_converter_registry as global_query_string_converter_registry
+from flask_rebar.framing.marshmallow_to_jsonschema import request_body_converter_registry as global_request_body_converter_registry
+from flask_rebar.framing.marshmallow_to_jsonschema import response_converter_registry as global_response_converter_registry
+from flask_rebar.validation import Error
 
 
 def _get_key(obj):

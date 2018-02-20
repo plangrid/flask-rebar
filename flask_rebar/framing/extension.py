@@ -9,15 +9,15 @@ from flask import request
 from flask import g
 from flask_swagger_ui import get_swaggerui_blueprint
 
-from plangrid.flask_toolbox.config_parser import truthy
-from plangrid.flask_toolbox.framing.authenticators import USE_DEFAULT
-from plangrid.flask_toolbox.framing.swagger_generator import SwaggerV2Generator
-from plangrid.flask_toolbox import get_json_body_params_or_400,\
+from flask_rebar.config_parser import truthy
+from flask_rebar.framing.authenticators import USE_DEFAULT
+from flask_rebar.framing.swagger_generator import SwaggerV2Generator
+from flask_rebar import get_json_body_params_or_400,\
     get_query_string_params_or_400, get_header_params_or_400
-from plangrid.flask_toolbox.request_utils import marshal
-from plangrid.flask_toolbox.request_utils import response
-from plangrid.flask_toolbox.extension import Extension
-from plangrid.flask_toolbox.errors import Errors
+from flask_rebar.request_utils import marshal
+from flask_rebar.request_utils import response
+from flask_rebar.extension import Extension
+from flask_rebar.errors import Errors
 
 
 # Metadata about a declared handler function. This can be used to both
@@ -151,7 +151,7 @@ class Framer(Extension):
         """
         Sets a handler authenticator to be used by default.
 
-        :param plangrid.flask_toolbox.framing.authenticators.Authenticator authenticator:
+        :param flask_rebar.framing.authenticators.Authenticator authenticator:
         """
         self.default_authenticator = authenticator
 
@@ -195,7 +195,7 @@ class Framer(Extension):
             assumes everything is JSON.
         :param Type[USE_DEFAULT]|None|marshmallow.Schema headers_schema:
             Schema to use to grab and validate headers.
-        :param Type[USE_DEFAULT]|None|plangrid.flask_toolbox.framing.authenticators.Authenticator authenticator:
+        :param Type[USE_DEFAULT]|None|flask_rebar.framing.authenticators.Authenticator authenticator:
             An authenticator object to authenticate incoming requests.
             If left as USE_DEFAULT, the Framer's default will be used.
             Set to None to make this an unauthenticated handler.

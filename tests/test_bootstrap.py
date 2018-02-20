@@ -4,9 +4,9 @@ from marshmallow import fields
 from flask import Flask
 from flask_testing import TestCase
 
-from plangrid.flask_toolbox import ResponseSchema
-from plangrid.flask_toolbox import Framer
-from plangrid.flask_toolbox import bootstrap_app_with_framer
+from flask_rebar import ResponseSchema
+from flask_rebar import Framer
+from flask_rebar import bootstrap_app_with_framer
 
 
 class TestBootstrapAppWithFramer(TestCase):

@@ -5,7 +5,7 @@ from flask_testing import TestCase
 from marshmallow import fields, ValidationError
 
 from plangrid import flask_toolbox
-from plangrid.flask_toolbox import validation
+from flask_rebar import validation
 
 
 class TestResponseFormatting(TestCase):

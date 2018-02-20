@@ -1,8 +1,8 @@
 from unittest import TestCase
 
-from plangrid.flask_toolbox.config_parser import ConfigParser
-from plangrid.flask_toolbox.config_parser import MissingConfiguration
-from plangrid.flask_toolbox.config_parser import truthy
+from flask_rebar.config_parser import ConfigParser
+from flask_rebar.config_parser import MissingConfiguration
+from flask_rebar.config_parser import truthy
 
 
 class TestTruthy(TestCase):

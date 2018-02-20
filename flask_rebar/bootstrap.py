@@ -3,17 +3,17 @@ import uuid
 from marshmallow import fields
 from marshmallow import Schema
 
-from plangrid.flask_toolbox.errors import Errors
-from plangrid.flask_toolbox.healthcheck import Healthcheck
-from plangrid.flask_toolbox.url_converters import UrlConverters
-from plangrid.flask_toolbox.pagination import Pagination
-from plangrid.flask_toolbox.bugsnag import Bugsnag
-from plangrid.flask_toolbox.framing import HeaderApiKeyAuthenticator
-from plangrid.flask_toolbox.toolbox import Toolbox
-from plangrid.flask_toolbox.constants import HEADER_AUTH_TOKEN
-from plangrid.flask_toolbox.constants import HEADER_USER_ID
-from plangrid.flask_toolbox.constants import HEADER_REQUEST_ID
-from plangrid.flask_toolbox.validation import UUID
+from flask_rebar.errors import Errors
+from flask_rebar.healthcheck import Healthcheck
+from flask_rebar.url_converters import UrlConverters
+from flask_rebar.pagination import Pagination
+from flask_rebar.bugsnag import Bugsnag
+from flask_rebar.framing import HeaderApiKeyAuthenticator
+from flask_rebar.toolbox import Toolbox
+from flask_rebar.constants import HEADER_AUTH_TOKEN
+from flask_rebar.constants import HEADER_USER_ID
+from flask_rebar.constants import HEADER_REQUEST_ID
+from flask_rebar.validation import UUID
 
 
 class HeadersSchema(Schema):
@@ -88,7 +88,7 @@ def bootstrap_app_with_framer(
     This should be called at application startup, for example::
 
         from flask import Flask
-        from plangrid.flask_toolbox import Framer
+        from flask_rebar import Framer
 
         framer = Framer()
 
@@ -109,7 +109,7 @@ def bootstrap_app_with_framer(
         app.run()
 
     :param flask.Flask app:
-    :param plangrid.flask_toolbox.Framer framer:
+    :param flask_rebar.Framer framer:
     :param dict config: Dictionary with configuration parameters that is passed
         to every extension, overriding the values found in environment variables
     :param bool set_default_headers_schema: If True, add the PlanGrid prescribed

@@ -2,14 +2,14 @@ import unittest
 
 import marshmallow as m
 
-from plangrid.flask_toolbox import HeaderApiKeyAuthenticator
-from plangrid.flask_toolbox.framing import Framer
-from plangrid.flask_toolbox.framing.swagger_generator import SwaggerV2Generator
-from plangrid.flask_toolbox.framing.swagger_generator import _PathArgument as PathArgument
-from plangrid.flask_toolbox.framing.swagger_generator import _flatten as flatten
-from plangrid.flask_toolbox.framing.swagger_generator import _format_path_for_swagger as format_path_for_swagger
-from plangrid.flask_toolbox.validation import ListOf
-from plangrid.flask_toolbox.testing import validate_swagger
+from flask_rebar import HeaderApiKeyAuthenticator
+from flask_rebar.framing import Framer
+from flask_rebar.framing.swagger_generator import SwaggerV2Generator
+from flask_rebar.framing.swagger_generator import _PathArgument as PathArgument
+from flask_rebar.framing.swagger_generator import _flatten as flatten
+from flask_rebar.framing.swagger_generator import _format_path_for_swagger as format_path_for_swagger
+from flask_rebar.validation import ListOf
+from flask_rebar.testing import validate_swagger
 
 
 class TestFlatten(unittest.TestCase):

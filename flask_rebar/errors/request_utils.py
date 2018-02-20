@@ -4,10 +4,10 @@ import marshmallow
 from flask import request
 from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
 
-from plangrid.flask_toolbox import messages, constants
-from plangrid.flask_toolbox.errors import http_errors
-from plangrid.flask_toolbox.request_utils import normalize_schema
-from plangrid.flask_toolbox.validation import ObjectId
+from flask_rebar import messages, constants
+from flask_rebar.errors import http_errors
+from flask_rebar.request_utils import normalize_schema
+from flask_rebar.validation import ObjectId
 
 
 def _get_json_body_or_400():

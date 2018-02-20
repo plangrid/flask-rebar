@@ -1,7 +1,7 @@
 from flask import request
 from werkzeug.security import safe_str_cmp
 
-from plangrid.flask_toolbox import errors, messages
+from flask_rebar import errors, messages
 
 
 class USE_DEFAULT(object):

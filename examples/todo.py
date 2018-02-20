@@ -1,8 +1,8 @@
 from flask import Flask
 from marshmallow import fields
 
-from plangrid.flask_toolbox import Framer, bootstrap_app_with_framer, errors
-from plangrid.flask_toolbox.validation import ListOf, RequestSchema, ResponseSchema
+from flask_rebar import Framer, bootstrap_app_with_framer, errors
+from flask_rebar.validation import ListOf, RequestSchema, ResponseSchema
 
 
 framer = Framer()
