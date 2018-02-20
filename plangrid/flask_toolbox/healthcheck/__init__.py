@@ -1,2 +1,0 @@
-from plangrid.flask_toolbox.healthcheck.extension import Healthcheck
-from plangrid.flask_toolbox.healthcheck.extension import HEALTHCHECK_ENDPOINT
