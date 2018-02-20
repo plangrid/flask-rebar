@@ -1,22 +1,22 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 if __name__ == '__main__':
     setup(
-        author='PlanGrid',
-        description='Tools for quickly getting a Flask service up and running',
-        name='plangrid.flask-toolbox',
-        packages=find_packages(where=".", exclude=['tests*', 'examples']),
+        author='Barak Alon',
+        author_email='barak.s.alon@gmail.com',
+        description='Tools for quickly building reinforced REST APIs with Flask.',
+        long_description=open('README.md').read(),
+        keywords=['flask', 'rest', 'marshmallow', 'openapi', 'swagger'],
+        name='flask-rebar',
+        packages=['flask_rebar'],
         install_requires=[
-            'bugsnag[flask]~=3.4.0',
-            'Flask==0.12.1',
-            'flask-swagger-ui==3.0.12a0',
-            'marshmallow==2.13.5',
-            'newrelic==2.46.0.37'
+            'Flask>=0.12.1',
+            'marshmallow>=2.13.5',
+            'flask-swagger-ui>=3.0.12a0',
         ],
-        version='2.8.0',
+        version='0.1.0',
         zip_safe=True,
-        namespace_packages=['plangrid'],
-        url='https://github.com/plangrid/flask-toolbox'
+        url='https://github.com/plangrid/flask-rebar'
     )
