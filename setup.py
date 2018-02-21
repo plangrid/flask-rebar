@@ -6,7 +6,7 @@ if __name__ == '__main__':
     setup(
         author='Barak Alon',
         author_email='barak.s.alon@gmail.com',
-        description='Tools for quickly building reinforced REST APIs with Flask.',
+        description='Flask-Rebar combines flask, marshmallow, and swagger for robust REST services.',
         long_description=open('README.md').read(),
         keywords=['flask', 'rest', 'marshmallow', 'openapi', 'swagger'],
         name='flask-rebar',

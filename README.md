@@ -1,93 +1,140 @@
-Flask Rebar
+Flask-Rebar
 ===========
 
-Utilities for building a RESTful PlanGrid service.
+Flask-Rebar combines flask, marshmallow, and swagger for robust REST services.
 
 
-Summary
+Features
+--------
+
+- **Request and Response Validation** - Flask-Rebar relies on schemas from the popular [marshmallow](https://marshmallow.readthedocs.io/en/latest/) to validate incoming requests and marshal outgoing responses.
+- **Automatic Swagger Generation** - The same schemas used for validation and marshaling are used to automatically generate OpenAPI specifications (a.k.a. Swagger). This also means automatic documentation via [Swagger UI](https://swagger.io/swagger-ui/).
+- **Error Handling** - Uncaught exceptions from Flask-Rebar are converted to appropriate HTTP errors.
+
+
+Example
 -------
 
-What you get:
+```python
+from flask import Flask
+from flask_rebar import Framer, bootstrap_app_with_framer, errors
+from marshmallow import fields, Schema
 
-- **Request and Response Validation** - Flask-toolbox is designed to work with [marshmallow](https://marshmallow.readthedocs.io/en/latest/) and is packaged with some common additions (e.g. validating against unexpected fields in request bodies).
-- **Authentication** - More specifically... lightweight backend service authentication.
-- **Error Handling** - All you need to do to get a proper JSON HTTP error response is throw an exception.
-- **Bugsnag Configuration** - Flask-toolbox forwards uncaught exceptions to Bugsnag.
-- **Healthcheck** - Kubernetes expects a healthcheck to know if a service was properly deployed - flask-toolbox includes one out of the box.
-- **Automatic Swagger Generation** - No need to manually maintain a massive .yaml file.
+from my_app import database
 
-What you don't get:
 
-- **Auto-generated CRUD** - Flask-toolbox tries to be fairly un-opinionated, and doesn't make any assumptions about a service's database or business logic.
-- **Guaranteed Adherence to PlanGrid API Standards** - It's still up to you to make sure we're staying consistent with how PlanGrid does REST. As those standards become more and more finalized, flask-toolbox can start enforcing them.
-- **Content Negotiation** - Just application/json for now
+framer = Framer()
+
+
+class GetTodoSchema(Schema):
+    complete = fields.Boolean()
+
+
+class TodoSchema(Schema):
+    id = fields.Integer()
+    complete = fields.Boolean()
+    description = fields.String()
+
+
+@framer.handles(
+    path='/todos/<int:todo_id>',
+    method='GET',
+    query_string_schema=UpdateTodoSchema(),
+    marshal_schemas=TodoSchema(),
+)
+def get_todo(todo_id):
+    """
+    This docstring will be rendered as the operation's description in
+    the auto-generated OpenAPI specification.
+    """
+    if todo_id not in database:
+        # Errors are converted to appropriate HTTP errors
+        raise errors.NotFound()
+
+    # The query string has already been validated by `query_string_schema`
+    complete = framer.validated_args.get('complete')
+
+    ...
+
+    # The response will be marshaled by `marshal_schemas`
+    return {'data': {}}
+
+
+def create_app(name):
+    app = Flask(name)
+    framer.init_app(app)
+    return app
+
+
+if __name__ == '__main__':
+    create_app(__name__).run()
+```
+
+For a more complete example, check out the example app at [examples/todo.py](examples/todo.py). Some example requests to this example app can be found at [examples/todo_output.md](examples/todo_output.md).
+
+
+Documentation
+-------------
 
 
 Installation
 ------------
 
-This package is deployed to our local Python package index.
-
 ```
-pip install plangrid.flask-toolbox
+pip install flask-rebar
 ```
 
 
-Package Makeup
---------------
+Similar Packages
+----------------
 
-The bulk of Flask-toolbox is a smorgasbord of Flask extensions:
+There are number of packages out there that solve a similar problem. Here are just a few:
 
-- **bugsnag** - reports errors to Bugsnag
-- **errors** - translates Python exceptions to HTTP errors
-- **framing** - declarative REST handlers with automatic swagger generation
-- **healthcheck** - PlanGrid compliant healthcheck for Kubernetes
-- **pagination** - utilities for paginated requests
-- **url_converters** - additional converters for Flask URL parameters
-- **toolbox (DEPRECATED)** - there used to be a single extension in the toolbox that included several of the above. This functionality was broken out into modular extensions, and now this extensions only includes some authentication stuff. This has been deprecated in favor of `framing`.
+- [Connexion](https://github.com/zalando/connexion)
+- [Flask-RESTful](https://github.com/flask-restful/flask-restful)
+- [flask-apispec](https://github.com/jmcarp/flask-apispec)
 
-While these extensions are nice and composable, there are recommended ways to bundle them up. Functions to create these bundles live in the [plangrid/flask_toolbox/bootstrap.py](plangrid/flask_toolbox/bootstrap.py) file. These functions serve as main entry points into this package and should be called at application startup.
+These are all great projects, and one might work better for your use case. Flask-Rebar solves a similar problem with its own its own twist on the approach.
 
 
-Example Usage
--------------
+Philosophy
+----------
 
-Check out the example app at [examples/todo.py](examples/todo.py). Some example requests to this example app can be found at [examples/todo_output.md](examples/todo_output.md).
+**OpenAPI as a side effect**
 
+Flask-Rebar aims to free developers from having to think about OpenAPI.
 
-Configuration
--------------
+This is not always practical, so some of OpenAPI's needs sneak up to Flask-Rebar. C'est la vie.
 
-Flask-toolbox looks for the following environment variables:
+Flask-Rebar tries not to constrain a service by what is possible with OpenAPI. This means, for better and for worse, that more complex validation logic than can be represented in an OpenAPI specification.
+OpenAPI 3.0 promises to bridge some of this gap, and we have plans to support OpenAPI 3.0 once the tooling catches up (e.g. [swagger-codegen](https://github.com/swagger-api/swagger-codegen).
 
-| Environment Variable | Description | Default |
-| -------------------- | ----------- | ------- |
-| TOOLBOX_PAGINATION_LIMIT_MAX | The default page size limit for pagination requests. | `100` |
-| BUGSNAG_API_KEY | The API key to use for notifying Bugsnag of errors. | `None` |
-| BUGSNAG_RELEASE_STAGE | The release stage to use in Bugsnag notifications. | `'production'` |
-| TOOLBOX_FRAMER_ADD_SWAGGER_ENDPOINTS | Adds auto-generated swagger endpoints to the service | `True` |
-| TOOLBOX_FRAMER_SWAGGER_PATH | The path to retrieve the swagger JSON spec for the service | `'/swagger'` |
-| TOOLBOX_FRAMER_SWAGGER_UI_PATH | The path to view HTML docs for the service generated from swagger | `'/swagger/ui'` |
+**Marshmallow, marshmallow, marshmallow**
 
+Marshmallow is a popular tool for validation/marshaling of objects. Instead of creating a new schema library, Flask-Rebar aims to support Marshmallow in the least constrained way as possible.
 
-Authentication
---------------
+Custom Marshmallow schemas/fields should work by default with OpenAPI spec generation, and Marshmallow-to-OpenAPI conversions should be easily extendable to support the trickiest of Marshmallow schemas.
 
-Flask-toolbox is designed for *internal* PlanGrid services, i.e. services inside our VPC, with requests from external clients proxied by an edge router.
-Consequently, the only authentication mechanism included in this box is simple API key authentication, where all requests are assumed to be *internal and trusted*.
+**Opinions are dangerous**
 
-Clients may include an `X-PG-Auth` header, where the value is a shared secret. Clients may also include a `X-PG-UserId` header, where the value is a user object's unique identifier.
+Flask-Rebar shouldn't care about any particular flavor of REST, what database a service might be backed by, how a service authenticates, etc. It should just provide the tools to make common patterns quicker to implement.
 
-A Flask-toolbox application can be configured to be aware of multiple different API keys, making zero-downtime key rotation possible.
-It can also be configured to associate different keys with different application, which can be useful for rudimentary application authorization.
+There's always an exception (e.g. some endpoint that doesn't return JSON), and Flask-Rebar should be easily bypass-able.
 
 
-Swagger Generation
-------------------
+Who's using Flask-Rebar
+-----------------------
 
-Flask-toolbox can automatically generate a Swagger specification from the declarative routing of the `Framer`.
-The same marshmallow schemas used to validate incoming requests and marshal outgoing data are used to generate the Swagger.
+PlanGrid!
 
-Converters for most of Marshmallow's fields and validators are included here.
-The converters also inspect a Marshmallow schema/field/validator's method resolution order, so subclassing Marshmallow objects should work without much trouble.
-With that, the Marshmallow to Swagger converter is extendable, allowing for custom handling of custom Marshmallow types.
+
+Contribute
+----------
+
+
+License
+-------
+
+`ReactiveLists` is released under an [MIT License](https://opensource.org/licenses/MIT). See [LICENSE](LICENSE) for details.
+
+> **Copyright &copy; 2018-present PlanGrid, Inc.**
