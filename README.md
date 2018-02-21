@@ -17,13 +17,14 @@ Example
 
 ```python
 from flask import Flask
-from flask_rebar import Framer, bootstrap_app_with_framer, errors
+from flask_rebar import errors, Registry
 from marshmallow import fields, Schema
+
 
 from my_app import database
 
 
-framer = Framer()
+registry = Registry()
 
 
 class GetTodoSchema(Schema):
@@ -36,7 +37,7 @@ class TodoSchema(Schema):
     description = fields.String()
 
 
-@framer.handles(
+@registry.handles(
     path='/todos/<int:todo_id>',
     method='GET',
     query_string_schema=UpdateTodoSchema(),
@@ -62,7 +63,7 @@ def get_todo(todo_id):
 
 def create_app(name):
     app = Flask(name)
-    framer.init_app(app)
+    registry.init_app(app)
     return app
 
 
