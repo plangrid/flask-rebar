@@ -1,19 +1,16 @@
 from __future__ import unicode_literals
 
 import json
-import random
 
 from flask import Flask
 from flask_testing import TestCase
 from marshmallow import fields
 
 
-from flask_rebar import messages, validation, response
-from flask_rebar .errors import http_errors
-from flask_rebar.errors import Errors
-from flask_rebar.errors import get_json_body_params_or_400
-from flask_rebar.errors import get_query_string_params_or_400
-from flask_rebar.errors import get_user_id_from_header_or_400
+from flask_rebar import messages, validation, response, Rebar
+from flask_rebar import errors
+from flask_rebar.request_utils import get_json_body_params_or_400
+from flask_rebar.request_utils import get_query_string_params_or_400
 
 
 class TestErrors(TestCase):
@@ -24,7 +21,7 @@ class TestErrors(TestCase):
 
         @app.route('/errors', methods=['GET'])
         def a_terrible_handler():
-            raise http_errors.Conflict(msg=TestErrors.ERROR_MSG)
+            raise errors.Conflict(msg=TestErrors.ERROR_MSG)
 
         @app.route('/uncaught_errors', methods=['GET'])
         def an_even_worse_handler():
@@ -32,15 +29,16 @@ class TestErrors(TestCase):
 
         @app.route('/verbose_errors', methods=['GET'])
         def a_fancy_handler():
-            raise http_errors.Conflict(
+            raise errors.Conflict(
                 msg=TestErrors.ERROR_MSG,
                 error_code=123,
                 additional_data={'foo': 'bar'}
             )
 
-        Errors(app)
+        Rebar().init_app(app=app)
 
         return app
+
 
     def test_custom_http_errors_are_handled(self):
         resp = self.app.test_client().get('/errors')
@@ -92,7 +90,7 @@ class TestJsonBodyValidation(TestCase):
 
     def create_app(self):
         app = Flask(__name__)
-        Errors(app)
+        Rebar().init_app(app=app)
 
         class NestedSchema(validation.RequestSchema):
             baz = fields.List(fields.Integer())
@@ -224,7 +222,7 @@ class TestJsonBodyValidation(TestCase):
 class TestQueryStringValidation(TestCase):
     def create_app(self):
         app = Flask(__name__)
-        Errors(app)
+        Rebar().init_app(app=app)
 
         class Schema(validation.RequestSchema):
             foo = fields.Integer(required=True)
@@ -279,39 +277,3 @@ class TestQueryStringValidation(TestCase):
             'bar': True,
             'baz': [1, 2, 3]
         })
-
-
-def generate_object_id():
-    chars = [hex(x)[2] for x in range(0, 16)]
-    return ''.join([random.choice(chars) for x in range(0, 24)])
-
-
-class TestRetrieveUserID(TestCase):
-    def create_app(self):
-        app = Flask(__name__)
-        Errors(app)
-
-        @app.route('/whoami')
-        def route():
-            user_id = get_user_id_from_header_or_400()
-            return response({'user_id': user_id})
-
-        return app
-
-    def test_missing_user_id(self):
-        resp = self.app.test_client().get('/whoami')
-        self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {'message': messages.missing_user_id})
-
-    def test_invalid_user_id(self):
-        headers = {'X-PG-UserId': 'asdfghjkl;'}
-        resp = self.app.test_client().get('/whoami', headers=headers)
-        self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {'message': messages.invalid_user_id})
-
-    def test_valid_user_id(self):
-        user_id = generate_object_id()
-        headers = {'X-PG-UserId': user_id}
-        resp = self.app.test_client().get('/whoami', headers=headers)
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, {'user_id': user_id})

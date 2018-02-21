@@ -1,11 +1,11 @@
 from flask import Flask
-from marshmallow import fields
+from marshmallow import fields, pre_dump, Schema
 
-from flask_rebar import Framer, bootstrap_app_with_framer, errors
-from flask_rebar.validation import ListOf, RequestSchema, ResponseSchema
+from flask_rebar import Rebar, errors, HeaderApiKeyAuthenticator
+from flask_rebar.validation import RequestSchema, ResponseSchema
 
 
-framer = Framer()
+rebar = Rebar()
 
 # Just a mock database, for demonstration purposes
 todo_id_sequence = 0
@@ -36,7 +36,23 @@ class TodoSchema(ResponseSchema):
     description = fields.String(required=True)
 
 
-@framer.handles(
+class TodoResourceSchema(ResponseSchema):
+    data = fields.Nested(TodoSchema)
+
+    @pre_dump
+    def envelope_in_data(self, data):
+        return {'data': data}
+
+
+class TodoListSchema(ResponseSchema):
+    data = fields.Nested(TodoSchema, many=True)
+
+    @pre_dump
+    def envelope_in_data(self, data):
+        return {'data': data}
+
+
+@rebar.handles(
     path='/todos',
     method='POST',
     request_body_schema=CreateTodoSchema(),
@@ -44,7 +60,7 @@ class TodoSchema(ResponseSchema):
     # This dictionary tells framer which schema to use for which response code.
     # This is a little ugly, but tremendously helpful for generating swagger.
     marshal_schemas={
-        201: TodoSchema()
+        201: TodoResourceSchema()
     }
 )
 def create_todo():
@@ -52,7 +68,7 @@ def create_todo():
 
     # The body is eagerly validated with the `request_body_schema` provided in
     # the decorator. The resulting parameters are now available here:
-    todo = framer.validated_body
+    todo = rebar.validated_body
 
     todo_id_sequence += 1
 
@@ -66,14 +82,14 @@ def create_todo():
     return todo, 201
 
 
-@framer.handles(
+@rebar.handles(
     path='/todos',
     method='GET',
     query_string_schema=GetTodoListSchema(),
 
     # If the value for this is not a dictionary, the response code is assumed
     # to be 200
-    marshal_schemas=ListOf(TodoSchema)()
+    marshal_schemas=TodoListSchema()
 )
 def get_todos():
     global todo_database
@@ -82,21 +98,20 @@ def get_todos():
     # and made available here. Flask-toolbox does treats a request body and
     # query string parameters as two separate sources, and currently does not
     # implement any abstraction on top of them.
-    args = framer.validated_args
+    args = rebar.validated_args
 
     todos = todo_database.values()
 
     if 'complete' in args:
         todos = [t for t in todos if ['complete'] == args['complete']]
 
-    # The `ListOf` helper above just nests the provided schema into "data"
-    return {'data': todos}
+    return todos
 
 
-@framer.handles(
+@rebar.handles(
     path='/todos/<int:todo_id>',
     method='PATCH',
-    marshal_schemas=TodoSchema(),
+    marshal_schemas=TodoResourceSchema(),
     request_body_schema=UpdateTodoSchema()
 )
 def update_todo(todo_id):
@@ -105,7 +120,7 @@ def update_todo(todo_id):
     if todo_id not in todo_database:
         raise errors.NotFound()
 
-    params = framer.validated_body
+    params = rebar.validated_body
 
     todo_database[todo_id].update(params)
 
@@ -117,12 +132,14 @@ def update_todo(todo_id):
 def create_app(name):
     app = Flask(name)
 
-    bootstrap_app_with_framer(app=app, framer=framer)
+    authenticator = HeaderApiKeyAuthenticator(header='X-MyApp-Key')
+    # The HeaderApiKeyAuthenticator does super simple authentication, designed for
+    # service-to-service authentication inside of a protected network, by looking for a
+    # shared secret in the specified header. Here we define what that shared secret is.
+    authenticator.register_key(key='my-api-key')
+    rebar.set_default_authenticator(authenticator=authenticator)
 
-    # The ToolboxFramer includes a default authenticator, which does super
-    # simple service-to-service authentication by looking for a shared secret
-    # in the X-PG-Auth header. Here we define what that shared secret is.
-    framer.default_authenticator.register_key(key='my-api-key')
+    rebar.init_app(app=app)
 
     return app
 

@@ -1,24 +1,27 @@
 from __future__ import unicode_literals
 
+import os
+import sys
 from collections import defaultdict
 from collections import namedtuple
 from functools import wraps
 
 import marshmallow
-from flask import request
+from flask import current_app, jsonify
 from flask import g
+from flask import request
 from flask_swagger_ui import get_swaggerui_blueprint
 
-from flask_rebar.config_parser import truthy
-from flask_rebar.framing.authenticators import USE_DEFAULT
-from flask_rebar.framing.swagger_generator import SwaggerV2Generator
-from flask_rebar import get_json_body_params_or_400,\
-    get_query_string_params_or_400, get_header_params_or_400
+from flask_rebar import messages
+from flask_rebar.authenticators import USE_DEFAULT
+from flask_rebar.config_parser import ConfigParser
+from flask_rebar import errors
 from flask_rebar.request_utils import marshal
 from flask_rebar.request_utils import response
-from flask_rebar.extension import Extension
-from flask_rebar.errors import Errors
-
+from flask_rebar.request_utils import get_header_params_or_400
+from flask_rebar.request_utils import get_json_body_params_or_400
+from flask_rebar.request_utils import get_query_string_params_or_400
+from flask_rebar.swagger_generation import SwaggerV2Generator
 
 # Metadata about a declared handler function. This can be used to both
 # declare the flask routing and to autogenerate swagger.
@@ -105,19 +108,17 @@ def _wrap_handler(
     return wrapped
 
 
-class Framer(Extension):
+class Rebar(object):
     """
     Declaratively constructs a REST API.
 
     Similar to a Flask Blueprint, but intentionally kept separate.
-    """
-    NAME = 'ToolboxExtension::Framer'
-    DEPENDENCIES = (Errors,)
 
-    def add_params_to_parser(self, parser):
-        parser.add_param(name='TOOLBOX_FRAMER_ADD_SWAGGER_ENDPOINTS', coerce=truthy, default=True)
-        parser.add_param(name='TOOLBOX_FRAMER_SWAGGER_PATH', default='/swagger')
-        parser.add_param(name='TOOLBOX_FRAMER_SWAGGER_UI_PATH', default='/swagger/ui')
+    :param flask_rebar.authenticators.Authenticator default_authenticator:
+    :param marshmallow.Schema default_headers_schema:
+    :param swagger_generator:
+    :param dict config:
+    """
 
     def __init__(
             self,
@@ -125,15 +126,19 @@ class Framer(Extension):
             default_headers_schema=None,
             swagger_generator=None,
             swagger_ui_config=None,
-            config=None
+            config=None,
     ):
         self.paths = defaultdict(dict)
         self.default_authenticator = default_authenticator
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.swagger_ui_config = swagger_ui_config or {}
         self.default_headers_schema = default_headers_schema
+        self.config = config or {}
+        self.uncaught_exception_handlers = []
 
-        super(Framer, self).__init__(config=config)
+    def add_params_to_parser(self, parser):
+        parser.add_param(name='REBAR_SWAGGER_PATH', default='/swagger')
+        parser.add_param(name='REBAR_SWAGGER_UI_PATH', default='/swagger/ui')
 
     @property
     def validated_body(self):
@@ -151,7 +156,7 @@ class Framer(Extension):
         """
         Sets a handler authenticator to be used by default.
 
-        :param flask_rebar.framing.authenticators.Authenticator authenticator:
+        :param flask_rebar.authenticators.Authenticator authenticator:
         """
         self.default_authenticator = authenticator
 
@@ -162,6 +167,19 @@ class Framer(Extension):
         :param marshmallow.Schema headers_schema:
         """
         self.default_headers_schema = headers_schema
+
+    def add_uncaught_exception_handler(self, func):
+        """
+        Adds a function that will be called for uncaught exceptions, i.e. exceptions
+        that will result in a 500 error.
+
+        This function should accept the exception instance as a single positional argument.
+
+        All handlers will be called in the order they are added.
+
+        :param Callable func:
+        """
+        self.uncaught_exception_handlers.append(func)
 
     def add_handler(
             self,
@@ -197,7 +215,7 @@ class Framer(Extension):
             Schema to use to grab and validate headers.
         :param Type[USE_DEFAULT]|None|flask_rebar.framing.authenticators.Authenticator authenticator:
             An authenticator object to authenticate incoming requests.
-            If left as USE_DEFAULT, the Framer's default will be used.
+            If left as USE_DEFAULT, the Rebar's default will be used.
             Set to None to make this an unauthenticated handler.
         """
         if isinstance(marshal_schemas, marshmallow.Schema):
@@ -229,6 +247,7 @@ class Framer(Extension):
         """
         Same arguments as `add_handler`, except this can be used as a decorator.
         """
+
         def wrapper(f):
             self.add_handler(
                 func=f,
@@ -242,11 +261,18 @@ class Framer(Extension):
                 authenticator=authenticator
             )
             return f
+
         return wrapper
 
-    def init_extension(self, app, config):
+    def init_app(self, app, config=None):
         """Registers all the handlers with a Flask application."""
+        config = self._resolve_config(app=app, config=config)
+        self._init_routes(app=app, config=config)
+        self._init_swagger(app=app, config=config)
+        self._init_swagger_ui(app=app, config=config)
+        self._init_error_handling(app=app, config=config)
 
+    def _init_routes(self, app, config):
         for path, methods in self.paths.items():
             for method, definition_ in methods.items():
                 app.add_url_rule(
@@ -271,10 +297,10 @@ class Framer(Extension):
                     endpoint=definition_.endpoint
                 )
 
-        if config['TOOLBOX_FRAMER_ADD_SWAGGER_ENDPOINTS']:
-            swagger_path = config['TOOLBOX_FRAMER_SWAGGER_PATH']
-            swagger_ui_path = config['TOOLBOX_FRAMER_SWAGGER_UI_PATH']
+    def _init_swagger(self, app, config):
+        swagger_path = config['REBAR_SWAGGER_PATH']
 
+        if swagger_path:
             @app.route(swagger_path, methods=['GET'])
             def get_swagger():
                 swagger = self.swagger_generator.generate(
@@ -283,6 +309,11 @@ class Framer(Extension):
                 )
                 return response(data=swagger)
 
+    def _init_swagger_ui(self, app, config):
+        swagger_path = config['REBAR_SWAGGER_PATH']
+        swagger_ui_path = config['REBAR_SWAGGER_UI_PATH']
+
+        if swagger_ui_path:
             swagger_ui_blueprint = get_swaggerui_blueprint(
                 base_url=swagger_ui_path,
                 api_url=swagger_path,
@@ -292,3 +323,76 @@ class Framer(Extension):
                 blueprint=swagger_ui_blueprint,
                 url_prefix=swagger_ui_path,
             )
+
+    def _init_error_handling(self, app, config):
+        @app.errorhandler(errors.HttpJsonError)
+        def handle_http_error(error):
+            return self._create_json_error_response(
+                message=error.error_message,
+                http_status_code=error.http_status_code,
+                additional_data=error.additional_data
+            )
+
+        @app.errorhandler(404)
+        @app.errorhandler(405)
+        def handle_werkzeug_http_error(error):
+            return self._create_json_error_response(
+                message=error.description,
+                http_status_code=error.code
+            )
+
+        @app.errorhandler(Exception)
+        def handle_werkzeug_http_error(error):
+            exc_info = sys.exc_info()
+            current_app.log_exception(exc_info=exc_info)
+
+            for func in self.uncaught_exception_handlers:
+                func(error)
+
+            return self._create_json_error_response(
+                message=messages.internal_server_error,
+                http_status_code=500
+            )
+
+    def _create_json_error_response(
+            self,
+            message,
+            http_status_code,
+            additional_data=None
+    ):
+        """
+        Compiles a response object for an error.
+
+        :param str message:
+        :param int http_status_code:
+          An optional, application-specific error code to add to the response.
+        :param additional_data:
+          Additional JSON data to attach to the response.
+        :rtype: flask.Response
+        """
+        body = {'message': message}
+        if additional_data:
+            body.update(additional_data)
+        resp = jsonify(body)
+        resp.status_code = http_status_code
+        return resp
+
+    def _resolve_config(self, app, config):
+        """
+        Resolves the configuration parameters for the extension.
+
+        :param flask.Flask app:
+        :param dict config:
+        :rtype: dict
+        """
+        config = config or {}
+
+        parser = ConfigParser()
+        self.add_params_to_parser(parser)
+
+        return parser.resolve(sources=(
+            config,
+            self.config,
+            app.config,
+            os.environ
+        ))

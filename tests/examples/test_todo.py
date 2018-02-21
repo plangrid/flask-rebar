@@ -22,7 +22,7 @@ class TestTodoApp(TestCase):
         self.assertEqual(resp.status_code, 401)
         resp = self.app.test_client().get(
             '/todos',
-            headers={'X-PG-Auth': 'my-api-key'}
+            headers={'X-MyApp-Key': 'my-api-key'}
         )
         self.assertEqual(resp.status_code, 200)
 
@@ -30,7 +30,7 @@ class TestTodoApp(TestCase):
         resp = self.app.test_client().patch(
             '/todos/1',
             headers={
-                'X-PG-Auth': 'my-api-key',
+                'X-MyApp-Key': 'my-api-key',
                 'Content-Type': 'application/json'
             },
             data=json.dumps({'complete': 'not a boolean'})
@@ -41,7 +41,7 @@ class TestTodoApp(TestCase):
         resp = self.app.test_client().post(
             '/todos',
             headers={
-                'X-PG-Auth': 'my-api-key',
+                'X-MyApp-Key': 'my-api-key',
                 'Content-Type': 'application/json'
             },
             data=json.dumps({
@@ -54,7 +54,7 @@ class TestTodoApp(TestCase):
         resp = self.app.test_client().patch(
             '/todos/1',
             headers={
-                'X-PG-Auth': 'my-api-key',
+                'X-MyApp-Key': 'my-api-key',
                 'Content-Type': 'application/json'
             },
             data=json.dumps({
@@ -66,7 +66,7 @@ class TestTodoApp(TestCase):
         resp = self.app.test_client().get(
             '/todos',
             headers={
-                'X-PG-Auth': 'my-api-key',
+                'X-MyApp-Key': 'my-api-key',
                 'Content-Type': 'application/json'
             }
         )

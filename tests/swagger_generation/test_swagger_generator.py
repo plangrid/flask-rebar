@@ -3,12 +3,11 @@ import unittest
 import marshmallow as m
 
 from flask_rebar import HeaderApiKeyAuthenticator
-from flask_rebar.framing import Framer
-from flask_rebar.framing.swagger_generator import SwaggerV2Generator
-from flask_rebar.framing.swagger_generator import _PathArgument as PathArgument
-from flask_rebar.framing.swagger_generator import _flatten as flatten
-from flask_rebar.framing.swagger_generator import _format_path_for_swagger as format_path_for_swagger
-from flask_rebar.validation import ListOf
+from flask_rebar.rebar import Rebar
+from flask_rebar.swagger_generation import SwaggerV2Generator
+from flask_rebar.swagger_generation.swagger_generator import _PathArgument as PathArgument
+from flask_rebar.swagger_generation.swagger_generator import _flatten as flatten
+from flask_rebar.swagger_generation.swagger_generator import _format_path_for_swagger as format_path_for_swagger
 from flask_rebar.testing import validate_swagger
 
 
@@ -131,7 +130,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         self.maxDiff = None
 
     def test_generate_swagger(self):
-        framer = Framer()
+        rebar = Rebar()
 
         authenticator = HeaderApiKeyAuthenticator(header='x-auth')
         default_authenticator = HeaderApiKeyAuthenticator(
@@ -148,6 +147,9 @@ class TestSwaggerV2Generator(unittest.TestCase):
             uid = m.fields.String()
             name = m.fields.String()
 
+        class ListOfFooSchema(m.Schema):
+            data = m.fields.Nested(FooSchema, many=True)
+
         class FooUpdateSchema(m.Schema):
             __swagger_title = 'FooUpdate'
 
@@ -156,7 +158,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         class FooListSchema(m.Schema):
             name = m.fields.String()
 
-        @framer.handles(
+        @rebar.handles(
             path='/foos/<uuid_string:foo_uid>',
             method='GET',
             marshal_schemas={200: FooSchema()},
@@ -166,7 +168,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
             """helpful description"""
             pass
 
-        @framer.handles(
+        @rebar.handles(
             path='/foos/<foo_uid>',
             method='PATCH',
             marshal_schemas={200: FooSchema()},
@@ -176,17 +178,17 @@ class TestSwaggerV2Generator(unittest.TestCase):
         def update_foo(foo_uid):
             pass
 
-        @framer.handles(
+        @rebar.handles(
             path='/foos',
             method='GET',
-            marshal_schemas={200: ListOf(FooSchema)()},
+            marshal_schemas={200: ListOfFooSchema()},
             query_string_schema=FooListSchema(),
             authenticator=None  # Override the default!
         )
         def list_foos():
             pass
 
-        framer.set_default_authenticator(default_authenticator)
+        rebar.set_default_authenticator(default_authenticator)
 
         host = 'swag.com'
         schemes = ['http']
@@ -209,7 +211,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
             default_response_schema=Error()
         )
 
-        swagger = generator.generate(framer)
+        swagger = generator.generate(rebar)
 
         expected_swagger = {
             'swagger': '2.0',
@@ -295,8 +297,8 @@ class TestSwaggerV2Generator(unittest.TestCase):
                         'operationId': 'list_foos',
                         'responses': {
                             '200': {
-                                'description': 'ListOfFoo',
-                                'schema': {'$ref': '#/definitions/ListOfFoo'}
+                                'description': 'ListOfFooSchema',
+                                'schema': {'$ref': '#/definitions/ListOfFooSchema'}
                             },
                             'default': {
                                 'description': 'Error',
@@ -331,9 +333,9 @@ class TestSwaggerV2Generator(unittest.TestCase):
                         'name': {'type': 'string'}
                     }
                 },
-                'ListOfFoo': {
+                'ListOfFooSchema': {
                     'type': 'object',
-                    'title': 'ListOfFoo',
+                    'title': 'ListOfFooSchema',
                     'properties': {
                         'data': {
                             'type': 'array',
@@ -364,16 +366,16 @@ class TestSwaggerV2Generator(unittest.TestCase):
         self.assertEqual(swagger, expected_swagger)
 
     def test_path_parameter_types_must_be_the_same_for_same_path(self):
-        framer = Framer()
+        rebar = Rebar()
 
-        @framer.handles(
+        @rebar.handles(
             path='/foos/<string:foo_uid>',
             method='GET'
         )
         def get_foo(foo_uid):
             pass
 
-        @framer.handles(
+        @rebar.handles(
             path='/foos/<int:foo_uid>',
             method='PATCH'
         )
@@ -383,7 +385,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         generator = SwaggerV2Generator()
 
         with self.assertRaises(ValueError):
-            generator.generate(framer)
+            generator.generate(rebar)
 
 
 if __name__ == '__main__':

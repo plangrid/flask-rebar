@@ -3,13 +3,12 @@ import unittest
 import marshmallow as m
 from marshmallow import validate as v
 
-from flask_rebar.framing.marshmallow_to_jsonschema import ALL_CONVERTERS
-from flask_rebar.framing.marshmallow_to_jsonschema import ConverterRegistry
-from flask_rebar.framing.marshmallow_to_jsonschema import IN
+from flask_rebar.swagger_generation.marshmallow_to_jsonschema import ALL_CONVERTERS
+from flask_rebar.swagger_generation.marshmallow_to_jsonschema import ConverterRegistry
+from flask_rebar.swagger_generation.marshmallow_to_jsonschema import IN
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import DisallowExtraFieldsMixin
-from flask_rebar.pagination.validation import Skip, Limit
 
 
 class TestConverterRegistry(unittest.TestCase):
@@ -48,8 +47,6 @@ class TestConverterRegistry(unittest.TestCase):
             (m.fields.Method(serialize='x', deserialize='y', swagger_type='integer'), {'type': 'integer'}),
             (m.fields.Function(serialize=lambda _: _, deserialize=lambda _: _, swagger_type='string'), {'type': 'string'}),
             (m.fields.Integer(validate=lambda value: True), {'type': 'integer'}),
-            (Skip(), {'type': 'integer', 'default': 0}),
-            (Limit(), {'type': 'integer'}),
         ]:
             class Foo(m.Schema):
                 a = field

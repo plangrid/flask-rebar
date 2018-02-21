@@ -1,2 +1,1 @@
-from flask_rebar.framing.extension import Framer
-from flask_rebar.framing.authenticators import HeaderApiKeyAuthenticator
+from flask_rebar.swagger_generation.swagger_generator import SwaggerV2Generator

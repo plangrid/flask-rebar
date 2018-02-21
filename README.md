@@ -94,6 +94,7 @@ There are number of packages out there that solve a similar problem. Here are ju
 - [Connexion](https://github.com/zalando/connexion)
 - [Flask-RESTful](https://github.com/flask-restful/flask-restful)
 - [flask-apispec](https://github.com/jmcarp/flask-apispec)
+- [Flasgger](https://github.com/rochacbruno/flasgger)
 
 These are all great projects, and one might work better for your use case. Flask-Rebar solves a similar problem with its own its own twist on the approach.
 
@@ -112,7 +113,7 @@ OpenAPI 3.0 promises to bridge some of this gap, and we have plans to support Op
 
 **Marshmallow, marshmallow, marshmallow**
 
-Marshmallow is a popular tool for validation/marshaling of objects. Instead of creating a new schema library, Flask-Rebar aims to support Marshmallow in the least constrained way as possible.
+Marshmallow is a popular tool for validation/marshaling of objects. Flask-Rebar uses Marshmallow for request validation _and_ response marshaling.
 
 Custom Marshmallow schemas/fields should work by default with OpenAPI spec generation, and Marshmallow-to-OpenAPI conversions should be easily extendable to support the trickiest of Marshmallow schemas.
 

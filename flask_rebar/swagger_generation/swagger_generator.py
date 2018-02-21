@@ -5,14 +5,14 @@ import re
 from collections import namedtuple
 from collections import OrderedDict
 
-from flask_rebar.framing import swagger_words as sw
-from flask_rebar.framing.authenticators import USE_DEFAULT
-from flask_rebar.framing.authenticators import HeaderApiKeyAuthenticator
-from flask_rebar.framing.marshmallow_to_jsonschema import get_swagger_title
-from flask_rebar.framing.marshmallow_to_jsonschema import headers_converter_registry as global_headers_converter_registry
-from flask_rebar.framing.marshmallow_to_jsonschema import query_string_converter_registry as global_query_string_converter_registry
-from flask_rebar.framing.marshmallow_to_jsonschema import request_body_converter_registry as global_request_body_converter_registry
-from flask_rebar.framing.marshmallow_to_jsonschema import response_converter_registry as global_response_converter_registry
+from flask_rebar.swagger_generation import swagger_words as sw
+from flask_rebar.authenticators import USE_DEFAULT
+from flask_rebar.authenticators import HeaderApiKeyAuthenticator
+from flask_rebar.swagger_generation.marshmallow_to_jsonschema import get_swagger_title
+from flask_rebar.swagger_generation.marshmallow_to_jsonschema import headers_converter_registry as global_headers_converter_registry
+from flask_rebar.swagger_generation.marshmallow_to_jsonschema import query_string_converter_registry as global_query_string_converter_registry
+from flask_rebar.swagger_generation.marshmallow_to_jsonschema import request_body_converter_registry as global_request_body_converter_registry
+from flask_rebar.swagger_generation.marshmallow_to_jsonschema import response_converter_registry as global_response_converter_registry
 from flask_rebar.validation import Error
 
 
@@ -238,9 +238,9 @@ def _verify_parameters_are_the_same(a, b):
 
 class SwaggerV2Generator(object):
     """
-    Generates a v2.0 Swagger specification from a Framer object.
+    Generates a v2.0 Swagger specification from a Rebar object.
 
-    Not all things are retrievable from the Framer object, so this
+    Not all things are retrievable from the Rebar object, so this
     guy also needs some additional information to complete the job.
 
     :param str host:
@@ -336,7 +336,7 @@ class SwaggerV2Generator(object):
 
     def register_authenticator_converter(self, authenticator_class, converter):
         """
-        The Framer allows for custom Authenticators.
+        The Rebar allows for custom Authenticators.
 
         If you have a custom Authenticator, you need to add a function that
         can convert that authenticator to a Swagger representation.
@@ -360,9 +360,9 @@ class SwaggerV2Generator(object):
             produces=None
     ):
         """
-        Generates a Swagger specification from a Framer instance.
+        Generates a Swagger specification from a Rebar instance.
 
-        :param Framer framer:
+        :param Rebar framer:
         :param str host: Overrides the initialized host
         :param iterable(str) schemes: Overrides the initialized schemas
         :param iterable(str) consumes: Overrides the initialized consumes

@@ -2,19 +2,7 @@ from flask import request
 from werkzeug.security import safe_str_cmp
 
 from flask_rebar import errors, messages
-
-
-class USE_DEFAULT(object):
-    pass
-
-
-class Authenticator(object):
-    """
-    Abstract authenticator class. Custom authentication methods should
-    extend this class.
-    """
-    def authenticate(self):
-        raise NotImplemented
+from flask_rebar.authenticators.base import Authenticator
 
 
 class HeaderApiKeyAuthenticator(Authenticator):

@@ -16,8 +16,7 @@ from marshmallow.validate import Validator
 from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import DisallowExtraFieldsMixin
-from flask_rebar.pagination.validation import Limit
-from flask_rebar.framing import swagger_words as sw
+from flask_rebar.swagger_generation import swagger_words as sw
 
 
 marshmallow_version = tuple(int(v) for v in m.__version__.split('.'))
@@ -466,16 +465,6 @@ class ConstantConverter(FieldConverter):
         return [obj.constant]
 
 
-class LimitConverter(IntegerConverter):
-    MARSHMALLOW_TYPE = Limit
-
-    @sets_jsonschema_attr(sw.default)
-    def get_default(self, obj, context):
-        # This is a tricky value to get declaratively, since its configured
-        # at runtime. Punting on this for now.
-        return UNSET
-
-
 class CsvArrayConverter(ListConverter):
     MARSHMALLOW_TYPE = CommaSeparatedList
 
@@ -552,7 +541,7 @@ class LengthConverter(ValidatorConverter):
 
 class ConverterRegistry(object):
     """
-    Registry for `MarshmallowConverter`s.
+    Rebar for `MarshmallowConverter`s.
 
     Schemas for responses, query strings, request bodies, etc. need to
     be converted differently. For example, response schemas as "dump"ed and
@@ -633,6 +622,7 @@ class ConverterRegistry(object):
                 schema=obj
             )
         )
+
 
 ALL_CONVERTERS = tuple([
     klass()

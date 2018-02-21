@@ -5,10 +5,8 @@ import marshmallow as m
 from flask import Flask
 
 from flask_rebar import HeaderApiKeyAuthenticator
-from flask_rebar.errors import Errors
-from flask_rebar.framing.authenticators import USE_DEFAULT
-from flask_rebar.framing import Framer
-from flask_rebar.validation import ListOf
+from flask_rebar.authenticators import USE_DEFAULT
+from flask_rebar.rebar import Rebar
 from flask_rebar.testing import validate_swagger
 
 
@@ -20,6 +18,10 @@ DEFAULT_RESPONSE = {'uid': '0', 'name': "I'm the default for testing!"}
 class FooSchema(m.Schema):
     uid = m.fields.String()
     name = m.fields.String()
+
+
+class ListOfFooSchema(m.Schema):
+    data = m.fields.Nested(FooSchema, many=True)
 
 
 class FooUpdateSchema(m.Schema):
@@ -50,11 +52,10 @@ def auth_headers(header=DEFAULT_AUTH_HEADER, secret=DEFAULT_AUTH_SECRET):
     return dict([(header, secret)])
 
 
-def create_framed_app(framer):
+def create_framed_app(rebar):
     app = Flask('FramerTest')
     app.testing = True
-    Errors(app)
-    framer.init_app(app)
+    rebar.init_app(app)
 
     default_authenticator = HeaderApiKeyAuthenticator(
         header=DEFAULT_AUTH_HEADER,
@@ -64,12 +65,12 @@ def create_framed_app(framer):
         app_name='internal',
         key=DEFAULT_AUTH_SECRET
     )
-    framer.set_default_authenticator(default_authenticator)
+    rebar.set_default_authenticator(default_authenticator)
 
     return app
 
 
-def register_default_authenticator(framer):
+def register_default_authenticator(rebar):
     default_authenticator = HeaderApiKeyAuthenticator(
         header=DEFAULT_AUTH_HEADER,
         name='default'
@@ -78,11 +79,11 @@ def register_default_authenticator(framer):
         app_name='internal',
         key=DEFAULT_AUTH_SECRET
     )
-    framer.set_default_authenticator(default_authenticator)
+    rebar.set_default_authenticator(default_authenticator)
 
 
 def register_endpoint(
-        framer,
+        rebar,
         func=None,
         path='/foos/<foo_uid>',
         method='GET',
@@ -96,7 +97,7 @@ def register_endpoint(
     def default_handler_func(*args, **kwargs):
         return DEFAULT_RESPONSE
 
-    framer.add_handler(
+    rebar.add_handler(
         func=func or default_handler_func,
         path=path,
         method=method,
@@ -111,10 +112,10 @@ def register_endpoint(
 
 class FramerTest(unittest.TestCase):
     def test_default_authentication(self):
-        framer = Framer()
-        register_default_authenticator(framer)
-        register_endpoint(framer)
-        app = create_framed_app(framer)
+        rebar = Rebar()
+        register_default_authenticator(rebar)
+        register_endpoint(rebar)
+        app = create_framed_app(rebar)
 
         resp = app.test_client().get(
             path='/foos/1',
@@ -133,14 +134,14 @@ class FramerTest(unittest.TestCase):
         auth_header = 'x-overridden-auth'
         auth_secret = 'BLAM!'
 
-        framer = Framer()
+        rebar = Rebar()
 
-        register_default_authenticator(framer)
+        register_default_authenticator(rebar)
         authenticator = HeaderApiKeyAuthenticator(header=auth_header)
         authenticator.register_key(app_name='internal', key=auth_secret)
 
-        register_endpoint(framer, authenticator=authenticator)
-        app = create_framed_app(framer)
+        register_endpoint(rebar, authenticator=authenticator)
+        app = create_framed_app(rebar)
 
         resp = app.test_client().get(
             path='/foos/1',
@@ -157,19 +158,19 @@ class FramerTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 401)
 
     def test_override_with_no_authenticator(self):
-        framer = Framer()
-        register_default_authenticator(framer)
-        register_endpoint(framer, authenticator=None)
-        app = create_framed_app(framer)
+        rebar = Rebar()
+        register_default_authenticator(rebar)
+        register_endpoint(rebar, authenticator=None)
+        app = create_framed_app(rebar)
 
         resp = app.test_client().get(path='/foos/1')
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
 
     def test_validate_body_parameters(self):
-        framer = Framer()
+        rebar = Rebar()
 
-        @framer.handles(
+        @rebar.handles(
             path='/foos/<foo_uid>',
             method='PATCH',
             marshal_schemas={
@@ -178,9 +179,9 @@ class FramerTest(unittest.TestCase):
             request_body_schema=FooUpdateSchema(),
         )
         def update_foo(foo_uid):
-            return {'uid': foo_uid, 'name': framer.validated_body['name']}
+            return {'uid': foo_uid, 'name': rebar.validated_body['name']}
 
-        app = create_framed_app(framer)
+        app = create_framed_app(rebar)
 
         resp = app.test_client().patch(
             path='/foos/1',
@@ -201,22 +202,22 @@ class FramerTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 400)
 
     def test_validate_query_parameters(self):
-        framer = Framer()
+        rebar = Rebar()
 
-        @framer.handles(
+        @rebar.handles(
             path='/foos',
             method='GET',
             marshal_schemas={
-                200: ListOf(FooSchema)()
+                200: ListOfFooSchema()
             },
             query_string_schema=FooListSchema(),
         )
         def list_foos():
             return {
-                'data': [{'name': framer.validated_args['name'], 'uid': '1'}]
+                'data': [{'name': rebar.validated_args['name'], 'uid': '1'}]
             }
 
-        app = create_framed_app(framer)
+        app = create_framed_app(rebar)
 
         resp = app.test_client().get(path='/foos?name=jill')
         self.assertEqual(resp.status_code, 200)
@@ -231,10 +232,10 @@ class FramerTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 400)
 
     def test_validate_headers(self):
-        framer = Framer()
-        register_default_authenticator(framer)
+        rebar = Rebar()
+        register_default_authenticator(rebar)
 
-        @framer.handles(
+        @rebar.handles(
             path='/me',
             method='GET',
             marshal_schemas={
@@ -244,10 +245,10 @@ class FramerTest(unittest.TestCase):
         )
         def get_me():
             return {
-                'user_name': framer.validated_headers['name']
+                'user_name': rebar.validated_headers['name']
             }
 
-        app = create_framed_app(framer)
+        app = create_framed_app(rebar)
 
         headers = auth_headers()
         headers['x-name'] = 'hello'
@@ -269,8 +270,8 @@ class FramerTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 400)
 
     def test_swagger_endpoint_is_automatically_created(self):
-        framer = Framer()
-        app = create_framed_app(framer)
+        rebar = Rebar()
+        app = create_framed_app(rebar)
 
         resp = app.test_client().get('/swagger')
 
@@ -279,26 +280,26 @@ class FramerTest(unittest.TestCase):
         validate_swagger(get_json_from_resp(resp))
 
     def test_swagger_ui_endpoint_is_automatically_created(self):
-        framer = Framer()
-        app = create_framed_app(framer)
+        rebar = Rebar()
+        app = create_framed_app(rebar)
 
         resp = app.test_client().get('/swagger/ui/')
 
         self.assertEqual(resp.status_code, 200)
 
     def test_register_multiple_paths(self):
-        framer = Framer()
+        rebar = Rebar()
 
         common_kwargs = {
             'method': 'GET',
             'marshal_schemas': {200: FooSchema()},
         }
 
-        @framer.handles(path='/bars/<foo_uid>', endpoint='bar', **common_kwargs)
-        @framer.handles(path='/foos/<foo_uid>', endpoint='foo', **common_kwargs)
+        @rebar.handles(path='/bars/<foo_uid>', endpoint='bar', **common_kwargs)
+        @rebar.handles(path='/foos/<foo_uid>', endpoint='foo', **common_kwargs)
         def handler_func(foo_uid):
             return DEFAULT_RESPONSE
-        app = create_framed_app(framer)
+        app = create_framed_app(rebar)
 
         resp = app.test_client().get(path='/foos/1')
         self.assertEqual(resp.status_code, 200)
@@ -313,18 +314,18 @@ class FramerTest(unittest.TestCase):
         self.assertIn('/foos/{foo_uid}', swagger['paths'])
 
     def test_register_multiple_methods(self):
-        framer = Framer()
+        rebar = Rebar()
 
         common_kwargs = {
             'path': '/foos/<foo_uid>',
             'marshal_schemas': {200: FooSchema()},
         }
 
-        @framer.handles(method='GET', endpoint='get_foo', **common_kwargs)
-        @framer.handles(method='PATCH', endpoint='update_foo', **common_kwargs)
+        @rebar.handles(method='GET', endpoint='get_foo', **common_kwargs)
+        @rebar.handles(method='PATCH', endpoint='update_foo', **common_kwargs)
         def handler_func(foo_uid):
             return DEFAULT_RESPONSE
-        app = create_framed_app(framer)
+        app = create_framed_app(rebar)
 
         resp = app.test_client().get(path='/foos/1')
         self.assertEqual(resp.status_code, 200)
@@ -342,20 +343,20 @@ class FramerTest(unittest.TestCase):
         self.assertIn('patch', swagger['paths']['/foos/{foo_uid}'])
 
     def test_default_headers(self):
-        framer = Framer()
-        framer.set_default_headers_schema(HeadersSchema())
+        rebar = Rebar()
+        rebar.set_default_headers_schema(HeadersSchema())
 
-        @framer.handles(
+        @rebar.handles(
             path='/me',
             method='GET',
             marshal_schemas=MeSchema()
         )
         def get_me():
             return {
-                'user_name': framer.validated_headers['name']
+                'user_name': rebar.validated_headers['name']
             }
 
-        @framer.handles(
+        @rebar.handles(
             path='/myself',
             method='GET',
             marshal_schemas=MeSchema(),
@@ -366,7 +367,7 @@ class FramerTest(unittest.TestCase):
         def get_myself():
             return DEFAULT_RESPONSE
 
-        app = create_framed_app(framer)
+        app = create_framed_app(rebar)
 
         resp = app.test_client().get(
             path='/me',
@@ -399,8 +400,8 @@ class FramerTest(unittest.TestCase):
         )
 
     def test_swagger_endpoints_can_be_omitted(self):
-        framer = Framer(config={'TOOLBOX_FRAMER_ADD_SWAGGER_ENDPOINTS': False})
-        app = create_framed_app(framer)
+        rebar = Rebar(config={'REBAR_SWAGGER_PATH': None, 'REBAR_SWAGGER_UI_PATH': ''})
+        app = create_framed_app(rebar)
 
         resp = app.test_client().get('/swagger')
         self.assertEqual(resp.status_code, 404)
