@@ -1,10 +1,9 @@
-# cURL and example.py
-
-Here's a snippet of playing with the application inside [todo.py](todo.py).
+# cURL and examples/todo.py
+Here's a snippet of playing with the application inside todo.py.
 
 Swagger for free!
 ```
-$ curl -XGET http://127.0.0.1:5000/swagger
+$ curl -s -XGET http://127.0.0.1:5000/swagger
 {
   "consumes": [
     "application/json"
@@ -21,20 +20,14 @@ $ curl -XGET http://127.0.0.1:5000/swagger
         }
       },
       "required": [
-        "description",
-        "complete"
+        "complete",
+        "description"
       ],
       "title": "CreateTodoSchema",
       "type": "object"
     },
     "Error": {
       "properties": {
-        "code": {
-          "type": "string"
-        },
-        "details": {
-          "type": "object"
-        },
         "errors": {
           "type": "object"
         },
@@ -48,7 +41,7 @@ $ curl -XGET http://127.0.0.1:5000/swagger
       "title": "Error",
       "type": "object"
     },
-    "ListOfTodoSchema": {
+    "TodoListSchema": {
       "properties": {
         "data": {
           "items": {
@@ -57,7 +50,16 @@ $ curl -XGET http://127.0.0.1:5000/swagger
           "type": "array"
         }
       },
-      "title": "ListOfTodoSchema",
+      "title": "TodoListSchema",
+      "type": "object"
+    },
+    "TodoResourceSchema": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/TodoSchema"
+        }
+      },
+      "title": "TodoResourceSchema",
       "type": "object"
     },
     "TodoSchema": {
@@ -73,9 +75,9 @@ $ curl -XGET http://127.0.0.1:5000/swagger
         }
       },
       "required": [
-        "description",
         "id",
-        "complete"
+        "complete",
+        "description"
       ],
       "title": "TodoSchema",
       "type": "object"
@@ -114,9 +116,9 @@ $ curl -XGET http://127.0.0.1:5000/swagger
         ],
         "responses": {
           "200": {
-            "description": "ListOfTodoSchema",
+            "description": "TodoListSchema",
             "schema": {
-              "$ref": "#/definitions/ListOfTodoSchema"
+              "$ref": "#/definitions/TodoListSchema"
             }
           },
           "default": {
@@ -141,9 +143,9 @@ $ curl -XGET http://127.0.0.1:5000/swagger
         ],
         "responses": {
           "201": {
-            "description": "TodoSchema",
+            "description": "TodoResourceSchema",
             "schema": {
-              "$ref": "#/definitions/TodoSchema"
+              "$ref": "#/definitions/TodoResourceSchema"
             }
           },
           "default": {
@@ -178,9 +180,9 @@ $ curl -XGET http://127.0.0.1:5000/swagger
         ],
         "responses": {
           "200": {
-            "description": "TodoSchema",
+            "description": "TodoResourceSchema",
             "schema": {
-              "$ref": "#/definitions/TodoSchema"
+              "$ref": "#/definitions/TodoResourceSchema"
             }
           },
           "default": {
@@ -207,7 +209,7 @@ $ curl -XGET http://127.0.0.1:5000/swagger
   "securityDefinitions": {
     "sharedSecret": {
       "in": "header",
-      "name": "X-PG-Auth",
+      "name": "X-MyApp-Key",
       "type": "apiKey"
     }
   },
@@ -215,22 +217,9 @@ $ curl -XGET http://127.0.0.1:5000/swagger
 }
 ```
 
-Authentication!
+Request validation!
 ```
-$ curl -XGET http://127.0.0.1:5000/todos
-{
-  "message": "No auth token provided."
-}
-
-$ curl -XGET http://127.0.0.1:5000/todos -H "X-PG-Auth: my-api-key"
-{
-  "data": []
-}
-```
-
-Validation!
-```
-$ curl -XPATCH http://127.0.0.1:5000/todos/1 -H "X-PG-Auth: my-api-key" -H "Content-Type: application/json" -d '{"complete": "wrong type, for demonstration of validation"}'
+$ curl -s -XPATCH http://127.0.0.1:5000/todos/1 -H "X-MyApp-Key: my-api-key" -H "Content-Type: application/json" -d '{"complete": "wrong type, for demonstration of validation"}'
 {
   "errors": {
     "complete": "Not a valid boolean."
@@ -239,23 +228,37 @@ $ curl -XPATCH http://127.0.0.1:5000/todos/1 -H "X-PG-Auth: my-api-key" -H "Cont
 }
 ```
 
+Authentication!
+```
+$ curl -s -XGET http://127.0.0.1:5000/todos
+{
+  "message": "No auth token provided."
+}
+$ curl -s -XGET http://127.0.0.1:5000/todos -H "X-MyApp-Key: my-api-key"
+{
+  "data": []
+}
+```
+
 CRUD!
 ```
-$ curl -XPOST http://127.0.0.1:5000/todos -H "X-PG-Auth: my-api-key" -H "Content-Type: application/json" -d '{"complete": false, "description": "Find product market fit"}'
+$ curl -s -XPOST http://127.0.0.1:5000/todos -H "X-MyApp-Key: my-api-key" -H "Content-Type: application/json" -d '{"complete": false, "description": "Find product market fit"}'
 {
-  "complete": false,
-  "description": "Find product market fit",
-  "id": 1
+  "data": {
+    "complete": false,
+    "description": "Find product market fit",
+    "id": 1
+  }
 }
-
-$ curl -XPATCH http://127.0.0.1:5000/todos/1 -H "X-PG-Auth: my-api-key" -H "Content-Type: application/json" -d '{"complete": true}'
+$ curl -s -XPATCH http://127.0.0.1:5000/todos/1 -H "X-MyApp-Key: my-api-key" -H "Content-Type: application/json" -d '{"complete": true}'
 {
-  "complete": true,
-  "description": "Find product market fit",
-  "id": 1
+  "data": {
+    "complete": true,
+    "description": "Find product market fit",
+    "id": 1
+  }
 }
-
-$ curl -XGET http://127.0.0.1:5000/todos -H "X-PG-Auth: my-api-key"
+$ curl -s -XGET http://127.0.0.1:5000/todos -H "X-MyApp-Key: my-api-key"
 {
   "data": [
     {

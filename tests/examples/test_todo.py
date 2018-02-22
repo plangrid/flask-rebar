@@ -2,7 +2,7 @@ import json
 
 from flask_testing import TestCase
 
-from examples.todo import create_app
+from examples.todo.todo import create_app
 
 
 class TestTodoApp(TestCase):
