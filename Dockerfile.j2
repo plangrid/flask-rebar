@@ -1,5 +1,0 @@
-FROM {{ PLANGRID_DOCKER_REPO }}/pg-docker:master
-MAINTAINER plangrid
-
-COPY ./ .
-RUN pip3 install -r requirements.txt

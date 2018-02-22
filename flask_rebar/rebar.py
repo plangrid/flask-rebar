@@ -10,7 +10,6 @@ import marshmallow
 from flask import current_app, jsonify
 from flask import g
 from flask import request
-from flask_swagger_ui import get_swaggerui_blueprint
 
 from flask_rebar import messages
 from flask_rebar.authenticators import USE_DEFAULT
@@ -22,6 +21,7 @@ from flask_rebar.request_utils import get_header_params_or_400
 from flask_rebar.request_utils import get_json_body_params_or_400
 from flask_rebar.request_utils import get_query_string_params_or_400
 from flask_rebar.swagger_generation import SwaggerV2Generator
+from flask_rebar.swagger_ui import create_swagger_ui_blueprint
 
 # Metadata about a declared handler function. This can be used to both
 # declare the flask routing and to autogenerate swagger.
@@ -125,13 +125,11 @@ class Rebar(object):
             default_authenticator=None,
             default_headers_schema=None,
             swagger_generator=None,
-            swagger_ui_config=None,
             config=None,
     ):
         self.paths = defaultdict(dict)
         self.default_authenticator = default_authenticator
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
-        self.swagger_ui_config = swagger_ui_config or {}
         self.default_headers_schema = default_headers_schema
         self.config = config or {}
         self.uncaught_exception_handlers = []
@@ -314,13 +312,12 @@ class Rebar(object):
         swagger_ui_path = config['REBAR_SWAGGER_UI_PATH']
 
         if swagger_ui_path:
-            swagger_ui_blueprint = get_swaggerui_blueprint(
-                base_url=swagger_ui_path,
-                api_url=swagger_path,
-                config=self.swagger_ui_config,
+            blueprint = create_swagger_ui_blueprint(
+                ui_url=swagger_ui_path,
+                swagger_url=swagger_path,
             )
             app.register_blueprint(
-                blueprint=swagger_ui_blueprint,
+                blueprint=blueprint,
                 url_prefix=swagger_ui_path,
             )
 

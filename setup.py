@@ -14,7 +14,6 @@ if __name__ == '__main__':
         install_requires=[
             'Flask>=0.12.1',
             'marshmallow>=2.13.5',
-            'flask-swagger-ui>=3.0.12a0',
         ],
         version='0.1.0',
         zip_safe=True,

@@ -137,6 +137,6 @@ Contribute
 License
 -------
 
-`ReactiveLists` is released under an [MIT License](https://opensource.org/licenses/MIT). See [LICENSE](LICENSE) for details.
+`flask-rebar` is released under an [MIT License](https://opensource.org/licenses/MIT). See [LICENSE](LICENSE) for details.
 
 > **Copyright &copy; 2018-present PlanGrid, Inc.**
