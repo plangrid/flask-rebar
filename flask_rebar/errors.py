@@ -1,13 +1,37 @@
+"""
+    Errors
+    ~~~~~~
+
+    Exceptions that get transformed to HTTP error responses.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 from __future__ import unicode_literals
 
 
 class HttpJsonError(Exception):
+    """
+    Abstract base class for exceptions that will be cause and transformed
+    into an appropriate HTTP error response with a JSON body.
+
+    These can be raised at any time during the handling of a request,
+    and the Rebar extension will handling catching it and transforming it.
+
+    This class itself shouldn't be used. Instead, use one of the subclasses.
+
+    :param str msg:
+        A human readable message to be included in the JSON error response
+    :param dict additional_data:
+        Dictionary of additional keys and values to be set in the JSON body.
+        Note that these keys and values are added to the root object of the
+        response, not nested under "additional_data".
+    """
     default_message = None
     http_status_code = None
 
-    def __init__(self, msg=None, error_code=None, additional_data=None):
+    def __init__(self, msg=None, additional_data=None):
         self.error_message = msg or self.default_message
-        self.error_code = error_code
         self.additional_data = additional_data
         super(HttpJsonError, self).__init__(self.error_message)
 

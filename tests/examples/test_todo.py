@@ -1,3 +1,12 @@
+"""
+    Test Todo
+    ~~~~~~~~~
+
+    Tests for the example todo application.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 import json
 
 from flask_testing import TestCase

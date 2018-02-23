@@ -1,3 +1,12 @@
+"""
+    Swagger UI Blueprint
+    ~~~~~~~~~~~~~~~~~~~~
+
+    Flask Blueprint for adding Swagger UI to an API.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 from flask import Blueprint, render_template, current_app
 
 

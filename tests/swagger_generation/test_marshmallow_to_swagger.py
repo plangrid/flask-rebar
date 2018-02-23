@@ -1,11 +1,20 @@
+"""
+    Test Marshmallow to Swagger
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Tests for the Marshmallow to Swagger converters.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 import unittest
 
 import marshmallow as m
 from marshmallow import validate as v
 
-from flask_rebar.swagger_generation.marshmallow_to_jsonschema import ALL_CONVERTERS
-from flask_rebar.swagger_generation.marshmallow_to_jsonschema import ConverterRegistry
-from flask_rebar.swagger_generation.marshmallow_to_jsonschema import IN
+from flask_rebar.swagger_generation.marshmallow_to_swagger import ALL_CONVERTERS
+from flask_rebar.swagger_generation.marshmallow_to_swagger import ConverterRegistry
+from flask_rebar.swagger_generation.marshmallow_to_swagger import IN
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import DisallowExtraFieldsMixin

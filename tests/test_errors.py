@@ -1,3 +1,12 @@
+"""
+    Test Errors
+    ~~~~~~~~~~~
+
+    Tests for the exception to HTTP error transformation.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 from __future__ import unicode_literals
 
 import json
@@ -31,14 +40,12 @@ class TestErrors(TestCase):
         def a_fancy_handler():
             raise errors.Conflict(
                 msg=TestErrors.ERROR_MSG,
-                error_code=123,
                 additional_data={'foo': 'bar'}
             )
 
         Rebar().init_app(app=app)
 
         return app
-
 
     def test_custom_http_errors_are_handled(self):
         resp = self.app.test_client().get('/errors')

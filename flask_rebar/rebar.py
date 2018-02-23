@@ -1,6 +1,15 @@
+"""
+    Rebar Extension
+    ~~~~~~~~~~~~~~~
+
+    The main entry point for Flask-Rebar, including a Flask extension
+    and a registry for request handlers.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 from __future__ import unicode_literals
 
-import os
 import sys
 from collections import defaultdict
 from collections import namedtuple
@@ -14,7 +23,6 @@ from flask import request
 
 from flask_rebar import messages
 from flask_rebar.authenticators import USE_DEFAULT
-from flask_rebar.config_parser import ConfigParser
 from flask_rebar import errors
 from flask_rebar.request_utils import marshal
 from flask_rebar.request_utils import response
@@ -110,14 +118,32 @@ def _wrap_handler(
 
 
 def get_validated_body():
+    """
+    Retrieve the result of validating/transforming an incoming request body with
+    the `request_body_schema` a handler was registered with.
+
+    :rtype: dict
+    """
     return g.validated_body
 
 
 def get_validated_args():
+    """
+    Retrieve the result of validating/transforming an incoming request's query
+    string with the `query_string_schema` a handler was registered with.
+
+    :rtype: dict
+    """
     return g.validated_args
 
 
 def get_validated_headers():
+    """
+    Retrieve the result of validating/transforming an incoming request's headers
+    with the `headers_schema` a handler was registered with.
+
+    :rtype: dict
+    """
     return g.validated_headers
 
 
@@ -151,13 +177,36 @@ def prefix_url(prefix, url):
 
 class HandlerRegistry(object):
     """
-    Declaratively constructs a REST API.
+    Registry for request handlers.
 
-    Similar to a Flask Blueprint, but intentionally kept separate.
+    This should typically be instantiated via a :class:`Rebar` instance::
 
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+    Although it can be instantiated independently and added to the registry::
+
+        rebar = Rebar()
+        registry = HandlerRegistry()
+        rebar.add_handler_registry(registry)
+
+    :param str prefix:
+        URL prefix for all handlers registered with this registry instance.
     :param flask_rebar.authenticators.Authenticator default_authenticator:
+        Authenticator to use for all handlers as a default.
     :param marshmallow.Schema default_headers_schema:
+        Schema to validate the headers on all requests as a default.
     :param swagger_generator:
+        Object to generate a Swagger specification from this registry. This will be
+        the Swagger generator that is used in the endpoints swagger and swagger UI
+        that are added to the API.
+        If left as None, a `SwaggerV2Generator` instance will be used.
+    :param str swagger_path:
+        The Swagger specification as a JSON document will be hosted at this URL.
+        If set as None, no swagger specification will be hosted.
+    :param str swagger_ui_path:
+        The HTML Swagger UI will be hosted at this URL.
+        If set as None, no Swagger UI will be hosted.
     """
 
     def __init__(
@@ -166,12 +215,16 @@ class HandlerRegistry(object):
             default_authenticator=None,
             default_headers_schema=None,
             swagger_generator=None,
+            swagger_path='/swagger',
+            swagger_ui_path='/swagger/ui'
     ):
         self.prefix = normalize_prefix(prefix)
         self._paths = defaultdict(dict)
         self.default_authenticator = default_authenticator
         self.default_headers_schema = default_headers_schema
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
+        self.swagger_path = swagger_path
+        self.swagger_ui_path = swagger_ui_path
 
     def set_default_authenticator(self, authenticator):
         """
@@ -190,7 +243,24 @@ class HandlerRegistry(object):
         self.default_headers_schema = headers_schema
 
     def clone(self):
+        """
+        Returns a new, shallow-copied instance of :class:`HandlerRegistry`.
+
+        :rtype: HandlerRegistry
+        """
         return copy(self)
+
+    def _prefixed(self, path):
+        if self.prefix:
+            return prefix_url(prefix=self.prefix, url=path)
+        else:
+            return path
+
+    def _prefixed_swagger_path(self):
+        return self._prefixed(self.swagger_path)
+
+    def _prefixed_swagger_ui_path(self):
+        return self._prefixed(self.swagger_ui_path)
 
     @property
     def paths(self):
@@ -222,7 +292,7 @@ class HandlerRegistry(object):
     def add_handler(
             self,
             func,
-            path,
+            rule,
             method='GET',
             endpoint=None,
             marshal_schemas=None,
@@ -236,7 +306,7 @@ class HandlerRegistry(object):
 
         :param func:
             The Flask "view_func"
-        :param str path:
+        :param str rule:
             The Flask "rule"
         :param str method:
             The HTTP method this handler accepts
@@ -259,9 +329,9 @@ class HandlerRegistry(object):
         if isinstance(marshal_schemas, marshmallow.Schema):
             marshal_schemas = {200: marshal_schemas}
 
-        self._paths[path][method] = PathDefinition(
+        self._paths[rule][method] = PathDefinition(
             func=func,
-            path=path,
+            path=rule,
             method=method,
             endpoint=endpoint,
             marshal_schemas=marshal_schemas,
@@ -273,7 +343,7 @@ class HandlerRegistry(object):
 
     def handles(
             self,
-            path,
+            rule,
             method='GET',
             endpoint=None,
             marshal_schemas=None,
@@ -283,13 +353,14 @@ class HandlerRegistry(object):
             authenticator=USE_DEFAULT
     ):
         """
-        Same arguments as `add_handler`, except this can be used as a decorator.
+        Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
+        be used as a decorator.
         """
 
         def wrapper(f):
             self.add_handler(
                 func=f,
-                path=path,
+                rule=rule,
                 method=method,
                 endpoint=endpoint,
                 marshal_schemas=marshal_schemas,
@@ -302,11 +373,10 @@ class HandlerRegistry(object):
 
         return wrapper
 
-    def register(self, app, swagger_path=None, swagger_ui_path=None):
-        """Registers all the handlers with a Flask application."""
+    def register(self, app):
         self._register_routes(app=app)
-        self._register_swagger(app=app, swagger_path=swagger_path)
-        self._register_swagger_ui(app=app, swagger_path=swagger_path, swagger_ui_path=swagger_ui_path)
+        self._register_swagger(app=app)
+        self._register_swagger_ui(app=app)
 
     def _register_routes(self, app):
         for path, methods in self.paths.items():
@@ -341,15 +411,14 @@ class HandlerRegistry(object):
                     endpoint=endpoint
                 )
 
-    def _register_swagger(self, app, swagger_path):
+    def _register_swagger(self, app):
         swagger_endpoint = 'get_swagger'
 
         if self.prefix:
-            swagger_path = prefix_url(prefix=self.prefix, url=swagger_path)
             swagger_endpoint = '.'.join((self.prefix, swagger_endpoint))
 
-        if swagger_path:
-            @app.route(swagger_path, methods=['GET'], endpoint=swagger_endpoint)
+        if self.swagger_path:
+            @app.route(self._prefixed_swagger_path(), methods=['GET'], endpoint=swagger_endpoint)
             def get_swagger():
                 swagger = self.swagger_generator.generate(
                     registry=self,
@@ -357,58 +426,49 @@ class HandlerRegistry(object):
                 )
                 return response(data=swagger)
 
-    def _register_swagger_ui(self, app, swagger_path, swagger_ui_path):
+    def _register_swagger_ui(self, app):
         blueprint_name = 'swagger_ui'
 
         if self.prefix:
-            swagger_ui_path = prefix_url(prefix=self.prefix, url=swagger_ui_path)
             blueprint_name = self.prefix + blueprint_name
 
-        if swagger_ui_path:
+        if self.swagger_ui_path:
             blueprint = create_swagger_ui_blueprint(
                 name=blueprint_name,
-                ui_url=swagger_ui_path,
-                swagger_url=swagger_path,
+                ui_url=self._prefixed_swagger_ui_path(),
+                swagger_url=self._prefixed_swagger_path(),
             )
             app.register_blueprint(
                 blueprint=blueprint,
-                url_prefix=swagger_ui_path,
+                url_prefix=self._prefixed_swagger_ui_path(),
             )
 
 
 class Rebar(object):
     """
-    Declaratively constructs a REST API.
+    The main entry point for the Flask-Rebar extension.
 
-    Similar to a Flask Blueprint, but intentionally kept separate.
+    This registers handler registries with the Flask application and initializes
+    all the Flask-Rebar goodies.
 
-    :param flask_rebar.authenticators.Authenticator default_authenticator:
-    :param marshmallow.Schema default_headers_schema:
-    :param swagger_generator:
-    :param dict config:
+    Example usage::
+
+        app = Flask(__name__)
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        @registry.handles()
+        def handler():
+            ...
+
+        rebar.init_app(app)
+
     """
 
-    def __init__(
-            self,
-            default_authenticator=None,
-            default_headers_schema=None,
-            swagger_generator=None,
-            config=None,
-    ):
+    def __init__(self):
         self.handler_registries = set()
         self.paths = defaultdict(dict)
-        self.default_authenticator = default_authenticator
-        self.swagger_generator = swagger_generator or SwaggerV2Generator()
-        self.default_headers_schema = default_headers_schema
-        self.config = config or {}
         self.uncaught_exception_handlers = []
-
-    def add_params_to_parser(self, parser):
-        parser.add_param(name='REBAR_SWAGGER_PATH', default='/swagger')
-        parser.add_param(name='REBAR_SWAGGER_UI_PATH', default='/swagger/ui')
-
-    def add_handler_registry(self, registry):
-        self.handler_registries.add(registry)
 
     def create_handler_registry(
             self,
@@ -416,31 +476,75 @@ class Rebar(object):
             default_authenticator=None,
             default_headers_schema=None,
             swagger_generator=None,
+            swagger_path='/swagger',
+            swagger_ui_path='/swagger/ui',
     ):
+        """
+        Create a new handler registry and add to this extension's set of
+        registered registries.
+
+        When calling :meth:`Rebar.init_app`, all registries created via this method
+        will be registered with the Flask application.
+
+        Parameters are the same for the :class:`HandlerRegistry` constructor.
+
+        :rtype: HandlerRegistry
+        """
         registry = HandlerRegistry(
             prefix=prefix,
             default_authenticator=default_authenticator,
             default_headers_schema=default_headers_schema,
             swagger_generator=swagger_generator,
+            swagger_path=swagger_path,
+            swagger_ui_path=swagger_ui_path,
         )
         self.add_handler_registry(registry=registry)
         return registry
 
+    def add_handler_registry(self, registry):
+        """
+        Register a handler registry with the extension.
+
+        There is no need to call this if a handler registry was created
+        via :meth:`Rebar.create_handler_registry`.
+
+        :param HandlerRegistry registry:
+        """
+        self.handler_registries.add(registry)
+
     @property
     def validated_body(self):
+        """
+        Proxy to the result of validating/transforming an incoming request body with
+        the `request_body_schema` a handler was registered with.
+
+        :rtype: dict
+        """
         return get_validated_body()
 
     @property
     def validated_args(self):
+        """
+        Proxy to the result of validating/transforming an incoming request's query
+        string with the `query_string_schema` a handler was registered with.
+
+        :rtype: dict
+        """
         return get_validated_args()
 
     @property
     def validated_headers(self):
+        """
+        Proxy to the result of validating/transforming an incoming request's headers
+        with the `headers_schema` a handler was registered with.
+
+        :rtype: dict
+        """
         return get_validated_headers()
 
     def add_uncaught_exception_handler(self, func):
         """
-        Adds a function that will be called for uncaught exceptions, i.e. exceptions
+        Add a function that will be called for uncaught exceptions, i.e. exceptions
         that will result in a 500 error.
 
         This function should accept the exception instance as a single positional argument.
@@ -451,20 +555,18 @@ class Rebar(object):
         """
         self.uncaught_exception_handlers.append(func)
 
-    def init_app(self, app, config=None):
-        """Registers all the handlers with a Flask application."""
-        config = self._resolve_config(app=app, config=config)
+    def init_app(self, app):
+        """
+        Register all the handler registries with a Flask application.
 
-        self._init_error_handling(app=app, config=config)
+        :param flask.Flask app:
+        """
+        self._init_error_handling(app=app)
 
         for registry in self.handler_registries:
-            registry.register(
-                app=app,
-                swagger_path=config['REBAR_SWAGGER_PATH'],
-                swagger_ui_path=config['REBAR_SWAGGER_UI_PATH']
-            )
+            registry.register(app=app)
 
-    def _init_error_handling(self, app, config):
+    def _init_error_handling(self, app):
         @app.errorhandler(errors.HttpJsonError)
         def handle_http_error(error):
             return self._create_json_error_response(
@@ -516,23 +618,3 @@ class Rebar(object):
         resp = jsonify(body)
         resp.status_code = http_status_code
         return resp
-
-    def _resolve_config(self, app, config):
-        """
-        Resolves the configuration parameters for the extension.
-
-        :param flask.Flask app:
-        :param dict config:
-        :rtype: dict
-        """
-        config = config or {}
-
-        parser = ConfigParser()
-        self.add_params_to_parser(parser)
-
-        return parser.resolve(sources=(
-            config,
-            self.config,
-            app.config,
-            os.environ
-        ))

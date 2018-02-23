@@ -1,3 +1,12 @@
+"""
+    Swagger Generator
+    ~~~~~~~~~~~~~~~~~
+
+    Class for converting a handler registry into a Swagger specification.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 from __future__ import unicode_literals
 
 import copy
@@ -8,11 +17,11 @@ from collections import OrderedDict
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.authenticators import USE_DEFAULT
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator
-from flask_rebar.swagger_generation.marshmallow_to_jsonschema import get_swagger_title
-from flask_rebar.swagger_generation.marshmallow_to_jsonschema import headers_converter_registry as global_headers_converter_registry
-from flask_rebar.swagger_generation.marshmallow_to_jsonschema import query_string_converter_registry as global_query_string_converter_registry
-from flask_rebar.swagger_generation.marshmallow_to_jsonschema import request_body_converter_registry as global_request_body_converter_registry
-from flask_rebar.swagger_generation.marshmallow_to_jsonschema import response_converter_registry as global_response_converter_registry
+from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
+from flask_rebar.swagger_generation.marshmallow_to_swagger import headers_converter_registry as global_headers_converter_registry
+from flask_rebar.swagger_generation.marshmallow_to_swagger import query_string_converter_registry as global_query_string_converter_registry
+from flask_rebar.swagger_generation.marshmallow_to_swagger import request_body_converter_registry as global_request_body_converter_registry
+from flask_rebar.swagger_generation.marshmallow_to_swagger import response_converter_registry as global_response_converter_registry
 from flask_rebar.validation import Error
 
 
@@ -248,9 +257,9 @@ class SwaggerV2Generator(object):
         static specification that will be used across multiple hosts (i.e.
         PlanGrid folks, don't worry about this guy. We have to override it
         manually when initializing a client anyways.
-    :param iterable(str) schemes: "http", "https", "ws", or "wss"
-    :param iterable(str) consumes: Mime Types the API accepts
-    :param iterable(str) produces: Mime Types the API returns
+    :param Sequence[str] schemes: "http", "https", "ws", or "wss"
+    :param Sequence[str] consumes: Mime Types the API accepts
+    :param Sequence[str] produces: Mime Types the API returns
 
     :param ConverterRegistry query_string_converter_registry:
     :param ConverterRegistry request_body_converter_registry:
@@ -346,7 +355,7 @@ class SwaggerV2Generator(object):
         where the first item is a name to use for the Swagger security
         definition, and the second item is the definition itself.
 
-        :param Type(Authenticator) authenticator_class:
+        :param Type[Authenticator] authenticator_class:
         :param function converter:
         """
         self.authenticator_converters[authenticator_class] = converter
@@ -364,9 +373,9 @@ class SwaggerV2Generator(object):
 
         :param flask_rebar.rebar.HandlerRegistry registry:
         :param str host: Overrides the initialized host
-        :param iterable(str) schemes: Overrides the initialized schemas
-        :param iterable(str) consumes: Overrides the initialized consumes
-        :param iterable(str) produces: Overrides the initialized produces
+        :param Sequence[str] schemes: Overrides the initialized schemas
+        :param Sequence[str] consumes: Overrides the initialized consumes
+        :param Sequence[str] produces: Overrides the initialized produces
         :rtype: dict
         """
         default_authenticator = registry.default_authenticator

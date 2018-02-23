@@ -1,3 +1,12 @@
+"""
+    Test Swagger Generation
+    ~~~~~~~~~~~~~~~~~~~~~~~
+
+    Tests for converting a handler registry to a Swagger specification.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 import unittest
 
 import marshmallow as m
@@ -160,7 +169,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
             name = m.fields.String()
 
         @registry.handles(
-            path='/foos/<uuid_string:foo_uid>',
+            rule='/foos/<uuid_string:foo_uid>',
             method='GET',
             marshal_schemas={200: FooSchema()},
             headers_schema=HeaderSchema()
@@ -170,7 +179,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
             pass
 
         @registry.handles(
-            path='/foos/<foo_uid>',
+            rule='/foos/<foo_uid>',
             method='PATCH',
             marshal_schemas={200: FooSchema()},
             request_body_schema=FooUpdateSchema(),
@@ -180,7 +189,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
             pass
 
         @registry.handles(
-            path='/foos',
+            rule='/foos',
             method='GET',
             marshal_schemas={200: ListOfFooSchema()},
             query_string_schema=FooListSchema(),
@@ -371,14 +380,14 @@ class TestSwaggerV2Generator(unittest.TestCase):
         registry = rebar.create_handler_registry()
 
         @registry.handles(
-            path='/foos/<string:foo_uid>',
+            rule='/foos/<string:foo_uid>',
             method='GET'
         )
         def get_foo(foo_uid):
             pass
 
         @registry.handles(
-            path='/foos/<int:foo_uid>',
+            rule='/foos/<int:foo_uid>',
             method='PATCH'
         )
         def update_foo(foo_uid):

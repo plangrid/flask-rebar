@@ -1,8 +1,21 @@
-from flask import request
+"""
+    Header API Key Authenticator
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Authenticator for API key passed in header.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
+from flask import request, g
 from werkzeug.security import safe_str_cmp
 
 from flask_rebar import errors, messages
 from flask_rebar.authenticators.base import Authenticator
+
+
+def get_authenticated_app_name():
+    return g.authenticated_app_name
 
 
 class HeaderApiKeyAuthenticator(Authenticator):
@@ -31,6 +44,10 @@ class HeaderApiKeyAuthenticator(Authenticator):
         self.keys = {}
         self.name = name
 
+    @property
+    def authenticated_app_name(self):
+        return get_authenticated_app_name()
+
     def register_key(self, key, app_name=DEFAULT_APP_NAME):
         """
         Register a client application's shared secret.
@@ -51,7 +68,7 @@ class HeaderApiKeyAuthenticator(Authenticator):
 
         for key, app_name in self.keys.items():
             if safe_str_cmp(str(token), key):
-                setattr(request, 'authenticated_app_name', app_name)
+                g.authenticated_app_name = app_name
                 break
         else:
             raise errors.Unauthorized(messages.invalid_auth_token)

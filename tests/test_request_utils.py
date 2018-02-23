@@ -1,3 +1,12 @@
+"""
+    Test Request Utilities
+    ~~~~~~~~~~~~~~~~~~~~~~
+
+    Tests for the request utilities.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 import unittest
 
 from flask import Flask

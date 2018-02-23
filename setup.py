@@ -7,7 +7,7 @@ if __name__ == '__main__':
         author='Barak Alon',
         author_email='barak.s.alon@gmail.com',
         description='Flask-Rebar combines flask, marshmallow, and swagger for robust REST services.',
-        long_description=open('README.md').read(),
+        long_description=open('README.rst').read(),
         keywords=['flask', 'rest', 'marshmallow', 'openapi', 'swagger'],
         name='flask-rebar',
         packages=['flask_rebar'],

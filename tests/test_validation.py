@@ -1,3 +1,12 @@
+"""
+    Test Validation
+    ~~~~~~~~~~~~~~~
+
+    Tests for the Marshmallow extensions.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 from datetime import datetime
 from unittest import TestCase
 

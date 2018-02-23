@@ -54,7 +54,7 @@ class TodoListSchema(ResponseSchema):
 
 
 @registry.handles(
-    path='/todos',
+    rule='/todos',
     method='POST',
     request_body_schema=CreateTodoSchema(),
 
@@ -84,7 +84,7 @@ def create_todo():
 
 
 @registry.handles(
-    path='/todos',
+    rule='/todos',
     method='GET',
     query_string_schema=GetTodoListSchema(),
 
@@ -110,7 +110,7 @@ def get_todos():
 
 
 @registry.handles(
-    path='/todos/<int:todo_id>',
+    rule='/todos/<int:todo_id>',
     method='PATCH',
     marshal_schemas=TodoResourceSchema(),
     request_body_schema=UpdateTodoSchema()

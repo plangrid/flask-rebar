@@ -1,0 +1,6 @@
+Flask-Rebar is developed and maintained by the PlanGrid team and community
+contributors. It was created by Barak Alon.
+
+A full list of contributors is available from git with::
+
+    git shortlog -sne

@@ -1,3 +1,13 @@
+"""
+    Marshmallow to Swagger Conversion
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Utilities for converting Marshmallow objects to their
+    corresponding Swagger representation.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 from __future__ import unicode_literals
 
 import copy
@@ -105,7 +115,7 @@ def get_swagger_title(obj):
         return obj.__class__.__name__
 
 
-def sets_jsonschema_attr(attr):
+def sets_swagger_attr(attr):
     """
     Decorates a `MarshmallowConverter` method, marking it as an JSONSchema
     attribute setter.
@@ -113,12 +123,11 @@ def sets_jsonschema_attr(attr):
     Example usage::
 
         class Converter(MarshmallowConverter):
+            MARSHMALLOW_TYPE = String()
 
-        MARSHMALLOW_TYPE = String()
-
-        @sets_jsonschema_attr('type')
-        def get_type(obj, context):
-            return 'string'
+            @sets_swagger_attr('type')
+            def get_type(obj, context):
+                return 'string'
 
     This converter receives instances of `String` and converts it to a
     JSONSchema object that looks like `{'type': 'string'}`.
@@ -170,14 +179,14 @@ class SchemaConverter(MarshmallowConverter):
 
     MARSHMALLOW_TYPE = m.Schema
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         if obj.many:
             return sw.array
         else:
             return sw.object_
 
-    @sets_jsonschema_attr(sw.items)
+    @sets_swagger_attr(sw.items)
     def get_items(self, obj, context):
         if not obj.many:
             return UNSET
@@ -187,7 +196,7 @@ class SchemaConverter(MarshmallowConverter):
 
         return context.convert(singular_obj, context)
 
-    @sets_jsonschema_attr(sw.properties)
+    @sets_swagger_attr(sw.properties)
     def get_properties(self, obj, context):
         if obj.many:
             return UNSET
@@ -204,7 +213,7 @@ class SchemaConverter(MarshmallowConverter):
 
         return properties
 
-    @sets_jsonschema_attr(sw.required)
+    @sets_swagger_attr(sw.required)
     def get_required(self, obj, context):
         if obj.many:
             return UNSET
@@ -222,7 +231,7 @@ class SchemaConverter(MarshmallowConverter):
 
         return required if required else UNSET
 
-    @sets_jsonschema_attr(sw.description)
+    @sets_swagger_attr(sw.description)
     def get_description(self, obj, context):
         if obj.many:
             return UNSET
@@ -231,7 +240,7 @@ class SchemaConverter(MarshmallowConverter):
         else:
             return UNSET
 
-    @sets_jsonschema_attr(sw.title)
+    @sets_swagger_attr(sw.title)
     def get_title(self, obj, context):
         if not obj.many:
             return get_swagger_title(obj)
@@ -277,7 +286,7 @@ class FieldConverter(MarshmallowConverter):
 
         return jsonschema_obj
 
-    @sets_jsonschema_attr(sw.default)
+    @sets_swagger_attr(sw.default)
     def get_default(self, obj, context):
         if (
                 obj.missing is not m.missing
@@ -290,14 +299,14 @@ class FieldConverter(MarshmallowConverter):
         else:
             return UNSET
 
-    @sets_jsonschema_attr(sw.nullable)
+    @sets_swagger_attr(sw.nullable)
     def get_nullable(self, obj, context):
         if obj.allow_none is not False:
             return True
         else:
             return UNSET
 
-    @sets_jsonschema_attr(sw.description)
+    @sets_swagger_attr(sw.description)
     def get_description(self, obj, context):
         if 'description' in obj.metadata:
             return obj.metadata['description']
@@ -318,7 +327,7 @@ class ValidatorConverter(MarshmallowConverter):
 class DisallowExtraFieldsConverter(SchemaConverter):
     MARSHMALLOW_TYPE = DisallowExtraFieldsMixin
 
-    @sets_jsonschema_attr(sw.additional_properties)
+    @sets_swagger_attr(sw.additional_properties)
     def get_additional_properties(self, obj, context):
         return False
 
@@ -344,11 +353,11 @@ class NestedConverter(FieldConverter):
 class ListConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.List
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         return sw.array
 
-    @sets_jsonschema_attr(sw.items)
+    @sets_swagger_attr(sw.items)
     def get_items(self, obj, context):
         return context.convert(obj.container, context)
 
@@ -356,7 +365,7 @@ class ListConverter(FieldConverter):
 class DictConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Dict
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         return sw.object_
 
@@ -364,7 +373,7 @@ class DictConverter(FieldConverter):
 class IntegerConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Integer
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         return sw.integer
 
@@ -372,7 +381,7 @@ class IntegerConverter(FieldConverter):
 class StringConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.String
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         return sw.string
 
@@ -380,7 +389,7 @@ class StringConverter(FieldConverter):
 class NumberConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Number
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         return sw.number
 
@@ -388,7 +397,7 @@ class NumberConverter(FieldConverter):
 class BooleanConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Boolean
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         return sw.boolean
 
@@ -396,11 +405,11 @@ class BooleanConverter(FieldConverter):
 class DateTimeConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.DateTime
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         return sw.string
 
-    @sets_jsonschema_attr(sw.format_)
+    @sets_swagger_attr(sw.format_)
     def get_format(self, obj, context):
         return sw.date_time
 
@@ -408,11 +417,11 @@ class DateTimeConverter(FieldConverter):
 class UUIDConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.UUID
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         return sw.string
 
-    @sets_jsonschema_attr(sw.format_)
+    @sets_swagger_attr(sw.format_)
     def get_format(self, obj, context):
         return sw.uuid
 
@@ -420,11 +429,11 @@ class UUIDConverter(FieldConverter):
 class DateConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Date
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         return sw.string
 
-    @sets_jsonschema_attr(sw.format_)
+    @sets_swagger_attr(sw.format_)
     def get_format(self, obj, context):
         return sw.date
 
@@ -432,7 +441,7 @@ class DateConverter(FieldConverter):
 class MethodConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Method
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         if 'swagger_type' in obj.metadata:
             return obj.metadata['swagger_type']
@@ -446,7 +455,7 @@ class MethodConverter(FieldConverter):
 class FunctionConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Function
 
-    @sets_jsonschema_attr(sw.type_)
+    @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         if 'swagger_type' in obj.metadata:
             return obj.metadata['swagger_type']
@@ -460,7 +469,7 @@ class FunctionConverter(FieldConverter):
 class ConstantConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Constant
 
-    @sets_jsonschema_attr(sw.enum)
+    @sets_swagger_attr(sw.enum)
     def get_enum(self, obj, context):
         return [obj.constant]
 
@@ -468,7 +477,7 @@ class ConstantConverter(FieldConverter):
 class CsvArrayConverter(ListConverter):
     MARSHMALLOW_TYPE = CommaSeparatedList
 
-    @sets_jsonschema_attr(sw.collection_format)
+    @sets_swagger_attr(sw.collection_format)
     def get_collection_format(self, obj, context):
         return sw.csv
 
@@ -476,7 +485,7 @@ class CsvArrayConverter(ListConverter):
 class MultiArrayConverter(ListConverter):
     MARSHMALLOW_TYPE = QueryParamList
 
-    @sets_jsonschema_attr(sw.collection_format)
+    @sets_swagger_attr(sw.collection_format)
     def get_collection_format(self, obj, context):
         return sw.multi
 
@@ -484,14 +493,14 @@ class MultiArrayConverter(ListConverter):
 class RangeConverter(ValidatorConverter):
     MARSHMALLOW_TYPE = Range
 
-    @sets_jsonschema_attr(sw.minimum)
+    @sets_swagger_attr(sw.minimum)
     def get_minimum(self, obj, context):
         if obj.min is not None:
             return obj.min
         else:
             return UNSET
 
-    @sets_jsonschema_attr(sw.maximum)
+    @sets_swagger_attr(sw.maximum)
     def get_maximum(self, obj, context):
         if obj.max is not None:
             return obj.max
@@ -502,7 +511,7 @@ class RangeConverter(ValidatorConverter):
 class OneOfConverter(ValidatorConverter):
     MARSHMALLOW_TYPE = OneOf
 
-    @sets_jsonschema_attr(sw.enum)
+    @sets_swagger_attr(sw.enum)
     def get_enum(self, obj, context):
         return list(obj.choices)
 
@@ -510,28 +519,28 @@ class OneOfConverter(ValidatorConverter):
 class LengthConverter(ValidatorConverter):
     MARSHMALLOW_TYPE = Length
 
-    @sets_jsonschema_attr(sw.min_items)
+    @sets_swagger_attr(sw.min_items)
     def get_minimum_items(self, obj, context):
         if context.memo[sw.type_] == sw.array:
             if obj.min is not None:
                 return obj.min
         return UNSET
 
-    @sets_jsonschema_attr(sw.max_items)
+    @sets_swagger_attr(sw.max_items)
     def get_maximum_items(self, obj, context):
         if context.memo[sw.type_] == sw.array:
             if obj.max is not None:
                 return obj.max
         return UNSET
 
-    @sets_jsonschema_attr(sw.min_length)
+    @sets_swagger_attr(sw.min_length)
     def get_minimum_length(self, obj, context):
         if context.memo[sw.type_] == sw.string:
             if obj.min is not None:
                 return obj.min
         return UNSET
 
-    @sets_jsonschema_attr(sw.max_length)
+    @sets_swagger_attr(sw.max_length)
     def get_maximum_length(self, obj, context):
         if context.memo[sw.type_] == sw.string:
             if obj.max is not None:
@@ -541,7 +550,7 @@ class LengthConverter(ValidatorConverter):
 
 class ConverterRegistry(object):
     """
-    Rebar for `MarshmallowConverter`s.
+    Registry for MarshmallowConverters.
 
     Schemas for responses, query strings, request bodies, etc. need to
     be converted differently. For example, response schemas as "dump"ed and
@@ -551,7 +560,7 @@ class ConverterRegistry(object):
     This registry also allows for additional converters to be added for custom
     Marshmallow types.
 
-    :param Type(IN)|Type(OUT) direction:
+    :param Type[IN]|Type[OUT] direction:
         OUT if this registry is used to convert output schemas (e.g. response
         schemas) and IN if tis registry is used to convert input schemas
         (e.g. request body schemas).

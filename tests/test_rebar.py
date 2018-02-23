@@ -1,3 +1,12 @@
+"""
+    Test Rebar
+    ~~~~~~~~~~
+
+    Tests for the basic usage of Flask-Rebar.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
 import json
 import unittest
 
@@ -92,7 +101,7 @@ def register_endpoint(
 
     registry.add_handler(
         func=func or default_handler_func,
-        path=path,
+        rule=path,
         method=method,
         endpoint=endpoint,
         marshal_schemas=marshal_schemas or {200: FooSchema()},
@@ -168,7 +177,7 @@ class RebarTest(unittest.TestCase):
         registry = rebar.create_handler_registry()
 
         @registry.handles(
-            path='/foos/<foo_uid>',
+            rule='/foos/<foo_uid>',
             method='PATCH',
             marshal_schemas={
                 200: FooSchema()
@@ -203,7 +212,7 @@ class RebarTest(unittest.TestCase):
         registry = rebar.create_handler_registry()
 
         @registry.handles(
-            path='/foos',
+            rule='/foos',
             method='GET',
             marshal_schemas={
                 200: ListOfFooSchema()
@@ -235,7 +244,7 @@ class RebarTest(unittest.TestCase):
         register_default_authenticator(registry)
 
         @registry.handles(
-            path='/me',
+            rule='/me',
             method='GET',
             marshal_schemas={
                 200: MeSchema(),
@@ -297,8 +306,8 @@ class RebarTest(unittest.TestCase):
             'marshal_schemas': {200: FooSchema()},
         }
 
-        @registry.handles(path='/bars/<foo_uid>', endpoint='bar', **common_kwargs)
-        @registry.handles(path='/foos/<foo_uid>', endpoint='foo', **common_kwargs)
+        @registry.handles(rule='/bars/<foo_uid>', endpoint='bar', **common_kwargs)
+        @registry.handles(rule='/foos/<foo_uid>', endpoint='foo', **common_kwargs)
         def handler_func(foo_uid):
             return DEFAULT_RESPONSE
         app = create_rebar_app(rebar)
@@ -320,7 +329,7 @@ class RebarTest(unittest.TestCase):
         registry = rebar.create_handler_registry()
 
         common_kwargs = {
-            'path': '/foos/<foo_uid>',
+            'rule': '/foos/<foo_uid>',
             'marshal_schemas': {200: FooSchema()},
         }
 
@@ -351,7 +360,7 @@ class RebarTest(unittest.TestCase):
         registry.set_default_headers_schema(HeadersSchema())
 
         @registry.handles(
-            path='/me',
+            rule='/me',
             method='GET',
             marshal_schemas=MeSchema()
         )
@@ -361,7 +370,7 @@ class RebarTest(unittest.TestCase):
             }
 
         @registry.handles(
-            path='/myself',
+            rule='/myself',
             method='GET',
             marshal_schemas=MeSchema(),
 
@@ -404,7 +413,11 @@ class RebarTest(unittest.TestCase):
         )
 
     def test_swagger_endpoints_can_be_omitted(self):
-        rebar = Rebar(config={'REBAR_SWAGGER_PATH': None, 'REBAR_SWAGGER_UI_PATH': ''})
+        rebar = Rebar()
+        rebar.create_handler_registry(
+            swagger_path=None,
+            swagger_ui_path=None,
+        )
         app = create_rebar_app(rebar)
 
         resp = app.test_client().get('/swagger')

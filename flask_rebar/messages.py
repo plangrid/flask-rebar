@@ -1,3 +1,13 @@
+"""
+    Messages
+    ~~~~~~~~
+
+    Helpers for generating messages that the API returns.
+
+    :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
+    :license: MIT, see LICENSE for details.
+"""
+
 body_validation_failed = 'JSON body parameters are invalid.'
 
 empty_json_body = 'Fields must be in JSON body.'
