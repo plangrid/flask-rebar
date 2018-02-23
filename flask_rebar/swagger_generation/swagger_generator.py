@@ -275,7 +275,7 @@ class SwaggerV2Generator(object):
             headers_converter_registry=None,
             response_converter_registry=None,
 
-            # TODO Still trying to figure out how to get this from the framer
+            # TODO Still trying to figure out how to get this from the registry
             # Flask error handling doesn't mesh well with Swagger responses,
             # and I'm trying to avoid building our own layer on top of Flask's
             # error handlers.
@@ -353,7 +353,7 @@ class SwaggerV2Generator(object):
 
     def generate(
             self,
-            framer,
+            registry,
             host=None,
             schemes=None,
             consumes=None,
@@ -362,22 +362,22 @@ class SwaggerV2Generator(object):
         """
         Generates a Swagger specification from a Rebar instance.
 
-        :param Rebar framer:
+        :param flask_rebar.rebar.HandlerRegistry registry:
         :param str host: Overrides the initialized host
         :param iterable(str) schemes: Overrides the initialized schemas
         :param iterable(str) consumes: Overrides the initialized consumes
         :param iterable(str) produces: Overrides the initialized produces
         :rtype: dict
         """
-        default_authenticator = framer.default_authenticator
+        default_authenticator = registry.default_authenticator
         security_definitions = self._get_security_definitions(
-            paths=framer.paths,
+            paths=registry.paths,
             default_authenticator=default_authenticator
         )
-        definitions = self._get_definitions(paths=framer.paths)
+        definitions = self._get_definitions(paths=registry.paths)
         paths = self._get_paths(
-            paths=framer.paths,
-            default_headers_schema=framer.default_headers_schema
+            paths=registry.paths,
+            default_headers_schema=registry.default_headers_schema
         )
 
         swagger = {

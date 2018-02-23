@@ -23,8 +23,8 @@ from marshmallow import fields, Schema
 
 from my_app import database
 
-
-registry = Registry()
+rebar = Rebar()
+registry = rebar.create_registry()
 
 
 class GetTodoSchema(Schema):
@@ -63,7 +63,7 @@ def get_todo(todo_id):
 
 def create_app(name):
     app = Flask(name)
-    registry.init_app(app)
+    rebar.init_app(app)
     return app
 
 

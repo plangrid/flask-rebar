@@ -4,6 +4,7 @@ import os
 import sys
 from collections import defaultdict
 from collections import namedtuple
+from copy import copy
 from functools import wraps
 
 import marshmallow
@@ -108,7 +109,47 @@ def _wrap_handler(
     return wrapped
 
 
-class Rebar(object):
+def get_validated_body():
+    return g.validated_body
+
+
+def get_validated_args():
+    return g.validated_args
+
+
+def get_validated_headers():
+    return g.validated_headers
+
+
+def normalize_prefix(prefix):
+    """
+    Removes slashes from a URL path prefix.
+
+    :param str prefix:
+    :rtype: str
+    """
+    if prefix and prefix.startswith('/'):
+        prefix = prefix[1:]
+    if prefix and prefix.endswith('/'):
+        prefix = prefix[:-1]
+
+    return prefix
+
+
+def prefix_url(prefix, url):
+    """
+    Returns a new URL with the prefix prepended to the provided URL.
+
+    :param str prefix:
+    :param str url:
+    :rtype: str
+    """
+    prefix = normalize_prefix(prefix)
+    url = url[1:] if url.startswith('/') else url
+    return '/{}/{}'.format(prefix, url)
+
+
+class HandlerRegistry(object):
     """
     Declaratively constructs a REST API.
 
@@ -117,38 +158,20 @@ class Rebar(object):
     :param flask_rebar.authenticators.Authenticator default_authenticator:
     :param marshmallow.Schema default_headers_schema:
     :param swagger_generator:
-    :param dict config:
     """
 
     def __init__(
             self,
+            prefix=None,
             default_authenticator=None,
             default_headers_schema=None,
             swagger_generator=None,
-            config=None,
     ):
-        self.paths = defaultdict(dict)
+        self.prefix = normalize_prefix(prefix)
+        self._paths = defaultdict(dict)
         self.default_authenticator = default_authenticator
-        self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.default_headers_schema = default_headers_schema
-        self.config = config or {}
-        self.uncaught_exception_handlers = []
-
-    def add_params_to_parser(self, parser):
-        parser.add_param(name='REBAR_SWAGGER_PATH', default='/swagger')
-        parser.add_param(name='REBAR_SWAGGER_UI_PATH', default='/swagger/ui')
-
-    @property
-    def validated_body(self):
-        return g.validated_body
-
-    @property
-    def validated_args(self):
-        return g.validated_args
-
-    @property
-    def validated_headers(self):
-        return g.validated_headers
+        self.swagger_generator = swagger_generator or SwaggerV2Generator()
 
     def set_default_authenticator(self, authenticator):
         """
@@ -166,18 +189,35 @@ class Rebar(object):
         """
         self.default_headers_schema = headers_schema
 
-    def add_uncaught_exception_handler(self, func):
-        """
-        Adds a function that will be called for uncaught exceptions, i.e. exceptions
-        that will result in a 500 error.
+    def clone(self):
+        return copy(self)
 
-        This function should accept the exception instance as a single positional argument.
+    @property
+    def paths(self):
+        # We duplicate the paths so we can modify the path definitions right before
+        # they are accessed.
+        paths = defaultdict(dict)
 
-        All handlers will be called in the order they are added.
+        for path, methods in self._paths.items():
+            for method, definition_ in methods.items():
+                path = definition_.path
 
-        :param Callable func:
-        """
-        self.uncaught_exception_handlers.append(func)
+                if self.prefix:
+                    path = prefix_url(prefix=self.prefix, url=path)
+
+                paths[path][method] = PathDefinition(
+                    func=definition_.func,
+                    path=path,
+                    method=definition_.method,
+                    endpoint=definition_.endpoint,
+                    marshal_schemas=definition_.marshal_schemas,
+                    query_string_schema=definition_.query_string_schema,
+                    request_body_schema=definition_.request_body_schema,
+                    headers_schema=definition_.headers_schema,
+                    authenticator=definition_.authenticator,
+                )
+
+        return paths
 
     def add_handler(
             self,
@@ -219,7 +259,7 @@ class Rebar(object):
         if isinstance(marshal_schemas, marshmallow.Schema):
             marshal_schemas = {200: marshal_schemas}
 
-        self.paths[path][method] = PathDefinition(
+        self._paths[path][method] = PathDefinition(
             func=func,
             path=path,
             method=method,
@@ -262,17 +302,23 @@ class Rebar(object):
 
         return wrapper
 
-    def init_app(self, app, config=None):
+    def register(self, app, swagger_path=None, swagger_ui_path=None):
         """Registers all the handlers with a Flask application."""
-        config = self._resolve_config(app=app, config=config)
-        self._init_routes(app=app, config=config)
-        self._init_swagger(app=app, config=config)
-        self._init_swagger_ui(app=app, config=config)
-        self._init_error_handling(app=app, config=config)
+        self._register_routes(app=app)
+        self._register_swagger(app=app, swagger_path=swagger_path)
+        self._register_swagger_ui(app=app, swagger_path=swagger_path, swagger_ui_path=swagger_ui_path)
 
-    def _init_routes(self, app, config):
+    def _register_routes(self, app):
         for path, methods in self.paths.items():
             for method, definition_ in methods.items():
+                if definition_.endpoint:
+                    endpoint = definition_.endpoint
+                else:
+                    endpoint = definition_.func.__name__
+
+                if self.prefix:
+                    endpoint = '.'.join((self.prefix, endpoint))
+
                 app.add_url_rule(
                     rule=definition_.path,
                     view_func=_wrap_handler(
@@ -292,33 +338,130 @@ class Rebar(object):
                         marshal_schemas=definition_.marshal_schemas
                     ),
                     methods=[definition_.method],
-                    endpoint=definition_.endpoint
+                    endpoint=endpoint
                 )
 
-    def _init_swagger(self, app, config):
-        swagger_path = config['REBAR_SWAGGER_PATH']
+    def _register_swagger(self, app, swagger_path):
+        swagger_endpoint = 'get_swagger'
+
+        if self.prefix:
+            swagger_path = prefix_url(prefix=self.prefix, url=swagger_path)
+            swagger_endpoint = '.'.join((self.prefix, swagger_endpoint))
 
         if swagger_path:
-            @app.route(swagger_path, methods=['GET'])
+            @app.route(swagger_path, methods=['GET'], endpoint=swagger_endpoint)
             def get_swagger():
                 swagger = self.swagger_generator.generate(
-                    framer=self,
+                    registry=self,
                     host=request.host
                 )
                 return response(data=swagger)
 
-    def _init_swagger_ui(self, app, config):
-        swagger_path = config['REBAR_SWAGGER_PATH']
-        swagger_ui_path = config['REBAR_SWAGGER_UI_PATH']
+    def _register_swagger_ui(self, app, swagger_path, swagger_ui_path):
+        blueprint_name = 'swagger_ui'
+
+        if self.prefix:
+            swagger_ui_path = prefix_url(prefix=self.prefix, url=swagger_ui_path)
+            blueprint_name = self.prefix + blueprint_name
 
         if swagger_ui_path:
             blueprint = create_swagger_ui_blueprint(
+                name=blueprint_name,
                 ui_url=swagger_ui_path,
                 swagger_url=swagger_path,
             )
             app.register_blueprint(
                 blueprint=blueprint,
                 url_prefix=swagger_ui_path,
+            )
+
+
+class Rebar(object):
+    """
+    Declaratively constructs a REST API.
+
+    Similar to a Flask Blueprint, but intentionally kept separate.
+
+    :param flask_rebar.authenticators.Authenticator default_authenticator:
+    :param marshmallow.Schema default_headers_schema:
+    :param swagger_generator:
+    :param dict config:
+    """
+
+    def __init__(
+            self,
+            default_authenticator=None,
+            default_headers_schema=None,
+            swagger_generator=None,
+            config=None,
+    ):
+        self.handler_registries = set()
+        self.paths = defaultdict(dict)
+        self.default_authenticator = default_authenticator
+        self.swagger_generator = swagger_generator or SwaggerV2Generator()
+        self.default_headers_schema = default_headers_schema
+        self.config = config or {}
+        self.uncaught_exception_handlers = []
+
+    def add_params_to_parser(self, parser):
+        parser.add_param(name='REBAR_SWAGGER_PATH', default='/swagger')
+        parser.add_param(name='REBAR_SWAGGER_UI_PATH', default='/swagger/ui')
+
+    def add_handler_registry(self, registry):
+        self.handler_registries.add(registry)
+
+    def create_handler_registry(
+            self,
+            prefix=None,
+            default_authenticator=None,
+            default_headers_schema=None,
+            swagger_generator=None,
+    ):
+        registry = HandlerRegistry(
+            prefix=prefix,
+            default_authenticator=default_authenticator,
+            default_headers_schema=default_headers_schema,
+            swagger_generator=swagger_generator,
+        )
+        self.add_handler_registry(registry=registry)
+        return registry
+
+    @property
+    def validated_body(self):
+        return get_validated_body()
+
+    @property
+    def validated_args(self):
+        return get_validated_args()
+
+    @property
+    def validated_headers(self):
+        return get_validated_headers()
+
+    def add_uncaught_exception_handler(self, func):
+        """
+        Adds a function that will be called for uncaught exceptions, i.e. exceptions
+        that will result in a 500 error.
+
+        This function should accept the exception instance as a single positional argument.
+
+        All handlers will be called in the order they are added.
+
+        :param Callable func:
+        """
+        self.uncaught_exception_handlers.append(func)
+
+    def init_app(self, app, config=None):
+        """Registers all the handlers with a Flask application."""
+        config = self._resolve_config(app=app, config=config)
+
+        self._init_error_handling(app=app, config=config)
+
+        for registry in self.handler_registries:
+            registry.register(
+                app=app,
+                swagger_path=config['REBAR_SWAGGER_PATH'],
+                swagger_ui_path=config['REBAR_SWAGGER_UI_PATH']
             )
 
     def _init_error_handling(self, app, config):

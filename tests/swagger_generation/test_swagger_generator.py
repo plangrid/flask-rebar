@@ -131,6 +131,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
 
     def test_generate_swagger(self):
         rebar = Rebar()
+        registry = rebar.create_handler_registry()
 
         authenticator = HeaderApiKeyAuthenticator(header='x-auth')
         default_authenticator = HeaderApiKeyAuthenticator(
@@ -158,7 +159,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         class FooListSchema(m.Schema):
             name = m.fields.String()
 
-        @rebar.handles(
+        @registry.handles(
             path='/foos/<uuid_string:foo_uid>',
             method='GET',
             marshal_schemas={200: FooSchema()},
@@ -168,7 +169,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
             """helpful description"""
             pass
 
-        @rebar.handles(
+        @registry.handles(
             path='/foos/<foo_uid>',
             method='PATCH',
             marshal_schemas={200: FooSchema()},
@@ -178,7 +179,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         def update_foo(foo_uid):
             pass
 
-        @rebar.handles(
+        @registry.handles(
             path='/foos',
             method='GET',
             marshal_schemas={200: ListOfFooSchema()},
@@ -188,7 +189,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         def list_foos():
             pass
 
-        rebar.set_default_authenticator(default_authenticator)
+        registry.set_default_authenticator(default_authenticator)
 
         host = 'swag.com'
         schemes = ['http']
@@ -211,7 +212,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
             default_response_schema=Error()
         )
 
-        swagger = generator.generate(rebar)
+        swagger = generator.generate(registry)
 
         expected_swagger = {
             'swagger': '2.0',
@@ -367,15 +368,16 @@ class TestSwaggerV2Generator(unittest.TestCase):
 
     def test_path_parameter_types_must_be_the_same_for_same_path(self):
         rebar = Rebar()
+        registry = rebar.create_handler_registry()
 
-        @rebar.handles(
+        @registry.handles(
             path='/foos/<string:foo_uid>',
             method='GET'
         )
         def get_foo(foo_uid):
             pass
 
-        @rebar.handles(
+        @registry.handles(
             path='/foos/<int:foo_uid>',
             method='PATCH'
         )
@@ -385,7 +387,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         generator = SwaggerV2Generator()
 
         with self.assertRaises(ValueError):
-            generator.generate(rebar)
+            generator.generate(registry)
 
 
 if __name__ == '__main__':

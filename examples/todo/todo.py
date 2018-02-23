@@ -6,6 +6,7 @@ from flask_rebar.validation import RequestSchema, ResponseSchema
 
 
 rebar = Rebar()
+registry = rebar.create_handler_registry()
 
 # Just a mock database, for demonstration purposes
 todo_id_sequence = 0
@@ -52,7 +53,7 @@ class TodoListSchema(ResponseSchema):
         return {'data': data}
 
 
-@rebar.handles(
+@registry.handles(
     path='/todos',
     method='POST',
     request_body_schema=CreateTodoSchema(),
@@ -82,7 +83,7 @@ def create_todo():
     return todo, 201
 
 
-@rebar.handles(
+@registry.handles(
     path='/todos',
     method='GET',
     query_string_schema=GetTodoListSchema(),
@@ -108,7 +109,7 @@ def get_todos():
     return todos
 
 
-@rebar.handles(
+@registry.handles(
     path='/todos/<int:todo_id>',
     method='PATCH',
     marshal_schemas=TodoResourceSchema(),
@@ -137,7 +138,7 @@ def create_app(name):
     # service-to-service authentication inside of a protected network, by looking for a
     # shared secret in the specified header. Here we define what that shared secret is.
     authenticator.register_key(key='my-api-key')
-    rebar.set_default_authenticator(authenticator=authenticator)
+    registry.set_default_authenticator(authenticator=authenticator)
 
     rebar.init_app(app=app)
 
