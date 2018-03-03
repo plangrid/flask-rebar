@@ -39,3 +39,17 @@ Pull Requests
 2. If you've added code that should be tested, add tests.
 3. If you've changed APIs, update the documentation.
 4. Add an entry to the ``CHANGELOG.md`` for any breaking changes, enhancements, or bug fixes.
+
+
+Releasing to PyPI
+-----------------
+
+Travis CI handles releasing package versions to PyPI.
+
+Flask-Rebar uses `semantic versions <https://semver.org/>`_. Once you know the appropriate version part to bump, use the ``bumpversion`` tool to bump the package version, add a commit, and tag the commit appropriately:
+
+.. code-block:: bash
+
+    bumpversion MINOR
+
+Push this commit, along with the tags, to master, and Travis CI will handle the rest.
