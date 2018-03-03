@@ -9,34 +9,34 @@ If you're interested in making a larger change, we recommend you to open an issu
 
 
 Issues
-======
+------
 
 We use GitHub issues to track public bugs. Please ensure your description is clear and has sufficient instructions to be able to reproduce the issue.
 
 Developing
-==========
+----------
 
 We recommend using a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`_ for development. Once within a virtual environment install the ``flask_rebar`` package:
 
-.. code-block::
+.. code-block:: bash
 
    pip install -r requirements.txt
 
 To run the test suite with the current version of Python/virtual environment, use pytest:
 
-.. code-block::
+.. code-block:: bash
 
     pytest
 
 Flask-Rebar supports multiple versions of Python and uses tox to run the test suite against different version. Before putting up a PR, we recommend running this test suite to verify that the changes will work for all versions:
 
-.. code-block::
+.. code-block:: bash
 
    pip install tox
    tox
 
 Pull Requests
-=============
+-------------
 
 1. Fork the repo and create your branch from ``master``.
 2. If you've added code that should be tested, add tests.
