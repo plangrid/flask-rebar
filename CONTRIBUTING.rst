@@ -13,6 +13,7 @@ Issues
 
 We use GitHub issues to track public bugs. Please ensure your description is clear and has sufficient instructions to be able to reproduce the issue.
 
+
 Developing
 ----------
 
@@ -28,12 +29,8 @@ To run the test suite with the current version of Python/virtual environment, us
 
     pytest
 
-Flask-Rebar supports multiple versions of Python and uses tox to run the test suite against different version. Before putting up a PR, we recommend running this test suite to verify that the changes will work for all versions:
+Flask-Rebar supports multiple versions of Python, Flask, and Marshmallow and uses Travis CI to run the test suite with different combinations of dependency versions. These tests are required before a PR is merged.
 
-.. code-block:: bash
-
-   pip install tox
-   tox
 
 Pull Requests
 -------------

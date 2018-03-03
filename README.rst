@@ -5,6 +5,9 @@ Flask-Rebar
    :target: http://flask-rebar.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
+.. image:: https://travis-ci.org/plangrid/flask-rebar.svg?branch=master
+   :target: https://travis-ci.org/plangrid/flask-rebar
+   :alt: CI Status
 |
 
 Flask-Rebar combines `flask <http://flask.pocoo.org/>`_, `marshmallow <https://marshmallow.readthedocs.io/en/latest/>`_, and `swagger <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md>`_ for robust REST services.

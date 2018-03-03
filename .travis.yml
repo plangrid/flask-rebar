@@ -1,0 +1,20 @@
+language: python
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+env:
+  - MARSHMALLOW_VERSION='2.15.*' FLASK_VERSION='0.10.*'
+  - MARSHMALLOW_VERSION='2.15.*' FLASK_VERSION='0.11.*'
+  - MARSHMALLOW_VERSION='2.15.*' FLASK_VERSION='0.12.*'
+
+  - MARSHMALLOW_VERSION='2.13.*' FLASK_VERSION='0.12.*'
+  - MARSHMALLOW_VERSION='2.14.*' FLASK_VERSION='0.12.*'
+install:
+  - pip install Flask==$FLASK_VERSION
+  - pip install marshmallow==$MARSHMALLOW_VERSION
+  - pip install -r requirements.txt
+  - pip freeze
+script:
+  - pytest
