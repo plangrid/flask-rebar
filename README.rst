@@ -1,6 +1,12 @@
 Flask-Rebar
 ===========
 
+.. image:: https://readthedocs.org/projects/flask-rebar/badge/?version=latest
+   :target: http://flask-rebar.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
+|
+
 Flask-Rebar combines `flask <http://flask.pocoo.org/>`_, `marshmallow <https://marshmallow.readthedocs.io/en/latest/>`_, and `swagger <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md>`_ for robust REST services.
 
 
@@ -84,6 +90,12 @@ Installation
 .. code-block::
 
    pip install flask-rebar
+
+
+Documentation
+-------------
+
+More extensive documentation can be found  `here <https://flask-rebar.readthedocs.io>`_.
 
 
 Why Flask-Rebar?
