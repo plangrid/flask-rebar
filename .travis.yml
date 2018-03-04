@@ -24,3 +24,7 @@ deploy:
     secure: BxQ7V0aLIY3+22usLrk3d6sejNPekfYwRGxt2wDdbKKwI6vUK8h1FgigDKhsqfAAfXgr9q2LDYkj6C7/4dn34Ra6HFQ/3mZEVyQCfoBk26syYqkhWEg1lIkt8gr4xt/NfeIuVEQgH885casAt7lYCI2tHsGSLveCHHjNaYG7kcqSvcSlWgjv8EKyXRliRvZYNr1Br+vRAAkvUqyqG2WYm6l1QSojCrrWe6MheWv+SrO1s/X1TnCNXWONTU/Z/Ke2lx9so/87Q8T1P0Q34e1SG8naCvpMEx4uTkfwqjNGJtUAWIdyHMdmyuVQWFyoJ6K5rS4XQ74SYTb/xv12cPCoNUfmw4SoaCNEtU60zZ+Pt48SbaVD1i2opYx0C7VcS8B2s9tFh1roC+H+nHXhW79bENdI8F0FTXvFk9NN3C/b0JbFolju2EcwuRIrebD9GgOhSHpmQ2rLRKLvX6YEC0qYhdEFzg8l2Jc8YlivafNyoVemTJDnSOaH+b3y1d6WB1PEZFDqsaAgcz35BKMEfh+s8NbCyd/FcChaGxvFtHHg1+bipumRcsb/HgvM38OnHNA+Nfs6MWEx08RItv06tXFV768qNe8RfJajIcTlPOR+60fx4Uam1r6dEcRNc7EsgWVu4fkrpxtxQtTQfcnqwLAcDTOgcDmxGysxKM9zvI6dQww=
   on:
     tags: true
+branches:
+  # This prevents double building for a PR
+  only:
+    master
