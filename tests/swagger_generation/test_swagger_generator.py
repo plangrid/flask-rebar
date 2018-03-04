@@ -171,7 +171,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         @registry.handles(
             rule='/foos/<uuid_string:foo_uid>',
             method='GET',
-            marshal_schemas={200: FooSchema()},
+            marshal_schema={200: FooSchema()},
             headers_schema=HeaderSchema()
         )
         def get_foo(foo_uid):
@@ -181,7 +181,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         @registry.handles(
             rule='/foos/<foo_uid>',
             method='PATCH',
-            marshal_schemas={200: FooSchema()},
+            marshal_schema={200: FooSchema()},
             request_body_schema=FooUpdateSchema(),
             authenticator=authenticator
         )
@@ -191,7 +191,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         @registry.handles(
             rule='/foos',
             method='GET',
-            marshal_schemas={200: ListOfFooSchema()},
+            marshal_schema={200: ListOfFooSchema()},
             query_string_schema=FooListSchema(),
             authenticator=None  # Override the default!
         )

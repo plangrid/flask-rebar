@@ -495,8 +495,8 @@ class SwaggerV2Generator(object):
                     }
                 }
 
-                if d.marshal_schemas:
-                    for status_code, schema in d.marshal_schemas.items():
+                if d.marshal_schema:
+                    for status_code, schema in d.marshal_schema.items():
                         if schema is not None:
                             response_definition = {
                                 sw.description: _get_response_description(schema),
@@ -573,8 +573,8 @@ class SwaggerV2Generator(object):
         converted.append(self._response_converter(self.default_response_schema))
 
         for d in self._iterate_path_definitions(paths=paths):
-            if d.marshal_schemas:
-                for schema in d.marshal_schemas.values():
+            if d.marshal_schema:
+                for schema in d.marshal_schema.values():
                     if schema is None:
                         # Responses that don't have a response body have None
                         # for a schema
