@@ -27,7 +27,7 @@ To run the test suite with the current version of Python/virtual environment, us
 
 .. code-block:: bash
 
-    pytest
+   pytest
 
 Flask-Rebar supports multiple versions of Python, Flask, and Marshmallow and uses Travis CI to run the test suite with different combinations of dependency versions. These tests are required before a PR is merged.
 
@@ -50,6 +50,13 @@ Flask-Rebar uses `semantic versions <https://semver.org/>`_. Once you know the a
 
 .. code-block:: bash
 
-    bumpversion MINOR
+   git checkout master
+   bumpversion MINOR
 
-Push this commit, along with the tags, to master, and Travis CI will handle the rest.
+Then push the new commit and tags to master:
+
+.. code-block:: bash
+
+   git push origin master --tags
+
+Voila.
