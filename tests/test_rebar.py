@@ -90,7 +90,7 @@ def register_endpoint(
         path='/foos/<foo_uid>',
         method='GET',
         endpoint=None,
-        marshal_schemas=None,
+        marshal_schema=None,
         query_string_schema=None,
         request_body_schema=None,
         headers_schema=None,
@@ -104,7 +104,7 @@ def register_endpoint(
         rule=path,
         method=method,
         endpoint=endpoint,
-        marshal_schemas=marshal_schemas or {200: FooSchema()},
+        marshal_schema=marshal_schema or {200: FooSchema()},
         query_string_schema=query_string_schema,
         request_body_schema=request_body_schema,
         headers_schema=headers_schema,
@@ -179,7 +179,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule='/foos/<foo_uid>',
             method='PATCH',
-            marshal_schemas={
+            marshal_schema={
                 200: FooSchema()
             },
             request_body_schema=FooUpdateSchema(),
@@ -214,7 +214,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule='/foos',
             method='GET',
-            marshal_schemas={
+            marshal_schema={
                 200: ListOfFooSchema()
             },
             query_string_schema=FooListSchema(),
@@ -246,7 +246,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule='/me',
             method='GET',
-            marshal_schemas={
+            marshal_schema={
                 200: MeSchema(),
             },
             headers_schema=HeadersSchema()
@@ -303,7 +303,7 @@ class RebarTest(unittest.TestCase):
 
         common_kwargs = {
             'method': 'GET',
-            'marshal_schemas': {200: FooSchema()},
+            'marshal_schema': {200: FooSchema()},
         }
 
         @registry.handles(rule='/bars/<foo_uid>', endpoint='bar', **common_kwargs)
@@ -330,7 +330,7 @@ class RebarTest(unittest.TestCase):
 
         common_kwargs = {
             'rule': '/foos/<foo_uid>',
-            'marshal_schemas': {200: FooSchema()},
+            'marshal_schema': {200: FooSchema()},
         }
 
         @registry.handles(method='GET', endpoint='get_foo', **common_kwargs)
@@ -362,7 +362,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule='/me',
             method='GET',
-            marshal_schemas=MeSchema()
+            marshal_schema=MeSchema()
         )
         def get_me():
             return {
@@ -372,7 +372,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule='/myself',
             method='GET',
-            marshal_schemas=MeSchema(),
+            marshal_schema=MeSchema(),
 
             # Let's make sure this can be overridden
             headers_schema=None

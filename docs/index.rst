@@ -54,7 +54,7 @@ Here's what a basic Flask-Rebar application looks like:
        rule='/todos/<int:todo_id>',
        method='GET',
        query_string_schema=UpdateTodoSchema(),
-       marshal_schemas=TodoSchema(),
+       marshal_schema=TodoSchema(),
    )
    def get_todo(todo_id):
        """
@@ -70,7 +70,7 @@ Here's what a basic Flask-Rebar application looks like:
 
        ...
 
-       # The response will be marshaled by `marshal_schemas`
+       # The response will be marshaled by `marshal_schema`
        return {'data': {}}
 
 

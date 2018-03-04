@@ -39,7 +39,7 @@ PathDefinition = namedtuple('PathDefinition', [
     'path',
     'method',
     'endpoint',
-    'marshal_schemas',
+    'marshal_schema',
     'query_string_schema',
     'request_body_schema',
     'headers_schema',
@@ -53,7 +53,7 @@ def _wrap_handler(
         query_string_schema=None,
         request_body_schema=None,
         headers_schema=None,
-        marshal_schemas=None
+        marshal_schema=None
 ):
     """
     Wraps a handler function before registering it with a Flask application.
@@ -83,18 +83,18 @@ def _wrap_handler(
 
         rv = f(*args, **kwargs)
 
-        if marshal_schemas:
+        if marshal_schema:
             if isinstance(rv, tuple):
                 data, status_code = rv[0], rv[1]
             else:
                 data, status_code = rv, 200
 
             try:
-                marshal_schema = marshal_schemas[status_code]
+                schema = marshal_schema[status_code]
             except KeyError:
                 raise
 
-            if marshal_schema is None:
+            if schema is None:
                 # Allow for the schema to be declared as None, which allows
                 # for status codes with no bodies (i.e. a 204 status code)
                 return response(
@@ -103,7 +103,7 @@ def _wrap_handler(
 
             marshaled = marshal(
                 data=data,
-                schema=marshal_schema
+                schema=schema
             )
 
             return response(
@@ -280,7 +280,7 @@ class HandlerRegistry(object):
                     path=path,
                     method=definition_.method,
                     endpoint=definition_.endpoint,
-                    marshal_schemas=definition_.marshal_schemas,
+                    marshal_schema=definition_.marshal_schema,
                     query_string_schema=definition_.query_string_schema,
                     request_body_schema=definition_.request_body_schema,
                     headers_schema=definition_.headers_schema,
@@ -295,7 +295,7 @@ class HandlerRegistry(object):
             rule,
             method='GET',
             endpoint=None,
-            marshal_schemas=None,
+            marshal_schema=None,
             query_string_schema=None,
             request_body_schema=None,
             headers_schema=USE_DEFAULT,
@@ -311,7 +311,7 @@ class HandlerRegistry(object):
         :param str method:
             The HTTP method this handler accepts
         :param str endpoint:
-        :param dict[int, marshmallow.Schema] marshal_schemas:
+        :param dict[int, marshmallow.Schema] marshal_schema:
             Dictionary mapping response codes to schemas to use to marshal
             the response. For now this assumes everything is JSON.
         :param marshmallow.Schema query_string_schema:
@@ -326,15 +326,15 @@ class HandlerRegistry(object):
             If left as USE_DEFAULT, the Rebar's default will be used.
             Set to None to make this an unauthenticated handler.
         """
-        if isinstance(marshal_schemas, marshmallow.Schema):
-            marshal_schemas = {200: marshal_schemas}
+        if isinstance(marshal_schema, marshmallow.Schema):
+            marshal_schema = {200: marshal_schema}
 
         self._paths[rule][method] = PathDefinition(
             func=func,
             path=rule,
             method=method,
             endpoint=endpoint,
-            marshal_schemas=marshal_schemas,
+            marshal_schema=marshal_schema,
             query_string_schema=query_string_schema,
             request_body_schema=request_body_schema,
             headers_schema=headers_schema,
@@ -346,7 +346,7 @@ class HandlerRegistry(object):
             rule,
             method='GET',
             endpoint=None,
-            marshal_schemas=None,
+            marshal_schema=None,
             query_string_schema=None,
             request_body_schema=None,
             headers_schema=USE_DEFAULT,
@@ -363,7 +363,7 @@ class HandlerRegistry(object):
                 rule=rule,
                 method=method,
                 endpoint=endpoint,
-                marshal_schemas=marshal_schemas,
+                marshal_schema=marshal_schema,
                 query_string_schema=query_string_schema,
                 request_body_schema=request_body_schema,
                 headers_schema=headers_schema,
@@ -405,7 +405,7 @@ class HandlerRegistry(object):
                             if definition_.headers_schema is USE_DEFAULT
                             else definition_.headers_schema
                         ),
-                        marshal_schemas=definition_.marshal_schemas
+                        marshal_schema=definition_.marshal_schema
                     ),
                     methods=[definition_.method],
                     endpoint=endpoint

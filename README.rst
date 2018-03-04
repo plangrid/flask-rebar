@@ -59,7 +59,7 @@ Example
        rule='/todos/<int:todo_id>',
        method='GET',
        query_string_schema=UpdateTodoSchema(),
-       marshal_schemas=TodoSchema(),
+       marshal_schema=TodoSchema(),
    )
    def get_todo(todo_id):
        """
@@ -75,7 +75,7 @@ Example
 
        ...
 
-       # The response will be marshaled by `marshal_schemas`
+       # The response will be marshaled by `marshal_schema`
        return {'data': {}}
 
 
