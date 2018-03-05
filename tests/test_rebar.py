@@ -66,7 +66,7 @@ def auth_headers(header=DEFAULT_AUTH_HEADER, secret=DEFAULT_AUTH_SECRET):
 
 
 def create_rebar_app(rebar):
-    app = Flask('FramerTest')
+    app = Flask('RebarTest')
     app.testing = True
     rebar.init_app(app)
     return app

@@ -13,7 +13,7 @@ todo_id_sequence = 0
 todo_database = {}
 
 
-# The framer relies heavily on Marshmallow.
+# Rebar relies heavily on Marshmallow.
 # These schemas will be used to validate incoming data, marshal outgoing
 # data, and to automatically generate a Swagger specification.
 
