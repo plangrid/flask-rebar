@@ -38,40 +38,43 @@ Here's what a basic Flask-Rebar application looks like:
    # All handler URL rules will be prefixed by '/v1'
    registry = rebar.create_handler_registry(prefix='/v1')
 
-
-   # This schema will validate the incoming request's query string
-   class GetTodoSchema(Schema):
-       complete = fields.Boolean()
-
-   # This schema will marshal the outgoing response
    class TodoSchema(Schema):
        id = fields.Integer()
        complete = fields.Boolean()
        description = fields.String()
 
+   # This schema will validate the incoming request's query string
+   class GetTodosQueryStringSchema(Schema):
+       complete = fields.Boolean()
+
+   # This schema will marshal the outgoing response
+   class GetTodosResponseSchema(Schema):
+       data = fields.Nested(TodoSchema, many=True)
+
 
    @registry.handles(
-       rule='/todos/<int:todo_id>',
+       rule='/todos',
        method='GET',
-       query_string_schema=UpdateTodoSchema(),
-       marshal_schema=TodoSchema(),
+       query_string_schema=GetTodosQueryStringSchema(),
+       marshal_schema=GetTodosResponseSchema(),
    )
-   def get_todo(todo_id):
+   def get_todos():
        """
        This docstring will be rendered as the operation's description in
        the auto-generated OpenAPI specification.
        """
-       if todo_id not in database:
-           # Errors are converted to appropriate HTTP errors
-           raise errors.NotFound()
-
        # The query string has already been validated by `query_string_schema`
-       complete = framer.validated_args.get('complete')
+       complete = rebar.validated_args.get('complete')
+
+       ...
+
+       # Errors are converted to appropriate HTTP errors
+       raise errors.Forbidden()
 
        ...
 
        # The response will be marshaled by `marshal_schema`
-       return {'data': {}}
+       return {'data': []}
 
 
    def create_app(name):
