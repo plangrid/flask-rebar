@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 if __name__ == '__main__':
@@ -12,7 +12,7 @@ if __name__ == '__main__':
         long_description=open('README.rst').read(),
         keywords=['flask', 'rest', 'marshmallow', 'openapi', 'swagger'],
         license='MIT',
-        packages=['flask_rebar'],
+        packages=find_packages(exclude=('test*', 'examples')),
         install_requires=[
             'Flask>=0.10',
             'marshmallow>=2.13',
