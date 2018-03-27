@@ -489,3 +489,22 @@ class RebarTest(unittest.TestCase):
             headers=auth_headers()
         )
         self.assertEqual(resp.status_code, 200)
+
+    def test_uncaught_errors_are_not_jsonified_in_debug_mode(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        @registry.handles('/force_500')
+        def force_500():
+            raise ArithmeticError()
+
+        app = create_rebar_app(rebar)
+
+        app.debug = False
+        resp = app.test_client().get(path='/force_500')
+        self.assertEqual(resp.status_code, 500)
+        self.assertEqual(resp.content_type, 'application/json')
+
+        app.debug = True
+        with self.assertRaises(ArithmeticError):
+            app.test_client().get(path='/force_500')

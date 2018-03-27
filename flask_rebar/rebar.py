@@ -591,10 +591,13 @@ class Rebar(object):
             for func in self.uncaught_exception_handlers:
                 func(error)
 
-            return self._create_json_error_response(
-                message=messages.internal_server_error,
-                http_status_code=500
-            )
+            if not current_app.debug:
+                return self._create_json_error_response(
+                    message=messages.internal_server_error,
+                    http_status_code=500
+                )
+            else:
+                raise error
 
     def _create_json_error_response(
             self,
