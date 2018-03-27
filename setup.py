@@ -13,11 +13,11 @@ if __name__ == '__main__':
         keywords=['flask', 'rest', 'marshmallow', 'openapi', 'swagger'],
         license='MIT',
         packages=find_packages(exclude=('test*', 'examples')),
+        include_package_data=True,
         install_requires=[
             'Flask>=0.10',
             'marshmallow>=2.13',
         ],
-        zip_safe=True,
         url='https://github.com/plangrid/flask-rebar',
         classifiers=[
             'Environment :: Web Environment',
