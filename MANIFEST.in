@@ -1,0 +1,2 @@
+recursive-include flask_rebar/swagger_ui/static *.png *.html *.css *.js *.map
+recursive-include flask_rebar/swagger_ui/templates *.jinja2
