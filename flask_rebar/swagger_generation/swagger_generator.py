@@ -319,6 +319,7 @@ class SwaggerV2Generator(object):
             'uuid': sw.string,
             'uuid_string': sw.string,
             'string': sw.string,
+            'path': sw.string,
             'int': sw.integer,
             'float': sw.number
         }
