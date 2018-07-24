@@ -73,3 +73,9 @@ man/
 
 # pytest
 .pytest_cache
+
+# pyenv
+.python-version
+
+# ctags
+tags
