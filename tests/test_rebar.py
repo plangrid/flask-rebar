@@ -12,6 +12,7 @@ import unittest
 
 import marshmallow as m
 from flask import Flask
+from flask import Response
 
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar.authenticators import USE_DEFAULT
@@ -508,3 +509,25 @@ class RebarTest(unittest.TestCase):
         app.debug = True
         with self.assertRaises(ArithmeticError):
             app.test_client().get(path='/force_500')
+
+
+    def test_return_flask_response_directly(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        @registry.handles('/')
+        def flask_response():
+            response = Response(None, status=204)
+            del response.headers['Content-Type']
+            return response
+
+        class NoDefaultMimeType(Response):
+            default_mimetype = None
+
+        app = create_rebar_app(rebar)
+        app.response_class = NoDefaultMimeType
+
+        resp = app.test_client().get(path='/')
+        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(resp.data, b'')
+        self.assertEqual(len(resp.headers), 0)

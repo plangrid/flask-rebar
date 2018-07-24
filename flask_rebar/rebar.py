@@ -20,6 +20,7 @@ import marshmallow
 from flask import current_app, jsonify
 from flask import g
 from flask import request
+from flask import Response
 
 from flask_rebar import messages
 from flask_rebar.authenticators import USE_DEFAULT
@@ -83,7 +84,9 @@ def _wrap_handler(
 
         rv = f(*args, **kwargs)
 
-        if marshal_schema:
+        if not marshal_schema or isinstance(rv, Response):
+            return rv
+        else:
             if isinstance(rv, tuple):
                 data, status_code = rv[0], rv[1]
             else:
@@ -110,9 +113,6 @@ def _wrap_handler(
                 data=marshaled,
                 status_code=status_code
             )
-
-        else:
-            return rv
 
     return wrapped
 
@@ -313,7 +313,9 @@ class HandlerRegistry(object):
         :param str endpoint:
         :param dict[int, marshmallow.Schema] marshal_schema:
             Dictionary mapping response codes to schemas to use to marshal
-            the response. For now this assumes everything is JSON.
+            the response. For now this assumes everything is JSON. To bypass
+            the JSON assumption, construct and return a flask.Response object
+            from your view function. This will ignore any marshal schemas.
         :param marshmallow.Schema query_string_schema:
             Schema to use to deserialize query string arguments.
         :param marshmallow.Schema request_body_schema:
