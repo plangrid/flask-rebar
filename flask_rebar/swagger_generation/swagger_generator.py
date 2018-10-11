@@ -275,7 +275,7 @@ class SwaggerV2Generator(object):
             host='swag.com',
             schemes=('http',),
             consumes=('application/json',),
-            produces=('application/vnd.plangrid+json',),
+            produces=('application/json',),
             version='1.0.0',
             title='My API',
             description='',
