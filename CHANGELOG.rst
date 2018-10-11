@@ -1,6 +1,11 @@
 Changelog
 =========
 
+NEXT RELEASE
+------------
+
+* Changed default "produces" of swagger generation to "application/json".
+
 Version 1.0.0
 -------------
 
