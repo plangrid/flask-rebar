@@ -146,9 +146,10 @@ To customize it:
        default_response_schema=DefaultResponseSchema()
    )
 
-   rebar = Rebar(swagger_generator=generator)
+   rebar = Rebar()
+   registry = rebar.create_handler_registry(swagger_generator=generator)
 
-Notice that since we've started to customize the swagger generator, we should specify the generator instance when instantiating our Rebar instance so our swagger endpoints get this same default response.
+Notice that since we've started to customize the swagger generator, we should specify the generator instance when instantiating our Registry instance so our swagger endpoints get this same default response.
 
 Authenticators
 ^^^^^^^^^^^^^^
@@ -177,6 +178,7 @@ We also need to tell the generator how to represent custom Authenticators as Swa
        converter=convert_easy_going_authenticator
    )
 
-   rebar = Rebar(swagger_generator=generator)
+   rebar = Rebar()
+   registry = rebar.create_handler_registry(swagger_generator=generator)
 
 The converter function should take an instance of the authenticator as a single positional argument and return a dictionary representing the `security schema object <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#securitySchemeObject>`_.
