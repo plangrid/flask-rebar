@@ -20,9 +20,9 @@ from flask_rebar import messages
 from flask_rebar import errors
 
 
-def response(data, status_code=200):
+def response(data, status_code=200, headers=None):
     """
-    Constructs a flask.Response.
+    Constructs a flask.jsonify response.
 
     :param dict data: The JSON body of the response
     :param int status_code: HTTP status code to use in the response
@@ -30,6 +30,7 @@ def response(data, status_code=200):
     """
     resp = jsonify(data)
     resp.status_code = status_code
+    resp.headers.extend(headers or {})
     return resp
 
 
