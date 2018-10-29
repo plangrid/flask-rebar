@@ -17,9 +17,7 @@ from copy import copy
 from functools import wraps
 
 import marshmallow
-from flask import current_app, jsonify
-from flask import g
-from flask import request
+from flask import current_app, g, jsonify, make_response, request
 
 from flask_rebar import messages
 from flask_rebar.authenticators import USE_DEFAULT
@@ -83,36 +81,30 @@ def _wrap_handler(
 
         rv = f(*args, **kwargs)
 
-        if marshal_schema:
-            if isinstance(rv, tuple):
-                data, status_code = rv[0], rv[1]
-            else:
-                data, status_code = rv, 200
-
-            try:
-                schema = marshal_schema[status_code]
-            except KeyError:
-                raise
-
-            if schema is None:
-                # Allow for the schema to be declared as None, which allows
-                # for status codes with no bodies (i.e. a 204 status code)
-                return response(
-                    data=data, status_code=status_code
-                )
-
-            marshaled = marshal(
-                data=data,
-                schema=schema
-            )
-
-            return response(
-                data=marshaled,
-                status_code=status_code
-            )
-
-        else:
+        if not marshal_schema:
             return rv
+
+        data, status_code, headers = rv, 200, None
+        if isinstance(rv, tuple):
+            data = rv[0]
+            if len(rv) == 2:
+                if isinstance(rv[1], (int, str)):
+                    status_code = int(rv[1])
+                else:
+                    headers = rv[1]
+            elif len(rv) == 3:
+                status_code, headers = rv[1:3]
+                status_code = int(status_code)
+            else:
+                raise ValueError(rv)
+
+        schema = marshal_schema[status_code]  # May raise KeyError.
+        # The schema may be declared as None to bypass marshaling (e.g. for 204 responses).
+        if schema is None:
+            return make_response((data or '', status_code, headers))
+
+        marshaled = marshal(data=data, schema=schema)
+        return response(data=marshaled, status_code=status_code, headers=headers)
 
     return wrapped
 
