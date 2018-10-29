@@ -12,6 +12,7 @@ import unittest
 
 import marshmallow as m
 from flask import Flask
+from werkzeug.routing import RequestRedirect
 
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar.authenticators import USE_DEFAULT
@@ -508,3 +509,21 @@ class RebarTest(unittest.TestCase):
         app.debug = True
         with self.assertRaises(ArithmeticError):
             app.test_client().get(path='/force_500')
+
+    def test_redirects_for_missing_trailing_slash(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        register_endpoint(registry=registry, path='/with_trailing_slash/')
+
+        app = create_rebar_app(rebar)
+
+        app.debug = False
+        resp = app.test_client().get(path='/with_trailing_slash')
+        self.assertEqual(resp.status_code, 301)
+        self.assertEqual(resp.content_type, 'application/json')
+        self.assertTrue(resp.headers['Location'].endswith('/with_trailing_slash/'))
+
+        app.debug = True
+        with self.assertRaises(RequestRedirect):
+            app.test_client().get(path='/with_trailing_slash')

@@ -15,11 +15,14 @@ from collections import defaultdict
 from collections import namedtuple
 from copy import copy
 from functools import wraps
+from packaging import version
 
 import marshmallow
+from flask import __version__ as flask_version
 from flask import current_app, jsonify
 from flask import g
 from flask import request
+from werkzeug.routing import RequestRedirect
 
 from flask_rebar import messages
 from flask_rebar.authenticators import USE_DEFAULT
@@ -45,6 +48,14 @@ PathDefinition = namedtuple('PathDefinition', [
     'headers_schema',
     'authenticator'
 ])
+
+
+# To catch redirection exceptions, app.errorhandler expects 301 in versions
+# below 0.11.0 but the exception itself in versions greater than 0.11.0.
+if version.parse(flask_version) < version.parse('0.11.0'):
+    REDIRECT_ERROR = 301
+else:
+    REDIRECT_ERROR = RequestRedirect
 
 
 def _wrap_handler(
@@ -583,27 +594,40 @@ class Rebar(object):
                 http_status_code=error.code
             )
 
+        @app.errorhandler(REDIRECT_ERROR)
+        def handle_request_redirect_error(error):
+            if current_app.debug:
+                raise error
+            else:
+                return self._create_json_error_response(
+                    message=error.name,
+                    http_status_code=error.code,
+                    additional_data={"new_url": error.new_url},
+                    headers={"Location": error.new_url}
+                )
+
         @app.errorhandler(Exception)
-        def handle_werkzeug_http_error(error):
+        def handle_generic_error(error):
             exc_info = sys.exc_info()
             current_app.log_exception(exc_info=exc_info)
 
             for func in self.uncaught_exception_handlers:
                 func(error)
 
-            if not current_app.debug:
+            if current_app.debug:
+                raise error
+            else:
                 return self._create_json_error_response(
                     message=messages.internal_server_error,
                     http_status_code=500
                 )
-            else:
-                raise error
 
     def _create_json_error_response(
             self,
             message,
             http_status_code,
-            additional_data=None
+            additional_data=None,
+            headers=None
     ):
         """
         Compiles a response object for an error.
@@ -611,13 +635,18 @@ class Rebar(object):
         :param str message:
         :param int http_status_code:
           An optional, application-specific error code to add to the response.
-        :param additional_data:
+        :param dict additional_data:
           Additional JSON data to attach to the response.
+        :param dict headers:
+          Additional headers to attach to the response.
         :rtype: flask.Response
         """
         body = {'message': message}
         if additional_data:
             body.update(additional_data)
         resp = jsonify(body)
+        if headers:
+            for key, value in headers.items():
+                resp.headers[key] = value
         resp.status_code = http_status_code
         return resp
