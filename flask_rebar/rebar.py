@@ -20,6 +20,7 @@ from functools import wraps
 import marshmallow
 from flask import __version__ as flask_version
 from flask import current_app, g, jsonify, make_response, request
+from werkzeug.datastructures import Headers
 from werkzeug.routing import RequestRedirect
 
 from flask_rebar import messages
@@ -54,6 +55,38 @@ if LooseVersion(flask_version) < LooseVersion('0.11.0'):
     REDIRECT_ERROR = 301
 else:
     REDIRECT_ERROR = RequestRedirect
+
+
+def _unpack_view_func_return_value(rv):
+    """
+    Normalize a return value from a view function into a tuple of (body, status, headers).
+
+    This imitates Flask's own `Flask.make_response` method.
+
+    :param Optional[tuple] rv: (body, status, headers), (body, status), or (body, headers)
+    :return: (body, status, headers)
+    :rtype: tuple
+    """
+    data, status, headers = rv, 200, None
+
+    if isinstance(rv, tuple):
+        len_rv = len(rv)
+
+        if len_rv == 3:
+            data, status, headers = rv
+        elif len_rv == 2:
+            if isinstance(rv[1], (Headers, dict, tuple, list)):
+                data, headers = rv
+            else:
+                data, status = rv
+        else:
+            raise TypeError(
+                'The view function did not return a valid response tuple.'
+                ' The tuple must have the form (body, status, headers),'
+                ' (body, status), or (body, headers).'
+            )
+
+    return data, int(status), headers
 
 
 def _wrap_handler(
@@ -95,21 +128,10 @@ def _wrap_handler(
         if not marshal_schema:
             return rv
 
-        data, status_code, headers = rv, 200, None
-        if isinstance(rv, tuple):
-            data = rv[0]
-            if len(rv) == 2:
-                if isinstance(rv[1], (int, str)):
-                    status_code = int(rv[1])
-                else:
-                    headers = rv[1]
-            elif len(rv) == 3:
-                status_code, headers = rv[1:3]
-                status_code = int(status_code)
-            else:
-                raise ValueError(rv)
+        data, status_code, headers = _unpack_view_func_return_value(rv)
 
         schema = marshal_schema[status_code]  # May raise KeyError.
+
         # The schema may be declared as None to bypass marshaling (e.g. for 204 responses).
         if schema is None:
             return make_response((data or '', status_code, headers))
