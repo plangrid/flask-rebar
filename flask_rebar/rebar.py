@@ -14,8 +14,8 @@ import sys
 from collections import defaultdict
 from collections import namedtuple
 from copy import copy
+from distutils.version import LooseVersion
 from functools import wraps
-from packaging import version
 
 import marshmallow
 from flask import __version__ as flask_version
@@ -52,7 +52,7 @@ PathDefinition = namedtuple('PathDefinition', [
 
 # To catch redirection exceptions, app.errorhandler expects 301 in versions
 # below 0.11.0 but the exception itself in versions greater than 0.11.0.
-if version.parse(flask_version) < version.parse('0.11.0'):
+if LooseVersion(flask_version) < LooseVersion('0.11.0'):
     REDIRECT_ERROR = 301
 else:
     REDIRECT_ERROR = RequestRedirect
