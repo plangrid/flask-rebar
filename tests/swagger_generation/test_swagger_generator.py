@@ -167,6 +167,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
 
         class FooListSchema(m.Schema):
             name = m.fields.String()
+            other = m.fields.String()
 
         @registry.handles(
             rule='/foos/<uuid_string:foo_uid>',
@@ -321,7 +322,13 @@ class TestSwaggerV2Generator(unittest.TestCase):
                                 'in': 'query',
                                 'required': False,
                                 'type': 'string'
-                            }
+                            },
+                            {
+                                'name': 'other',
+                                'in': 'query',
+                                'required': False,
+                                'type': 'string'
+                            },
                         ],
                         'security': []
                     }
@@ -368,6 +375,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
 
         # import json
         # print(json.dumps(swagger, indent=2))
+        # print(json.dumps(expected_swagger, indent=2))
         # self.assertTrue(False)
 
         # This will raise an error if validation fails
