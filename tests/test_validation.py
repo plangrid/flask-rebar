@@ -13,6 +13,7 @@ from unittest import TestCase
 from marshmallow import Schema
 from marshmallow import ValidationError
 from marshmallow import fields
+from marshmallow.validate import OneOf
 from werkzeug.datastructures import MultiDict
 
 from flask_rebar import messages
@@ -59,17 +60,19 @@ class ActuallyRequireOnDumpMixinSchema(Schema, ActuallyRequireOnDumpMixin):
     value_optional = fields.Str(required=True, allow_none=True)
     value_required = fields.Str(required=True, allow_none=False)
     validation_required = fields.DateTime(required=True, allow_none=False)
+    one_of_validation = fields.String(required=True, validate=OneOf(['a', 'b']))
 
 
-class RequireOutpuMixinTest(TestCase):
+class RequireOutputMixinTest(TestCase):
 
     def setUp(self):
-        super(RequireOutpuMixinTest, self).setUp()
+        super(RequireOutputMixinTest, self).setUp()
         self.schema = ActuallyRequireOnDumpMixinSchema(strict=True)
         self.data = {
             'value_required': 'abc',
             'value_optional': None,
             'validation_required': datetime.now(),
+            'one_of_validation': 'a',
         }
 
     def test_nominal(self):
@@ -79,19 +82,19 @@ class RequireOutpuMixinTest(TestCase):
         del self.data['value_required']
         with self.assertRaises(ValidationError) as ctx:
             self.schema.dump(self.data)
-        self.assertIn('value_required', ctx.exception.messages['_schema'][0])
+        self.assertIn('value_required', ctx.exception.messages)
 
     def test_required_none(self):
         self.data['value_required'] = None
         with self.assertRaises(ValidationError) as ctx:
             self.schema.dump(self.data)
-        self.assertIn('value_required', ctx.exception.messages['_schema'][0])
+        self.assertIn('value_required', ctx.exception.messages)
 
     def test_value_optional_missing(self):
         del self.data['value_optional']
         with self.assertRaises(ValidationError) as ctx:
             self.schema.dump(self.data)
-        self.assertIn('value_optional', ctx.exception.messages['_schema'][0])
+        self.assertIn('value_optional', ctx.exception.messages)
 
     def test_validation_works(self):
         self.data['validation_required'] = '123'
@@ -100,6 +103,12 @@ class RequireOutpuMixinTest(TestCase):
         # it's some sort of date error
         self.assertIn('cannot be formatted as a datetime',
                       ctx.exception.messages['validation_required'][0])
+
+    def test_required_failed_validate(self):
+        self.data['one_of_validation'] = 'c'
+        with self.assertRaises(ValidationError) as ctx:
+            self.schema.dump(self.data)
+        self.assertIn('one_of_validation', ctx.exception.messages)
 
 
 class StringList(Schema):

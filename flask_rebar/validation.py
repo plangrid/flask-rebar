@@ -51,17 +51,12 @@ class ActuallyRequireOnDumpMixin(object):
     when `marshmallow.Schema.load` is called.
 
     This is a `marshmallow.Schema` mixin that will throw an error when an object is
-    missing required fields when `marshmallow.Schema.dump` is called.
+    missing required fields when `marshmallow.Schema.dump` is called, or if one of
+    the required fields fails a validator.
     """
     @post_dump()
     def require_output_fields(self, data):
-        for field_name in self.fields:
-            field = self.fields[field_name]
-            if field.required:
-                if field_name not in data:
-                    raise ValidationError(messages.required_field_missing(field_name))
-                elif field.allow_none is False and data[field_name] is None:
-                    raise ValidationError(messages.required_field_empty(field_name))
+        self.validate(data)
 
 
 class DisallowExtraFieldsMixin(object):
