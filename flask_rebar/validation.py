@@ -56,23 +56,7 @@ class ActuallyRequireOnDumpMixin(object):
     """
     @post_dump()
     def require_output_fields(self, data):
-        for field_name in self.fields:
-            field = self.fields[field_name]
-            if field.required:
-                if field_name not in data:
-                    raise ValidationError(messages.required_field_missing(field_name))
-                elif field.allow_none is False and data[field_name] is None:
-                    raise ValidationError(messages.required_field_empty(field_name))
-                elif field.validate:
-                    try:
-                        field.validate(data[field_name])
-                    except ValidationError as e:
-                        raise ValidationError(
-                            messages.required_field_failed_validation(
-                                field_name=field_name,
-                                messages=e.messages,
-                            )
-                        )
+        self.validate(data)
 
 
 class DisallowExtraFieldsMixin(object):
