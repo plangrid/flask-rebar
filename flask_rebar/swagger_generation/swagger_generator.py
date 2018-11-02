@@ -172,7 +172,7 @@ def _convert_jsonschema_to_list_of_parameters(obj, in_='query'):
 
     required = obj.get('required', [])
 
-    for name, prop in obj['properties'].items():
+    for name, prop in sorted(obj['properties'].items(), key=lambda i: i[0]):
         parameter = copy.deepcopy(prop)
         parameter['required'] = name in required
         parameter['in'] = in_
