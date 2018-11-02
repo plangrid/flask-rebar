@@ -35,5 +35,12 @@ def required_field_empty(field_name):
     return "Value for required field cannot be None: {}".format(field_name)
 
 
+def required_field_failed_validation(field_name, messages):
+    return "Required field failed validation. {}: {}".format(
+        field_name,
+        ' '.join(messages),
+    )
+
+
 def unsupported_fields(field_names):
     return 'Unexpected field: {}'.format(','.join(field_names))
