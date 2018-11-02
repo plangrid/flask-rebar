@@ -51,7 +51,7 @@ Flask-Rebar uses `semantic versions <https://semver.org/>`_. Once you know the a
 .. code-block:: bash
 
    git checkout master
-   bumpversion MINOR
+   bumpversion minor
 
 Then push the new commit and tags to master:
 
