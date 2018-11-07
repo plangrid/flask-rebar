@@ -43,6 +43,19 @@ class TestResponseFormatting(TestCase):
         self.assertEqual(resp.json, {'foo': 'bar'})
         self.assertEqual(resp.content_type, 'application/json')
 
+    def test_single_resource_response_with_headers(self):
+        header_key = 'X-Foo'
+        header_value = 'bar'
+
+        @self.app.route('/single_resource')
+        def handler():
+            return response(data={'foo': 'bar'}, headers={header_key: header_value})
+
+        resp = self.app.test_client().get('/single_resource')
+        self.assertEqual(resp.headers[header_key], header_value)
+        self.assertEqual(resp.json, {'foo': 'bar'})
+        self.assertEqual(resp.content_type, 'application/json')
+
 
 class SchemaForMarshaling(validation.ResponseSchema):
     foo = fields.Integer()
