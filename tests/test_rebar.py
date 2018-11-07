@@ -16,6 +16,7 @@ from werkzeug.routing import RequestRedirect
 
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar.authenticators import USE_DEFAULT
+from flask_rebar import messages
 from flask_rebar.rebar import Rebar
 from flask_rebar.rebar import prefix_url
 from flask_rebar.testing import validate_swagger
@@ -24,6 +25,7 @@ from flask_rebar.testing import validate_swagger
 DEFAULT_AUTH_HEADER = 'x-default-auth'
 DEFAULT_AUTH_SECRET = 'SECRET!'
 DEFAULT_RESPONSE = {'uid': '0', 'name': "I'm the default for testing!"}
+DEFAULT_ERROR = {'message': messages.internal_server_error}
 
 
 class FooSchema(m.Schema):
@@ -277,6 +279,41 @@ class RebarTest(unittest.TestCase):
             headers=auth_headers()  # Missing the x-name header!
         )
         self.assertEqual(resp.status_code, 400)
+
+    def test_view_function_tuple_response(self):
+        header_key = 'X-Foo'
+        header_value = 'bar'
+        headers = {header_key: header_value}
+
+        for marshal_schema,      rv,                               expected_status, expected_body,    expected_headers in [
+            (FooSchema(),        DEFAULT_RESPONSE,                 200,             DEFAULT_RESPONSE, {}),
+            ({201: FooSchema()}, (DEFAULT_RESPONSE, 201),          201,             DEFAULT_RESPONSE, {}),
+            ({201: FooSchema()}, (DEFAULT_RESPONSE, 200),          500,             DEFAULT_ERROR,    {}),
+            ({204: None},        (None, 204),                      204,             '',               {}),
+            ({200: FooSchema()}, (DEFAULT_RESPONSE, headers),      200,             DEFAULT_RESPONSE, headers),
+            ({201: FooSchema()}, (DEFAULT_RESPONSE, 201, headers), 201,             DEFAULT_RESPONSE, headers),
+            ({201: None},        (None, 201, headers),             201,             '',               headers),
+        ]:
+            rebar = Rebar()
+            registry = rebar.create_handler_registry()
+
+            @registry.handles(
+                rule='/foo',
+                marshal_schema=marshal_schema
+            )
+            def foo():
+                return rv
+
+            app = create_rebar_app(rebar)
+
+            resp = app.test_client().get('/foo')
+
+            body = get_json_from_resp(resp) if resp.data else resp.data.decode()
+            self.assertEqual(body, expected_body)
+            self.assertEqual(resp.status_code, expected_status)
+
+            for key, value in expected_headers.items():
+                self.assertEqual(resp.headers[key], value)
 
     def test_swagger_endpoint_is_automatically_created(self):
         rebar = Rebar()
