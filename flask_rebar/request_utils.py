@@ -16,8 +16,37 @@ from flask import jsonify
 from flask import request
 from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
 
-from flask_rebar import messages
+from flask_rebar import compat
 from flask_rebar import errors
+from flask_rebar import messages
+
+
+class HeadersProxy(compat.Mapping):
+    """
+    Marshmallow expects objects being deserialized to be instances of `Mapping`.
+
+    This wraps werkzeug's `EnvironHeaders` to ensure that they're an instance of `Mapping`.
+
+    :param werkzeug.datastructures.EnvironHeaders headers:
+    """
+    __slots__ = ('headers',)
+
+    def __init__(self, headers):
+        self.headers = headers
+
+    def __len__(self):
+        return len(self.headers)
+
+    def __iter__(self):
+        # EnvironHeaders.__iter__ yields tuples of (key, value).
+        # We want to mimic a dict and yield keys.
+        return iter(self.headers.keys())
+
+    def __contains__(self, item):
+        return item in self.headers
+
+    def __getitem__(self, key):
+        return self.headers[key]
 
 
 def response(data, status_code=200, headers=None):
@@ -42,8 +71,7 @@ def marshal(data, schema):
       of the schema.
     """
     schema = normalize_schema(schema)
-    schema.strict = True
-    return schema.dump(data).data
+    return compat.dump(schema=schema, data=data)
 
 
 def normalize_schema(schema):
@@ -52,9 +80,8 @@ def normalize_schema(schema):
     itself to be passed to functions.
     """
     if not isinstance(schema, marshmallow.Schema):
-        return schema()
-    else:
-        return schema
+        schema = schema()
+    return schema
 
 
 def raise_400_for_marshmallow_errors(errs, msg):
@@ -90,17 +117,11 @@ def get_json_body_params_or_400(schema):
     """
     body = _get_json_body_or_400()
 
-    schema = normalize_schema(schema)
-
-    json_body_params, errs = schema.load(data=body)
-
-    if errs:
-        raise_400_for_marshmallow_errors(
-            errs=errs,
-            msg=messages.body_validation_failed
-        )
-
-    return json_body_params
+    return _get_data_or_400(
+        schema=schema,
+        data=body,
+        message=messages.body_validation_failed
+    )
 
 
 def get_query_string_params_or_400(schema):
@@ -111,36 +132,38 @@ def get_query_string_params_or_400(schema):
     :param schema:
     :rtype: dict
     """
-    query_multidict = request.args.copy()
-
-    schema = normalize_schema(schema)
-
-    # Deliberately use the request.args MultiDict in case a validator wants to
+    # Use the request.args MultiDict in case a validator wants to
     # do something with several of the same query param (e.g. ?foo=1&foo=2), in
     # which case it will need the getlist method
-    query_string_params, errs = schema.load(data=query_multidict)
+    query_multidict = request.args.copy()
 
-    if errs:
-        raise_400_for_marshmallow_errors(
-            errs=errs,
-            msg=messages.query_string_validation_failed
-        )
-
-    return query_string_params
+    return _get_data_or_400(
+        schema=schema,
+        data=query_multidict,
+        message=messages.query_string_validation_failed
+    )
 
 
 def get_header_params_or_400(schema):
+    schema = compat.exclude_unknown_fields(schema)
+    return _get_data_or_400(
+        schema=schema,
+        data=HeadersProxy(request.headers),
+        message=messages.header_validation_failed
+    )
+
+
+def _get_data_or_400(schema, data, message):
     schema = normalize_schema(schema)
 
-    header_params, errs = schema.load(data=request.headers)
+    try:
+        return compat.load(schema=schema, data=data)
 
-    if errs:
+    except marshmallow.ValidationError as e:
         raise_400_for_marshmallow_errors(
-            errs=errs,
-            msg=messages.header_validation_failed
+            errs=e.messages,
+            msg=message
         )
-
-    return header_params
 
 
 def _get_json_body_or_400():

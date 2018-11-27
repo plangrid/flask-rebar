@@ -1,4 +1,5 @@
 import jsonschema
+
 from flask_rebar.testing.swagger_jsonschema import SWAGGER_V2_JSONSCHEMA
 
 
@@ -14,3 +15,5 @@ def validate_swagger(swagger, schema=SWAGGER_V2_JSONSCHEMA):
         instance=swagger,
         schema=schema
     )
+
+

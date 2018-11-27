@@ -14,6 +14,7 @@ from marshmallow import post_dump
 from marshmallow import validates_schema
 
 from flask_rebar import messages
+from flask_rebar.compat import MARSHMALLOW_V2
 
 
 class CommaSeparatedList(fields.List):
@@ -54,9 +55,12 @@ class ActuallyRequireOnDumpMixin(object):
     missing required fields when `marshmallow.Schema.dump` is called, or if one of
     the required fields fails a validator.
     """
-    @post_dump()
-    def require_output_fields(self, data):
-        self.validate(data)
+    @post_dump(pass_many=True)
+    def require_output_fields(self, data, many):
+        errors = self.validate(data)
+        if errors:
+            raise ValidationError(errors, data=data)
+        return data
 
 
 class DisallowExtraFieldsMixin(object):
@@ -89,11 +93,11 @@ class DisallowExtraFieldsMixin(object):
             raise ValidationError(message=messages.unsupported_fields(unsupported_fields))
 
 
-class RequestSchema(DisallowExtraFieldsMixin, Schema):
-    """
-
-    """
-    pass
+# Marshmallow version 3 starts "disallowing" extra fields by default
+if MARSHMALLOW_V2:
+    RequestSchema = type("RequestSchema", (DisallowExtraFieldsMixin, Schema), {})
+else:
+    RequestSchema = Schema
 
 
 class ResponseSchema(ActuallyRequireOnDumpMixin, Schema):

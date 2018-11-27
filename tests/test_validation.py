@@ -16,7 +16,10 @@ from marshmallow import fields
 from marshmallow.validate import OneOf
 from werkzeug.datastructures import MultiDict
 
+from flask_rebar import compat
 from flask_rebar import messages
+from flask_rebar.request_utils import normalize_schema
+from tests.helpers import skip_if_marshmallow_not_v2
 from flask_rebar.validation import ActuallyRequireOnDumpMixin
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import DisallowExtraFieldsMixin
@@ -28,6 +31,7 @@ class DisallowExtraFieldsSchema(Schema, DisallowExtraFieldsMixin):
     b = fields.String(load_from='c')
 
 
+@skip_if_marshmallow_not_v2
 class TestDisallowExtraFieldsMixin(TestCase):
 
     def test_nominal(self):
@@ -51,7 +55,7 @@ class TestDisallowExtraFieldsMixin(TestCase):
 
     def test_doesnt_break_for_non_object_schema(self):
         data, errors = DisallowExtraFieldsSchema().load(['im not supposed to be a list :)'])
-        self.assertEqual(errors, {'_schema': [fields.Field.default_error_messages['type']]})
+        self.assertEqual(errors, {'_schema': ['Invalid input type.']})
         self.assertEqual(data, {})
 
 
@@ -67,7 +71,7 @@ class RequireOutputMixinTest(TestCase):
 
     def setUp(self):
         super(RequireOutputMixinTest, self).setUp()
-        self.schema = ActuallyRequireOnDumpMixinSchema(strict=True)
+        self.schema = normalize_schema(ActuallyRequireOnDumpMixinSchema)
         self.data = {
             'value_required': 'abc',
             'value_optional': None,
@@ -81,25 +85,25 @@ class RequireOutputMixinTest(TestCase):
     def test_required_missing(self):
         del self.data['value_required']
         with self.assertRaises(ValidationError) as ctx:
-            self.schema.dump(self.data)
+            compat.dump(self.schema, self.data)
         self.assertIn('value_required', ctx.exception.messages)
 
     def test_required_none(self):
         self.data['value_required'] = None
         with self.assertRaises(ValidationError) as ctx:
-            self.schema.dump(self.data)
+            compat.dump(self.schema, self.data)
         self.assertIn('value_required', ctx.exception.messages)
 
     def test_value_optional_missing(self):
         del self.data['value_optional']
         with self.assertRaises(ValidationError) as ctx:
-            self.schema.dump(self.data)
+            compat.dump(self.schema, self.data)
         self.assertIn('value_optional', ctx.exception.messages)
 
     def test_validation_works(self):
         self.data['validation_required'] = '123'
         with self.assertRaises(ValidationError) as ctx:
-            self.schema.dump(self.data)
+            compat.dump(self.schema, self.data)
         # it's some sort of date error
         self.assertIn('cannot be formatted as a datetime',
                       ctx.exception.messages['validation_required'][0])
@@ -107,7 +111,7 @@ class RequireOutputMixinTest(TestCase):
     def test_required_failed_validate(self):
         self.data['one_of_validation'] = 'c'
         with self.assertRaises(ValidationError) as ctx:
-            self.schema.dump(self.data)
+            compat.dump(self.schema, self.data)
         self.assertIn('one_of_validation', ctx.exception.messages)
 
 
@@ -121,34 +125,38 @@ class IntegerList(Schema):
 
 class TestCommaSeparatedList(TestCase):
     def test_deserialize(self):
-        data, _ = StringList().load({'foos': 'bar'})
+        data = compat.load(StringList(), {'foos': 'bar'})
         self.assertEqual(data['foos'], ['bar'])
 
-        data, _ = StringList().load({'foos': 'bar,baz'})
+        data = compat.load(StringList(), {'foos': 'bar,baz'})
         self.assertEqual(data['foos'], ['bar', 'baz'])
 
-        data, _ = IntegerList().load({'foos': '1,2'})
+        data = compat.load(IntegerList(), {'foos': '1,2'})
         self.assertEqual(data['foos'], [1, 2])
 
     def test_serialize(self):
-        data, _ = StringList().dump({'foos': ['bar']})
+        data = compat.dump(StringList(), {'foos': ['bar']})
         self.assertEqual(data['foos'], 'bar')
 
-        data, _ = StringList().dump({'foos': ['bar', 'baz']})
+        data = compat.dump(StringList(), {'foos': ['bar', 'baz']})
         self.assertEqual(data['foos'], 'bar,baz')
 
-        data, _ = IntegerList().dump({'foos': [1, 2]})
+        data = compat.dump(IntegerList(), {'foos': [1, 2]})
         self.assertEqual(data['foos'], '1,2')
 
     def test_deserialize_errors(self):
-        _, errs = IntegerList().load({'foos': '1,two'})
-        self.assertEqual(errs, {
+        with self.assertRaises(ValidationError) as ctx:
+            compat.load(IntegerList(), {'foos': '1,two'})
+
+        self.assertEqual(ctx.exception.messages, {
             'foos': {1: ['Not a valid integer.']}
         })
 
     def test_serialize_errors(self):
-        _, errs = IntegerList().dump({'foos': [1, 'two']})
-        self.assertEqual(errs, {
+        with self.assertRaises(ValidationError) as ctx:
+            compat.dump(IntegerList(), {'foos': [1, 'two']})
+
+        self.assertEqual(ctx.exception.messages, {
             # Marshmallow's fields.List formats the dump errors differently
             # than load :shrug:
             'foos': ['Not a valid integer.']
@@ -166,20 +174,23 @@ class IntegerQuery(Schema):
 class TestQueryParamList(TestCase):
     def test_deserialize(self):
         query = MultiDict([('foos', 'bar')])
-        data, _ = StringQuery().load(query)
+        data = compat.load(StringQuery(), query)
         self.assertEqual(data['foos'], ['bar'])
 
         query = MultiDict([('foos', 'bar'), ('foos', 'baz')])
-        data, _ = StringQuery().load(query)
+        data = compat.load(StringQuery(), query)
         self.assertEqual(data['foos'], ['bar', 'baz'])
 
         query = MultiDict([('foos', 1), ('foos', 2)])
-        data, _ = IntegerQuery().load(query)
+        data = compat.load(IntegerQuery(), query)
         self.assertEqual(data['foos'], [1, 2])
 
     def test_deserialize_errors(self):
         query = MultiDict([('foos', 1), ('foos', 'two')])
-        _, errs = IntegerQuery().load(query)
-        self.assertEqual(errs, {
+
+        with self.assertRaises(ValidationError) as ctx:
+            compat.load(IntegerQuery(), query)
+
+        self.assertEqual(ctx.exception.messages, {
             'foos': {1: ['Not a valid integer.']}
         })

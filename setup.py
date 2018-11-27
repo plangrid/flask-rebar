@@ -15,8 +15,8 @@ if __name__ == '__main__':
         packages=find_packages(exclude=('test*', 'examples')),
         include_package_data=True,
         install_requires=[
-            'Flask>=0.10',
-            'marshmallow>=2.13',
+            'Flask>=0.10,<2',
+            'marshmallow>=2.13,<4',
         ],
         url='https://github.com/plangrid/flask-rebar',
         classifiers=[

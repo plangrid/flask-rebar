@@ -135,6 +135,8 @@ Header Parameters
        . . .
 
 
+.. note:: In version 3 of Marshmallow, The `load_from` parameter of fields changes to `data_key`
+
 In this case we use a regular Marshmallow schema, since there will almost certainly be other HTTP headers in the request that we don't want to validate against.
 
 This schema is passed to ``headers_schema``, and the handler will now call `marshmallow.Schema.load <http://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema.load>`_ on the header values retrieved from Flask's ``request.headers``. A 400 error with a descriptive error will be returned if validation fails.
