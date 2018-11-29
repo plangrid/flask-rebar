@@ -260,6 +260,9 @@ class FieldConverter(MarshmallowConverter):
     def convert(self, obj, context):
         jsonschema_obj = super(FieldConverter, self).convert(obj, context)
 
+        if obj.dump_only:
+            jsonschema_obj['readOnly'] = True
+
         if obj.validate:
             validators = _normalize_validate(obj.validate)
 
