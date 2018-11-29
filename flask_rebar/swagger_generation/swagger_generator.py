@@ -504,7 +504,7 @@ class SwaggerV2Generator(object):
                         if schema is not None:
                             response_definition = {
                                 sw.description: _get_response_description(schema),
-                                sw.schema: {sw.ref: _get_ref(get_swagger_title(schema))}
+                                sw.schema: self._get_schema(schema),
                             }
 
                             responses_definition[str(status_code)] = response_definition
@@ -530,7 +530,7 @@ class SwaggerV2Generator(object):
                         sw.name: schema.__class__.__name__,
                         sw.in_: sw.body,
                         sw.required: True,
-                        sw.schema: {sw.ref: _get_ref(get_swagger_title(schema))}
+                        sw.schema: self._get_schema(schema),
                     })
 
                 if d.headers_schema is USE_DEFAULT and default_headers_schema:
@@ -567,6 +567,10 @@ class SwaggerV2Generator(object):
                     path_definition[method_lower][sw.security] = security
 
         return path_definitions
+
+    def _get_schema(self, schema):
+        ref = {sw.ref: _get_ref(get_swagger_title(schema))}
+        return ref if not schema.many else {sw.type_: sw.array, sw.items: ref}
 
     def _get_definitions(self, paths):
         all_schemas = set()

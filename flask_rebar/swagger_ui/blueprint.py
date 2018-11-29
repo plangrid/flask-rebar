@@ -47,14 +47,7 @@ def create_swagger_ui_blueprint(
     }
 
     @blueprint.route('/')
-    @blueprint.route('/<path:path>')
-    def show(path=None):
-        if not path or path == 'index.html':
-            return render_template(
-                'index.html.jinja2',
-                **template_context
-            )
-        else:
-            return current_app.send_static_file(path)
+    def show():
+        return render_template('index.html.jinja2', **template_context)
 
     return blueprint
