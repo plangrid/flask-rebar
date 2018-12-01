@@ -10,6 +10,10 @@
 """
 from __future__ import unicode_literals
 
+import importlib
+import inspect
+import pkgutil
+import os
 import sys
 from collections import defaultdict
 from collections import namedtuple
@@ -245,6 +249,7 @@ class HandlerRegistry(object):
     ):
         self.prefix = normalize_prefix(prefix)
         self._paths = defaultdict(dict)
+        self.supplemental_schemas = []
         self.default_authenticator = default_authenticator
         self.default_headers_schema = default_headers_schema
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
@@ -397,6 +402,28 @@ class HandlerRegistry(object):
             return f
 
         return wrapper
+
+    def add_supplemental_schemas(self, supp):
+        """Accepts an instance of a marshmallow Schema, a class, a module, or a directory."""
+        if isinstance(supp, marshmallow.Schema):
+            self.supplemental_schemas.append(supp)
+        elif inspect.isclass(supp) and issubclass(supp, marshmallow.Schema):
+            self.supplemental_schemas.append(supp())
+        elif inspect.ismodule(supp):
+            module_names = []
+
+            # import module, or if package, import all modules
+            if os.path.basename(supp.__file__) != '__init__.py':
+                module_names.append(supp.__name__)
+                importlib.import_module(supp.__name__)
+            else:
+                for _, name, _ in pkgutil.iter_modules([os.path.dirname(supp.__file__)]):
+                    importlib.import_module('.' + name, supp.__name__)
+                    module_names.append(supp.__name__ + '.' + name)
+
+            for cls in marshmallow.Schema.__subclasses__():
+                if cls.__module__ in module_names:
+                    self.add_supplemental_schemas(cls)
 
     def register(self, app):
         self._register_routes(app=app)

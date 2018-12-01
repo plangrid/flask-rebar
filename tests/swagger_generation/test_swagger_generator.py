@@ -18,6 +18,9 @@ from flask_rebar.swagger_generation.swagger_generator import _PathArgument as Pa
 from flask_rebar.swagger_generation.swagger_generator import _flatten as flatten
 from flask_rebar.swagger_generation.swagger_generator import _format_path_for_swagger as format_path_for_swagger
 from flask_rebar.testing import validate_swagger
+from tests.swagger_generation.supplemental_schemas import directory
+from tests.swagger_generation.supplemental_schemas import module_schema
+from tests.swagger_generation.supplemental_schemas.supplemental_schema import SupplementalSchema
 
 
 class TestFlatten(unittest.TestCase):
@@ -200,6 +203,9 @@ class TestSwaggerV2Generator(unittest.TestCase):
             pass
 
         registry.set_default_authenticator(default_authenticator)
+        registry.add_supplemental_schemas(SupplementalSchema())
+        registry.add_supplemental_schemas(module_schema)
+        registry.add_supplemental_schemas(directory)
 
         host = 'swag.com'
         schemes = ['http']
@@ -367,7 +373,28 @@ class TestSwaggerV2Generator(unittest.TestCase):
                         'message': {'type': 'string'},
                         'details': {'type': 'object'}
                     }
-                }
+                },
+                'SupplementalSchema': {
+                    'type': 'object',
+                    'title': 'SupplementalSchema',
+                    'properties': {
+                        'name': {'type': 'string'},
+                    }
+                },
+                'ModuleSchema': {
+                    'type': 'object',
+                    'title': 'ModuleSchema',
+                    'properties': {
+                        'name': {'type': 'string'},
+                    }
+                },
+                'DirectorySchema': {
+                    'type': 'object',
+                    'title': 'DirectorySchema',
+                    'properties': {
+                        'name': {'type': 'string'},
+                    }
+                },
             }
         }
 

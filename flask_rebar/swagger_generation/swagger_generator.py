@@ -386,7 +386,7 @@ class SwaggerV2Generator(object):
             paths=registry.paths,
             default_authenticator=default_authenticator
         )
-        definitions = self._get_definitions(paths=registry.paths)
+        definitions = self._get_definitions(paths=registry.paths, supplemental_schemas=registry.supplemental_schemas)
         paths = self._get_paths(
             paths=registry.paths,
             default_headers_schema=registry.default_headers_schema
@@ -568,7 +568,7 @@ class SwaggerV2Generator(object):
 
         return path_definitions
 
-    def _get_definitions(self, paths):
+    def _get_definitions(self, paths, supplemental_schemas=None):
         all_schemas = set()
 
         converted = []
@@ -595,6 +595,14 @@ class SwaggerV2Generator(object):
                     converted.append(self._request_body_converter(schema))
 
                 all_schemas.add(schema)
+
+        for schema in supplemental_schemas:
+            if schema is None:
+                continue
+
+            if schema not in all_schemas:
+                converted.append(self._response_converter(schema))
+            all_schemas.add(schema)
 
         flattened = {}
 
