@@ -160,7 +160,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
             uid = m.fields.String()
             name = m.fields.String()
 
-        class ListOfFooSchema(m.Schema):
+        class NestedFoosSchema(m.Schema):
             data = m.fields.Nested(FooSchema, many=True)
 
         class FooUpdateSchema(m.Schema):
@@ -168,7 +168,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
 
             name = m.fields.String()
 
-        class FooListSchema(m.Schema):
+        class NameAndOtherSchema(m.Schema):
             name = m.fields.String()
             other = m.fields.String()
 
@@ -192,14 +192,25 @@ class TestSwaggerV2Generator(unittest.TestCase):
         def update_foo(foo_uid):
             pass
 
+        # Test using Schema(many=True) without using a nested Field.
+        # https://github.com/plangrid/flask-rebar/issues/41
         @registry.handles(
-            rule='/foos',
+            rule='/foo_list',
             method='GET',
-            marshal_schema={200: ListOfFooSchema()},
-            query_string_schema=FooListSchema(),
+            marshal_schema={200: FooSchema(many=True)},
             authenticator=None  # Override the default!
         )
         def list_foos():
+            pass
+
+        @registry.handles(
+            rule='/foos',
+            method='GET',
+            marshal_schema={200: NestedFoosSchema()},
+            query_string_schema=NameAndOtherSchema(),
+            authenticator=None  # Override the default!
+        )
+        def nested_foos():
             pass
 
         registry.set_default_authenticator(default_authenticator)
@@ -210,7 +221,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
         host = 'swag.com'
         schemes = ['http']
         consumes = ['application/json']
-        produces = ['application/vnd.plangrid+json']
+        produces = ['application/json']
         title = 'Test API'
         version = '2.1.0'
 
@@ -309,13 +320,32 @@ class TestSwaggerV2Generator(unittest.TestCase):
                         'security': [{'sharedSecret': []}]
                     }
                 },
-                '/foos': {
+                '/foo_list': {
                     'get': {
                         'operationId': 'list_foos',
                         'responses': {
                             '200': {
-                                'description': 'ListOfFooSchema',
-                                'schema': {'$ref': '#/definitions/ListOfFooSchema'}
+                                'description': 'Foo',
+                                'schema': {
+                                    'type': 'array',
+                                    'items': {'$ref': '#/definitions/Foo'}
+                                },
+                            },
+                            'default': {
+                                'description': 'Error',
+                                'schema': {'$ref': '#/definitions/Error'}
+                            }
+                        },
+                        'security': []
+                    }
+                },
+                '/foos': {
+                    'get': {
+                        'operationId': 'nested_foos',
+                        'responses': {
+                            '200': {
+                                'description': 'NestedFoosSchema',
+                                'schema': {'$ref': '#/definitions/NestedFoosSchema'}
                             },
                             'default': {
                                 'description': 'Error',
@@ -356,9 +386,9 @@ class TestSwaggerV2Generator(unittest.TestCase):
                         'name': {'type': 'string'}
                     }
                 },
-                'ListOfFooSchema': {
+                'NestedFoosSchema': {
                     'type': 'object',
-                    'title': 'ListOfFooSchema',
+                    'title': 'NestedFoosSchema',
                     'properties': {
                         'data': {
                             'type': 'array',

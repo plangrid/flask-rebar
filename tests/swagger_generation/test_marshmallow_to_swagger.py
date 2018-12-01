@@ -38,6 +38,7 @@ class TestConverterRegistry(unittest.TestCase):
             (m.fields.Email(), {'type': 'string'}),
             (m.fields.Constant('foo'), {'enum': ['foo'], 'default': 'foo'}),
             (m.fields.Integer(missing=5), {'type': 'integer', 'default': 5}),
+            (m.fields.Integer(dump_only=True), {'type': 'integer', 'readOnly': True}),
             (m.fields.Integer(missing=lambda: 5), {'type': 'integer'}),
             (m.fields.Integer(allow_none=True), {'type': 'integer', 'x-nullable': True}),
             (m.fields.List(m.fields.Integer()), {'type': 'array', 'items': {'type': 'integer'}}),
