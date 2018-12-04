@@ -14,7 +14,6 @@ import copy
 import inspect
 import logging
 import sys
-import warnings
 from collections import namedtuple
 
 import marshmallow as m
@@ -23,35 +22,15 @@ from marshmallow.validate import OneOf
 from marshmallow.validate import Length
 from marshmallow.validate import Validator
 
+from flask_rebar import compat
 from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import DisallowExtraFieldsMixin
 from flask_rebar.swagger_generation import swagger_words as sw
 
 
-marshmallow_version = tuple(int(v) for v in m.__version__.split('.'))
-
-if not (2, 13, 5) <= marshmallow_version < (3, 0, 0):
-    warnings.warn(
-        'Version {} of Marshmallow is not supported yet! '
-        'Proceed with caution.'.format(m.__version__)
-    )
-
-
 # Special value to signify that a JSONSchema field should be left unset
 class UNSET(object):
-    pass
-
-
-# Marshmallow schemas work differently in different directions (i.e. "dump" vs
-# "load"), and we have to convert them to swagger accordingly.
-# These are special values that we'll use to signify the direction to
-# converters.
-class IN(object):
-    pass
-
-
-class OUT(object):
     pass
 
 
@@ -64,10 +43,6 @@ _Context = namedtuple('_Context', [
     # This will hold a reference to a convert method that can be used
     # to make recursive calls
     'convert',
-
-    # This will be either IN or OUT, and signifies if the converter should
-    # treat the marshmallow schema as "load"ing or "dump"ing.
-    'direction',
 
     # Only really using this for validators at the moment. It will hold the
     # JSONSchema object that's been converter so far, so that the validator
@@ -204,11 +179,7 @@ class SchemaConverter(MarshmallowConverter):
         properties = {}
 
         for name, field in obj.fields.items():
-            prop = name
-            if context.direction == OUT and field.dump_to:
-                prop = field.dump_to
-            elif context.direction == IN and field.load_from:
-                prop = field.load_from
+            prop = compat.get_data_key(field)
             properties[prop] = context.convert(field, context)
 
         return properties
@@ -222,11 +193,7 @@ class SchemaConverter(MarshmallowConverter):
 
         for name, field in obj.fields.items():
             if field.required:
-                prop = name
-                if context.direction == OUT and field.dump_to:
-                    prop = field.dump_to
-                elif context.direction == IN and field.load_from:
-                    prop = field.load_from
+                prop = compat.get_data_key(field)
                 required.append(prop)
 
         return required if required else UNSET
@@ -273,7 +240,6 @@ class FieldConverter(MarshmallowConverter):
                             obj=validator,
                             context=_Context(
                                 convert=context.convert,
-                                direction=context.direction,
                                 memo=jsonschema_obj,
                                 schema=context.schema
                             )
@@ -562,16 +528,10 @@ class ConverterRegistry(object):
 
     This registry also allows for additional converters to be added for custom
     Marshmallow types.
-
-    :param Type[IN]|Type[OUT] direction:
-        OUT if this registry is used to convert output schemas (e.g. response
-        schemas) and IN if tis registry is used to convert input schemas
-        (e.g. request body schemas).
     """
-    def __init__(self, direction=OUT):
+    def __init__(self):
         self._type_map = {}
         self._validator_map = {}
-        self.direction = direction
 
     def register_type(self, converter):
         """
@@ -629,7 +589,6 @@ class ConverterRegistry(object):
             obj=obj,
             context=_Context(
                 convert=self._convert,
-                direction=self.direction,
                 memo={},
                 schema=obj
             )
@@ -642,7 +601,7 @@ ALL_CONVERTERS = tuple([
     if issubclass(klass, MarshmallowConverter)
 ])
 
-query_string_converter_registry = ConverterRegistry(direction=IN)
+query_string_converter_registry = ConverterRegistry()
 query_string_converter_registry.register_types([
     BooleanConverter(),
     CsvArrayConverter(),
@@ -663,7 +622,7 @@ query_string_converter_registry.register_types([
     ConstantConverter(),
 ])
 
-headers_converter_registry = ConverterRegistry(direction=IN)
+headers_converter_registry = ConverterRegistry()
 headers_converter_registry.register_types([
     BooleanConverter(),
     CsvArrayConverter(),
@@ -684,7 +643,7 @@ headers_converter_registry.register_types([
     ConstantConverter(),
 ])
 
-request_body_converter_registry = ConverterRegistry(direction=IN)
+request_body_converter_registry = ConverterRegistry()
 request_body_converter_registry.register_types([
     BooleanConverter(),
     DateConverter(),
@@ -706,7 +665,7 @@ request_body_converter_registry.register_types([
     ConstantConverter(),
 ])
 
-response_converter_registry = ConverterRegistry(direction=OUT)
+response_converter_registry = ConverterRegistry()
 response_converter_registry.register_types([
     BooleanConverter(),
     DateConverter(),

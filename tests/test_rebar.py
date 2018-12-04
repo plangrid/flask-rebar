@@ -17,6 +17,7 @@ from werkzeug.routing import RequestRedirect
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar.authenticators import USE_DEFAULT
 from flask_rebar import messages
+from flask_rebar.compat import set_data_key
 from flask_rebar.rebar import Rebar
 from flask_rebar.rebar import prefix_url
 from flask_rebar.testing import validate_swagger
@@ -46,7 +47,10 @@ class FooListSchema(m.Schema):
 
 
 class HeadersSchema(m.Schema):
-    name = m.fields.String(load_from='x-name', required=True)
+    name = set_data_key(
+        field=m.fields.String(load_from='x-name', required=True),
+        key='x-name'
+    )
 
 
 class MeSchema(m.Schema):

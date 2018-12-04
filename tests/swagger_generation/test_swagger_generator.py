@@ -11,6 +11,7 @@ import unittest
 
 import marshmallow as m
 
+from flask_rebar import compat
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar.rebar import Rebar
 from flask_rebar.swagger_generation import SwaggerV2Generator
@@ -149,7 +150,10 @@ class TestSwaggerV2Generator(unittest.TestCase):
         )
 
         class HeaderSchema(m.Schema):
-            user_id = m.fields.String(load_from='x-userid', required=True)
+            user_id = compat.set_data_key(
+                field=m.fields.String(required=True),
+                key='X-UserId'
+            )
 
         class FooSchema(m.Schema):
             __swagger_title__ = 'Foo'
@@ -284,7 +288,7 @@ class TestSwaggerV2Generator(unittest.TestCase):
                         },
                         'parameters': [
                             {
-                                'name': 'x-userid',
+                                'name': 'X-UserId',
                                 'in': 'header',
                                 'required': True,
                                 'type': 'string'

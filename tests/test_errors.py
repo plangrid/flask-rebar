@@ -17,6 +17,7 @@ from marshmallow import fields
 
 
 from flask_rebar import messages, validation, response, Rebar
+from flask_rebar.compat import MARSHMALLOW_V2
 from flask_rebar import errors
 from flask_rebar.request_utils import get_json_body_params_or_400
 from flask_rebar.request_utils import get_query_string_params_or_400
@@ -162,10 +163,16 @@ class TestJsonBodyValidation(TestCase):
             data={'foo': 1, 'baz': 'This is an unexpected field!'}
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {
-            'message': messages.body_validation_failed,
-            'errors': {'_general': 'Unexpected field: baz'}
-        })
+        if MARSHMALLOW_V2:
+            self.assertEqual(resp.json, {
+                'message': messages.body_validation_failed,
+                'errors': {'_general': 'Unexpected field: baz'}
+            })
+        else:
+            self.assertEqual(resp.json, {
+                'message': messages.body_validation_failed,
+                'errors': {'baz': 'Unknown field.'}
+            })
 
         # Both field errors and general errors
         resp = self.post_json(
@@ -173,13 +180,23 @@ class TestJsonBodyValidation(TestCase):
             data={'baz': 'This is an unexpected field!'}
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {
-            'message': messages.body_validation_failed,
-            'errors': {
-                '_general': 'Unexpected field: baz',
-                'foo': 'Missing data for required field.'
-            }
-        })
+
+        if MARSHMALLOW_V2:
+            self.assertEqual(resp.json, {
+                'message': messages.body_validation_failed,
+                'errors': {
+                    '_general': 'Unexpected field: baz',
+                    'foo': 'Missing data for required field.'
+                }
+            })
+        else:
+            self.assertEqual(resp.json, {
+                'message': messages.body_validation_failed,
+                'errors': {
+                    'baz': 'Unknown field.',
+                    'foo': 'Missing data for required field.'
+                }
+            })
 
         # Happy path
         resp = self.post_json(
@@ -201,20 +218,36 @@ class TestJsonBodyValidation(TestCase):
         )
         self.assertEqual(resp.status_code, 400)
 
-        self.assertEqual(resp.json, {
-            'message': messages.body_validation_failed,
-            'errors': {
-                '_general': 'Unexpected field: bam',
-                'foo': 'Missing data for required field.',
-                'nested': {
-                    '_general': 'Unexpected field: unexpected',
-                    'baz': {
-                        '0': 'Not a valid integer.',
-                        '1': 'Not a valid integer.'
+        if MARSHMALLOW_V2:
+            self.assertEqual(resp.json, {
+                'message': messages.body_validation_failed,
+                'errors': {
+                    '_general': 'Unexpected field: bam',
+                    'foo': 'Missing data for required field.',
+                    'nested': {
+                        '_general': 'Unexpected field: unexpected',
+                        'baz': {
+                            '0': 'Not a valid integer.',
+                            '1': 'Not a valid integer.'
+                        }
                     }
                 }
-            }
-        })
+            })
+        else:
+            self.assertEqual(resp.json, {
+                'message': messages.body_validation_failed,
+                'errors': {
+                    'bam': 'Unknown field.',
+                    'foo': 'Missing data for required field.',
+                    'nested': {
+                        'unexpected': 'Unknown field.',
+                        'baz': {
+                            '0': 'Not a valid integer.',
+                            '1': 'Not a valid integer.'
+                        }
+                    }
+                }
+            })
 
     def test_invalid_json_error(self):
         resp = self.app.test_client().post(
@@ -270,10 +303,16 @@ class TestQueryStringValidation(TestCase):
             path='/stuffs?foo=1&unexpected=true'
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {
-            'message': messages.query_string_validation_failed,
-            'errors': {'_general': 'Unexpected field: unexpected'}
-        })
+        if MARSHMALLOW_V2:
+            self.assertEqual(resp.json, {
+                'message': messages.query_string_validation_failed,
+                'errors': {'_general': 'Unexpected field: unexpected'}
+            })
+        else:
+            self.assertEqual(resp.json, {
+                'message': messages.query_string_validation_failed,
+                'errors': {'unexpected': 'Unknown field.'}
+            })
 
         resp = self.app.test_client().get(
             path='/stuffs?foo=1&bar=true&baz=1,2,3'
