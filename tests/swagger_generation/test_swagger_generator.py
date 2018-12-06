@@ -214,6 +214,15 @@ class TestSwaggerV2Generator(unittest.TestCase):
         def nested_foos():
             pass
 
+        @registry.handles(
+            rule='/xml',
+            method='GET',
+            marshal_schema={200: FooSchema()},
+            produces=['text/xml']
+        )
+        def get_xml(foo_uid):
+            pass
+
         registry.set_default_authenticator(default_authenticator)
 
         host = 'swag.com'
@@ -365,6 +374,22 @@ class TestSwaggerV2Generator(unittest.TestCase):
                             },
                         ],
                         'security': []
+                    }
+                },
+                '/xml': {
+                    'get': {
+                        'operationId': 'get_xml',
+                        'produces': ['text/xml'],
+                        'responses': {
+                            '200': {
+                                'description': 'Foo',
+                                'schema': {'$ref': '#/definitions/Foo'}
+                            },
+                            'default': {
+                                'description': 'Error',
+                                'schema': {'$ref': '#/definitions/Error'}
+                            }
+                        }
                     }
                 }
             },

@@ -554,6 +554,9 @@ class SwaggerV2Generator(object):
                     sw.responses: responses_definition
                 }
 
+                if d.produces is not USE_DEFAULT and d.produces is not None:
+                    path_definition[method_lower][sw.produces] = d.produces
+
                 if d.func.__doc__:
                     path_definition[method_lower][sw.description] = d.func.__doc__
 

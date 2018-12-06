@@ -45,7 +45,8 @@ PathDefinition = namedtuple('PathDefinition', [
     'query_string_schema',
     'request_body_schema',
     'headers_schema',
-    'authenticator'
+    'authenticator',
+    'produces',
 ])
 
 
@@ -239,6 +240,7 @@ class HandlerRegistry(object):
             prefix=None,
             default_authenticator=None,
             default_headers_schema=None,
+            default_produces=None,
             swagger_generator=None,
             swagger_path='/swagger',
             swagger_ui_path='/swagger/ui'
@@ -247,6 +249,7 @@ class HandlerRegistry(object):
         self._paths = defaultdict(dict)
         self.default_authenticator = default_authenticator
         self.default_headers_schema = default_headers_schema
+        self.default_produces = default_produces
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.swagger_path = swagger_path
         self.swagger_ui_path = swagger_ui_path
@@ -264,6 +267,14 @@ class HandlerRegistry(object):
         Sets the schema to be used by default to validate incoming headers.
 
         :param marshmallow.Schema headers_schema:
+        """
+        self.default_headers_schema = headers_schema
+
+    def set_default_produces(self, produces):
+        """
+        Sets the content types that the endpoint can produce.
+
+        :param iterable[str] produces:
         """
         self.default_headers_schema = headers_schema
 
@@ -310,6 +321,7 @@ class HandlerRegistry(object):
                     request_body_schema=definition_.request_body_schema,
                     headers_schema=definition_.headers_schema,
                     authenticator=definition_.authenticator,
+                    produces=definition_.produces
                 )
 
         return paths
@@ -324,7 +336,8 @@ class HandlerRegistry(object):
             query_string_schema=None,
             request_body_schema=None,
             headers_schema=USE_DEFAULT,
-            authenticator=USE_DEFAULT
+            authenticator=USE_DEFAULT,
+            produces=USE_DEFAULT,
     ):
         """
         Registers a function as a request handler.
@@ -350,6 +363,8 @@ class HandlerRegistry(object):
             An authenticator object to authenticate incoming requests.
             If left as USE_DEFAULT, the Rebar's default will be used.
             Set to None to make this an unauthenticated handler.
+        :param Type[USE_DEFAULT]|list[str] produces:
+            The content types that this endpoint returns.
         """
         if isinstance(marshal_schema, marshmallow.Schema):
             marshal_schema = {200: marshal_schema}
@@ -364,6 +379,7 @@ class HandlerRegistry(object):
             request_body_schema=request_body_schema,
             headers_schema=headers_schema,
             authenticator=authenticator,
+            produces=produces,
         )
 
     def handles(
@@ -375,7 +391,8 @@ class HandlerRegistry(object):
             query_string_schema=None,
             request_body_schema=None,
             headers_schema=USE_DEFAULT,
-            authenticator=USE_DEFAULT
+            authenticator=USE_DEFAULT,
+            produces=USE_DEFAULT,
     ):
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
@@ -392,7 +409,8 @@ class HandlerRegistry(object):
                 query_string_schema=query_string_schema,
                 request_body_schema=request_body_schema,
                 headers_schema=headers_schema,
-                authenticator=authenticator
+                authenticator=authenticator,
+                produces=produces,
             )
             return f
 
@@ -433,7 +451,12 @@ class HandlerRegistry(object):
                         marshal_schema=definition_.marshal_schema
                     ),
                     methods=[definition_.method],
-                    endpoint=endpoint
+                    endpoint=endpoint,
+                    produces=(
+                        self.default_produces
+                        if definition_.produces is USE_DEFAULT
+                        else definition_.produces
+                    ),
                 )
 
     def _register_swagger(self, app):
