@@ -273,7 +273,7 @@ class SwaggerV2Generator(object):
     def __init__(
             self,
             host='swag.com',
-            schemes=('http',),
+            schemes=('http', 'https'),
             consumes=('application/json',),
             produces=('application/json',),
             version='1.0.0',
