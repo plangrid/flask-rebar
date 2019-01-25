@@ -34,6 +34,12 @@ Swagger V2 Generation
 .. autoclass:: flask_rebar.SwaggerV2Generator
    :members:
 
+.. autoclass:: flask_rebar.Tag
+   :members:
+
+.. autoclass:: flask_rebar.ExternalDocumentation
+   :members:
+
 .. autofunction:: flask_rebar.swagger_generation.sets_swagger_attr
 
 .. autoclass:: flask_rebar.swagger_generation.ConverterRegistry
