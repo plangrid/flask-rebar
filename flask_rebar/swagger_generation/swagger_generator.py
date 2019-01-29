@@ -16,6 +16,7 @@ from abc import abstractmethod
 from collections import namedtuple
 from collections import OrderedDict
 
+from flask_rebar.swagger_generation import swagger_marshmallow_schemas as so
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.authenticators import USE_DEFAULT
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator
@@ -734,9 +735,11 @@ class SwaggerV3Generator(SwaggerGenerator):
             sw.openapi: self._get_version(),
             sw.info: self._get_info(),
             sw.servers: self._get_servers(),
-            sw.security_definitions: security_definitions,
             sw.paths: paths,
-            sw.definitions: definitions
+            sw.components: None,  # definitions,
+            sw.security: security_definitions,
+            sw.tags: None,
+            sw.external_docs: None,
         }
 
         if default_authenticator:
