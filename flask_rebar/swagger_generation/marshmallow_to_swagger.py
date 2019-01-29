@@ -364,7 +364,7 @@ class NumberConverter(FieldConverter):
 
 
 class BooleanConverter(FieldConverter):
-    MARSHMALLOW_TYPE = m.fields.Boolean
+    MARSHMALLOW_TYPE = m.fields.Boolean   # __mro__
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):

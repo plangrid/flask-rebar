@@ -15,6 +15,7 @@ from collections import defaultdict
 from collections import namedtuple
 from copy import copy
 from distutils.version import LooseVersion
+from functools import partial
 from functools import wraps
 
 import marshmallow
@@ -35,7 +36,7 @@ from flask_rebar.swagger_generation import SwaggerV2Generator
 from flask_rebar.swagger_ui import create_swagger_ui_blueprint
 
 # Metadata about a declared handler function. This can be used to both
-# declare the flask routing and to autogenerate swagger.
+# declare the flask routing and to auto-generate swagger.
 PathDefinition = namedtuple('PathDefinition', [
     'func',
     'path',
@@ -47,6 +48,20 @@ PathDefinition = namedtuple('PathDefinition', [
     'headers_schema',
     'authenticator'
 ])
+
+
+default_path_definition = partial(
+    PathDefinition,
+    func=str(),
+    path=str(),
+    method=str(),
+    endpoint=str(),
+    marshal_schema={200: marshmallow.Schema},
+    query_string_schema=marshmallow.Schema,
+    request_body_schema=marshmallow.Schema,
+    headers_schema=None,
+    authenticator=None,
+)
 
 
 # To catch redirection exceptions, app.errorhandler expects 301 in versions
@@ -244,7 +259,7 @@ class HandlerRegistry(object):
             swagger_ui_path='/swagger/ui'
     ):
         self.prefix = normalize_prefix(prefix)
-        self._paths = defaultdict(dict)
+        self._paths = defaultdict(lambda: defaultdict(default_path_definition))
         self.default_authenticator = default_authenticator
         self.default_headers_schema = default_headers_schema
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
@@ -291,7 +306,7 @@ class HandlerRegistry(object):
     def paths(self):
         # We duplicate the paths so we can modify the path definitions right before
         # they are accessed.
-        paths = defaultdict(dict)
+        paths = defaultdict(lambda: defaultdict(default_path_definition))
 
         for path, methods in self._paths.items():
             for method, definition_ in methods.items():
