@@ -45,7 +45,8 @@ PathDefinition = namedtuple('PathDefinition', [
     'query_string_schema',
     'request_body_schema',
     'headers_schema',
-    'authenticator'
+    'authenticator',
+    'tags'
 ])
 
 
@@ -310,6 +311,7 @@ class HandlerRegistry(object):
                     request_body_schema=definition_.request_body_schema,
                     headers_schema=definition_.headers_schema,
                     authenticator=definition_.authenticator,
+                    tags=definition_.tags,
                 )
 
         return paths
@@ -324,7 +326,8 @@ class HandlerRegistry(object):
             query_string_schema=None,
             request_body_schema=None,
             headers_schema=USE_DEFAULT,
-            authenticator=USE_DEFAULT
+            authenticator=USE_DEFAULT,
+            tags=None,
     ):
         """
         Registers a function as a request handler.
@@ -350,6 +353,8 @@ class HandlerRegistry(object):
             An authenticator object to authenticate incoming requests.
             If left as USE_DEFAULT, the Rebar's default will be used.
             Set to None to make this an unauthenticated handler.
+        :param Sequence[str] tags:
+            Arbitrary strings to tag the handler with. These will translate to Swagger operation tags.
         """
         if isinstance(marshal_schema, marshmallow.Schema):
             marshal_schema = {200: marshal_schema}
@@ -364,6 +369,7 @@ class HandlerRegistry(object):
             request_body_schema=request_body_schema,
             headers_schema=headers_schema,
             authenticator=authenticator,
+            tags=tags,
         )
 
     def handles(
@@ -375,7 +381,8 @@ class HandlerRegistry(object):
             query_string_schema=None,
             request_body_schema=None,
             headers_schema=USE_DEFAULT,
-            authenticator=USE_DEFAULT
+            authenticator=USE_DEFAULT,
+            tags=None,
     ):
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
@@ -392,7 +399,8 @@ class HandlerRegistry(object):
                 query_string_schema=query_string_schema,
                 request_body_schema=request_body_schema,
                 headers_schema=headers_schema,
-                authenticator=authenticator
+                authenticator=authenticator,
+                tags=tags,
             )
             return f
 

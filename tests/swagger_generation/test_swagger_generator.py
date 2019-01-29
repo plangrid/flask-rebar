@@ -14,7 +14,9 @@ import marshmallow as m
 from flask_rebar import compat
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar.rebar import Rebar
+from flask_rebar.swagger_generation import ExternalDocumentation
 from flask_rebar.swagger_generation import SwaggerV2Generator
+from flask_rebar.swagger_generation import Tag
 from flask_rebar.swagger_generation.swagger_generator import _PathArgument as PathArgument
 from flask_rebar.swagger_generation.swagger_generator import _flatten as flatten
 from flask_rebar.swagger_generation.swagger_generator import _format_path_for_swagger as format_path_for_swagger
@@ -214,6 +216,13 @@ class TestSwaggerV2Generator(unittest.TestCase):
         def nested_foos():
             pass
 
+        @registry.handles(
+            rule='/tagged_foos',
+            tags=['bar', 'baz']
+        )
+        def tagged_foos():
+            pass
+
         registry.set_default_authenticator(default_authenticator)
 
         host = 'swag.com'
@@ -234,7 +243,14 @@ class TestSwaggerV2Generator(unittest.TestCase):
             produces=produces,
             title=title,
             version=version,
-            default_response_schema=Error()
+            default_response_schema=Error(),
+            tags=[
+                Tag(
+                    name='bar',
+                    description='baz',
+                    external_docs=ExternalDocumentation(url='http://bardocs.com', description='qux')
+                )
+            ]
         )
 
         swagger = generator.generate(registry)
@@ -265,6 +281,16 @@ class TestSwaggerV2Generator(unittest.TestCase):
                     'name': 'x-another'
                 }
             },
+            'tags': [
+                {
+                    'name': 'bar',
+                    'description': 'baz',
+                    'externalDocs': {
+                        'url': 'http://bardocs.com',
+                        'description': 'qux'
+                    }
+                }
+            ],
             'paths': {
                 '/foos/{foo_uid}': {
                     'parameters': [{
@@ -365,6 +391,18 @@ class TestSwaggerV2Generator(unittest.TestCase):
                             },
                         ],
                         'security': []
+                    }
+                },
+                '/tagged_foos': {
+                    'get': {
+                        'tags': ['bar', 'baz'],
+                        'operationId': 'tagged_foos',
+                        'responses': {
+                            'default': {
+                                'description': 'Error',
+                                'schema': {'$ref': '#/definitions/Error'}
+                            }
+                        }
                     }
                 }
             },

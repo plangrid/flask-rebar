@@ -23,5 +23,7 @@ from flask_rebar.validation import (
 )
 
 from flask_rebar.swagger_generation import (
+    ExternalDocumentation,
     SwaggerV2Generator,
+    Tag,
 )
