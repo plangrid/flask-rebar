@@ -182,3 +182,35 @@ We also need to tell the generator how to represent custom Authenticators as Swa
    registry = rebar.create_handler_registry(swagger_generator=generator)
 
 The converter function should take an instance of the authenticator as a single positional argument and return a dictionary representing the `security schema object <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#securitySchemeObject>`_.
+
+Tags
+^^^^
+
+Swagger supports tagging operations with arbitrary strings, and then optionally including additional metadata about those tags at the root Swagger Object.
+
+Handlers can be tagged, which will translate to tags on the Operation Object:
+
+.. code-block:: python
+
+   @registry.handles(
+      rule='/todos',
+      method='GET',
+      tags=['beta']
+   )
+   def get_todos():
+       ...
+
+Optionally, to include additional metadata about tags, pass the metadata directly to the swagger generator:
+
+.. code-block:: python
+
+   from flask_rebar import Tag
+
+   generator = SwaggerV2Generator(
+       tags=[
+           Tag(
+               name='beta',
+               description='These operations are still in beta!'
+           )
+       ]
+   )
