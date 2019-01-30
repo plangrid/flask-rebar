@@ -12,11 +12,12 @@ import unittest
 import marshmallow as m
 
 from flask_rebar import compat
+from flask_rebar import ExternalDocumentation
+from flask_rebar import Tag
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar.rebar import Rebar
-from flask_rebar.swagger_generation import ExternalDocumentation
 from flask_rebar.swagger_generation import SwaggerV2Generator
-from flask_rebar.swagger_generation import Tag
+from flask_rebar.swagger_generation import SwaggerV3Generator
 from flask_rebar.swagger_generation.swagger_generator import _PathArgument as PathArgument
 from flask_rebar.swagger_generation.swagger_generator import _flatten as flatten
 from flask_rebar.swagger_generation.swagger_generator import _format_path_for_swagger as format_path_for_swagger
@@ -477,6 +478,150 @@ class TestSwaggerV2Generator(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             generator.generate(registry)
+
+
+class TestSwaggerV3Generator(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.maxDiff = None
+
+    def test_generate_swagger(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        authenticator = HeaderApiKeyAuthenticator(header='x-auth')
+        default_authenticator = HeaderApiKeyAuthenticator(
+            header='x-another',
+            name='default'
+        )
+
+        class HeaderSchema(m.Schema):
+            user_id = compat.set_data_key(
+                field=m.fields.String(required=True),
+                key='X-UserId'
+            )
+
+        class FooSchema(m.Schema):
+            __swagger_title__ = 'Foo'
+
+            uid = m.fields.String()
+            name = m.fields.String()
+
+        class NestedFoosSchema(m.Schema):
+            data = m.fields.Nested(FooSchema, many=True)
+
+        class FooUpdateSchema(m.Schema):
+            __swagger_title = 'FooUpdate'
+
+            name = m.fields.String()
+
+        class NameAndOtherSchema(m.Schema):
+            name = m.fields.String()
+            other = m.fields.String()
+
+        @registry.handles(
+            rule='/foos/<uuid_string:foo_uid>',
+            method='GET',
+            marshal_schema={200: FooSchema()},
+            headers_schema=HeaderSchema()
+        )
+        def get_foo(foo_uid):
+            """helpful description"""
+            pass
+
+        @registry.handles(
+            rule='/foos/<foo_uid>',
+            method='PATCH',
+            marshal_schema={200: FooSchema()},
+            request_body_schema=FooUpdateSchema(),
+            authenticator=authenticator
+        )
+        def update_foo(foo_uid):
+            pass
+
+        # Test using Schema(many=True) without using a nested Field.
+        # https://github.com/plangrid/flask-rebar/issues/41
+        @registry.handles(
+            rule='/foo_list',
+            method='GET',
+            marshal_schema={200: FooSchema(many=True)},
+            authenticator=None  # Override the default!
+        )
+        def list_foos():
+            pass
+
+        @registry.handles(
+            rule='/foos',
+            method='GET',
+            marshal_schema={200: NestedFoosSchema()},
+            query_string_schema=NameAndOtherSchema(),
+            authenticator=None  # Override the default!
+        )
+        def nested_foos():
+            pass
+
+        @registry.handles(
+            rule='/tagged_foos',
+            tags=['bar', 'baz']
+        )
+        def tagged_foos():
+            pass
+
+        registry.set_default_authenticator(default_authenticator)
+
+        servers = ('http://swag.com',)
+        title = 'Test API'
+        version = '1.2.3'
+        description = 'This is a test API'
+
+        class Error(m.Schema):
+            message = m.fields.String()
+            details = m.fields.Dict()
+
+        generator = SwaggerV3Generator(
+            servers=servers,
+            title=title,
+            version=version,
+            description=description,
+            default_response_schema=Error(),
+            tags=[
+                Tag(
+                    name='bar',
+                    description='baz',
+                    external_docs=ExternalDocumentation(
+                        url='http://bardocs.com',
+                        description='qux',
+                    ),
+                ),
+            ],
+        )
+
+        swagger = generator.generate(registry)
+
+        expected_swagger = {
+            'openapi': '3.0.2',
+            'info': {
+                'title': title,
+                'version': version,
+                'description': description,
+            },
+            'paths': {
+
+            },
+        }
+
+        # Uncomment these lines to just dump the result to the terminal:
+        #
+        # import json
+        # import pdb;pdb.set_trace()
+        # print(json.dumps(swagger, indent=2))
+        # print(json.dumps(expected_swagger, indent=2))
+        # self.assertTrue(False)
+
+        # This will raise an error if validation fails
+        validate_swagger(swagger=expected_swagger, schema_major=3)
+
+        self.assertEqual(swagger, expected_swagger)
 
 
 if __name__ == '__main__':

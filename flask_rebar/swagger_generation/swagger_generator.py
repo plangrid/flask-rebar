@@ -16,7 +16,7 @@ from abc import abstractmethod
 from collections import namedtuple
 from collections import OrderedDict
 
-from flask_rebar.swagger_generation import swagger_marshmallow_schemas as so
+from flask_rebar.swagger_generation import swagger_objects as so
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.authenticators import USE_DEFAULT
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator
@@ -248,56 +248,6 @@ def _verify_parameters_are_the_same(a, b):
         raise ValueError(msg)
 
 
-class ExternalDocumentation(object):
-    """
-    Represents a Swagger "External Documentation Object"
-
-    :param str url: The URL for the target documentation. Value MUST be in the format of a URL
-    :param str description: A short description of the target documentation
-    """
-    def __init__(self, url, description=None):
-        self.url = url
-        self.description = description
-
-    def as_swagger(self):
-        """
-        Create a Swagger representation of this object
-
-        :rtype: dict
-        """
-        doc = {sw.url: self.url}
-        if self.description:
-            doc[sw.description] = self.description
-        return doc
-
-
-class Tag(object):
-    """
-    Represents a Swagger "Tag Object"
-
-    :param str name: The name of the tag
-    :param str description: A short description for the tag
-    :param ExternalDocumentation external_docs: Additional external documentation for this tag
-    """
-    def __init__(self, name, description=None, external_docs=None):
-        self.name = name
-        self.description = description
-        self.external_docs = external_docs
-
-    def as_swagger(self):
-        """
-        Create a Swagger representation of this object
-
-        :rtype: dict
-        """
-        doc = {sw.name: self.name}
-        if self.description:
-            doc[sw.description] = self.description
-        if self.external_docs:
-            doc[sw.external_docs] = self.external_docs.as_swagger()
-        return doc
-
-
 class SwaggerGenerator(object):
     """
     Generates a v2.0 Swagger specification from a Rebar object.
@@ -417,13 +367,9 @@ class SwaggerGenerator(object):
     def _get_version(self):
         pass
 
+    @abstractmethod
     def _get_info(self):
-        # TODO: add all the parameters for populating info
-        return {
-            sw.version: self.version,
-            sw.title: self.title,
-            sw.description: self.description,
-        }
+        pass
 
     def _get_security(self, authenticator):
         klass = authenticator.__class__
@@ -683,6 +629,14 @@ class SwaggerV2Generator(SwaggerGenerator):
     def _get_version(self):
         return '2.0'
 
+    def _get_info(self):
+        # TODO: add all the parameters for populating info
+        return {
+            sw.version: self.version,
+            sw.title: self.title,
+            sw.description: self.description,
+        }
+
     def generate(
             self,
             registry,
@@ -739,6 +693,8 @@ class SwaggerV2Generator(SwaggerGenerator):
 
 
 class SwaggerV3Generator(SwaggerGenerator):
+    """Consider changing info and servers here to be the class objects
+    """
     def __init__(
             self,
             servers=('http://swag.com',),
@@ -749,6 +705,7 @@ class SwaggerV3Generator(SwaggerGenerator):
             request_body_converter_registry=None,
             headers_converter_registry=None,
             response_converter_registry=None,
+            tags=None,
 
             # TODO Still trying to figure out how to get this from the registry
             # Flask error handling doesn't mesh well with Swagger responses,
@@ -765,13 +722,11 @@ class SwaggerV3Generator(SwaggerGenerator):
             request_body_converter_registry=request_body_converter_registry,
             headers_converter_registry=headers_converter_registry,
             response_converter_registry=response_converter_registry,
+            tags=tags,
             default_response_schema=default_response_schema,
         )
 
         self.servers = servers
-
-    def _get_version(self):
-        return '3.0.2'
 
     def generate(
             self,
@@ -793,25 +748,33 @@ class SwaggerV3Generator(SwaggerGenerator):
             default_headers_schema=registry.default_headers_schema
         )
 
-        swagger = {
-            sw.openapi: self._get_version(),
-            sw.info: self._get_info(),
-            sw.servers: self._get_servers(),
-            sw.paths: paths,
-            sw.components: None,  # definitions,
-            sw.security: security_definitions,
-            sw.tags: None,
-            sw.external_docs: None,
-        }
+        swagger = so.OpenAPI(
+            openapi=self._get_version(),
+            info=self._get_info(),
+            paths=so.Paths(),
+        )
 
-        if default_authenticator:
-            swagger[sw.security] = self._get_security(default_authenticator)
+        # if default_authenticator:
+        #     swagger[sw.security] = self._get_security(default_authenticator)
 
         if sort_keys:
             # Sort the swagger we generated by keys to produce a consistent output.
             swagger = self._recursively_order_dicts(swagger)
 
-        return swagger
+        return swagger.as_swagger()
+
+    def _get_version(self):
+        return '3.0.2'
+
+    def _get_info(self):
+        return so.Info(
+            title=self.title,
+            description=self.description,
+            # terms_of_service=self.terms_of_service,
+            # contact=self.contact,
+            # license=self.license,
+            version=self.version,
+        )
 
     def _get_servers(self):
         return [
