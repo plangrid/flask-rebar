@@ -1,0 +1,92 @@
+# -*- coding: utf-8; mode: python -*-
+## To make this config more readable we've removed all the detailed comments about what's going on
+## here. To see explanations of each config in this file go to https://github.com/vaab/gitchangelog/blob/master/.gitchangelog.rc.
+
+
+ignore_regexps = [
+    r'@minor', r'!minor',
+    r'@cosmetic', r'!cosmetic',
+    r'@refactor', r'!refactor',
+    r'@wip', r'!wip',
+    r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*[p|P]kg:',
+    r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*[d|D]ev:',
+    r'^(.{3,3}\s*:)?\s*[fF]irst commit.?\s*$',
+    r'^$',  ## ignore commits with empty messages,
+    r'Bump version',  ## ignore bumpversion commits
+]
+
+
+section_regexps = [
+    ('New', [
+        r'^[nN]ew\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n]*)$',
+     ]),
+    ('Changes', [
+        r'^[cC]hg\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n]*)$',
+     ]),
+    ('Fix', [
+        r'^[fF]ix\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n]*)$',
+     ]),
+
+    ('Other', None ## Match all lines
+     ),
+]
+
+
+body_process = ReSub(r'((^|\n)[A-Z]\w+(-\w+)*: .*(\n\s+.*)*)+$', r'') | strip
+
+
+subject_process = (strip |
+    ReSub(r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n@]*)(@[a-z]+\s+)*$', r'\4') |
+    SetIfEmpty("No commit message.") | ucfirst | final_dot)
+
+
+tag_filter_regexp = r'^v[0-9]+\.[0-9]+(\.[0-9]+)?$'
+
+
+unreleased_version_label = "(unreleased)"
+
+
+output_engine = rest_py
+
+
+include_merge = True
+
+
+INSERT_POINT_REGEX = r'''(?isxu)
+^
+(
+  \s*Changelog\s*(\n|\r\n|\r)        ## ``Changelog`` line
+  ==+\s*(\n|\r\n|\r){2}              ## ``=========`` rest underline
+)
+(                     ## Match all between changelog and release rev
+    (
+      (?!
+         (?<=(\n|\r))                ## look back for newline
+         %(rev)s                     ## revision
+         \s+
+         \([0-9]+-[0-9]{2}-[0-9]{2}\)(\n|\r\n|\r)   ## date
+           --+(\n|\r\n|\r)                          ## ``---`` underline
+      )
+      .
+    )*
+)
+(?P<rev>%(rev)s)
+''' % {'rev': r"v[0-9]+\.[0-9]+(\.[0-9]+)?"}
+
+
+publish = FileRegexSubst(
+    "CHANGELOG.rst",
+    INSERT_POINT_REGEX,
+    r"\1\o\g<rev>",
+)
+
+
+revs = [
+    Caret(
+        FileFirstRegexMatch(
+            "CHANGELOG.rst",
+            r'(?P<rev>v[0-9]+\.[0-9]+(\.[0-9]+)?)\s+',
+        )
+    ),
+    "HEAD"
+]

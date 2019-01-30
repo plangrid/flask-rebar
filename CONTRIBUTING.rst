@@ -38,7 +38,7 @@ Pull Requests
 1. Fork the repo and create your branch from ``master``.
 2. If you've added code that should be tested, add tests.
 3. If you've changed APIs, update the documentation.
-4. Add an entry to the ``CHANGELOG.md`` for any breaking changes, enhancements, or bug fixes.
+4. Make sure you commit message matches something like `(chg|fix|new): COMMIT_MSG` so `gitchangelog` can correctly generate the entry for your commit.
 
 
 Releasing to PyPI
@@ -51,6 +51,7 @@ Flask-Rebar uses `semantic versions <https://semver.org/>`_. Once you know the a
 .. code-block:: bash
 
    git checkout master
+   gitchangelog
    bumpversion minor
 
 Then push the new commit and tags to master:
