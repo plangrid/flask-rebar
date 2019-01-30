@@ -11,8 +11,6 @@ from __future__ import unicode_literals
 
 import copy
 import re
-from abc import ABCMeta
-from abc import abstractmethod
 from collections import namedtuple
 from collections import OrderedDict
 
@@ -158,35 +156,17 @@ def _flatten_array(schema, definitions):
         _flatten_array(schema=schema[sw.items], definitions=definitions)
 
 
-def _convert_jsonschema_to_list_of_parameters(obj, in_='query'):
-    """
-    Swagger is only _based_ on JSONSchema. Query string and header parameters
-    are represented as list, not as an object. This converts a JSONSchema
-    object (as return by the converters) to a list of parameters suitable for
-    swagger.
-
-    :param dict obj:
-    :param str in_: 'query' or 'header'
-    :rtype: list[dict]
-    """
-    parameters = []
-
-    assert obj['type'] == 'object'
-
-    required = obj.get('required', [])
-
-    for name, prop in sorted(obj['properties'].items(), key=lambda i: i[0]):
-        parameter = copy.deepcopy(prop)
-        parameter['required'] = name in required
-        parameter['in'] = in_
-        parameter['name'] = name
-        parameters.append(parameter)
-
-    return parameters
-
-
 _PATH_REGEX = re.compile('<((?P<type>.+?):)?(?P<name>.+?)>')
 _PathArgument = namedtuple('PathArgument', ['name', 'type'])
+
+FLASK_CONVERTERS_TO_SWAGGER_TYPES = {
+    'uuid': sw.string,
+    'uuid_string': sw.string,
+    'string': sw.string,
+    'path': sw.string,
+    'int': sw.integer,
+    'float': sw.number
+}
 
 
 def _format_path_for_swagger(path):
@@ -281,27 +261,28 @@ class SwaggerV2Generator(object):
     :param Sequence[str] schemes: "http", "https", "ws", or "wss"
     :param Sequence[str] consumes: Mime Types the API accepts
     :param Sequence[str] produces: Mime Types the API returns
+
     :param ConverterRegistry query_string_converter_registry:
     :param ConverterRegistry request_body_converter_registry:
     :param ConverterRegistry headers_converter_registry:
-    :param Sequence[Tag] tags:
-        A list of tags used by the specification with additional metadata.
     :param ConverterRegistry response_converter_registry:
         ConverterRegistrys that will be used to convert Marshmallow schemas
         to the corresponding types of swagger objects. These default to the
         global registries.
 
+    :param Sequence[Tag] tags:
+        A list of tags used by the specification with additional metadata.
+
     """
     def __init__(
             self,
             host='swag.com',
-            schemes=('http',),
+            schemes=('http', 'https'),
             consumes=('application/json',),
             produces=('application/json',),
             version='1.0.0',
             title='My API',
             description='',
-
             query_string_converter_registry=None,
             request_body_converter_registry=None,
             headers_converter_registry=None,
@@ -312,8 +293,7 @@ class SwaggerV2Generator(object):
             # Flask error handling doesn't mesh well with Swagger responses,
             # and I'm trying to avoid building our own layer on top of Flask's
             # error handlers.
-            default_response_schema=Error(),
-
+            default_response_schema=Error()
     ):
         self.host = host
         self.schemes = schemes
@@ -341,14 +321,7 @@ class SwaggerV2Generator(object):
             or global_response_converter_registry
         ).convert
 
-        self.flask_converters_to_swagger_types = {
-            'uuid': sw.string,
-            'uuid_string': sw.string,
-            'string': sw.string,
-            'path': sw.string,
-            'int': sw.integer,
-            'float': sw.number
-        }
+        self.flask_converters_to_swagger_types = copy.deepcopy(FLASK_CONVERTERS_TO_SWAGGER_TYPES)
 
         self.authenticator_converters = {
             HeaderApiKeyAuthenticator: _convert_header_api_key_authenticator
@@ -387,17 +360,6 @@ class SwaggerV2Generator(object):
         """
         self.authenticator_converters[authenticator_class] = converter
 
-    def _get_version(self):
-        return '2.0'
-
-    def _get_info(self):
-        # TODO: add all the parameters for populating info
-        return {
-            sw.version: self.version,
-            sw.title: self.title,
-            sw.description: self.description,
-        }
-
     def generate(
             self,
             registry,
@@ -411,7 +373,6 @@ class SwaggerV2Generator(object):
         Generates a Swagger specification from a Rebar instance.
 
         :param flask_rebar.rebar.HandlerRegistry registry:
-        :param registry: See parent
         :param str host: Overrides the initialized host
         :param Sequence[str] schemes: Overrides the initialized schemas
         :param Sequence[str] consumes: Overrides the initialized consumes
@@ -454,6 +415,17 @@ class SwaggerV2Generator(object):
             swagger = _recursively_order_dicts(swagger)
 
         return swagger
+
+    def _get_version(self):
+        return '2.0'
+
+    def _get_info(self):
+        # TODO: add all the parameters for populating info
+        return {
+            sw.version: self.version,
+            sw.title: self.title,
+            sw.description: self.description,
+        }
 
     def _get_security(self, authenticator):
         klass = authenticator.__class__
@@ -548,7 +520,7 @@ class SwaggerV2Generator(object):
 
                 if d.query_string_schema:
                     parameters_definition.extend(
-                        _convert_jsonschema_to_list_of_parameters(
+                        self._convert_jsonschema_to_list_of_parameters(
                             self._query_string_converter(d.query_string_schema),
                             in_=sw.query
                         )
@@ -566,14 +538,14 @@ class SwaggerV2Generator(object):
 
                 if d.headers_schema is USE_DEFAULT and default_headers_schema:
                     parameters_definition.extend(
-                        _convert_jsonschema_to_list_of_parameters(
+                        self._convert_jsonschema_to_list_of_parameters(
                             self._headers_converter(default_headers_schema),
                             in_=sw.header
                         )
                     )
                 elif d.headers_schema is not USE_DEFAULT and d.headers_schema is not None:
                     parameters_definition.extend(
-                        _convert_jsonschema_to_list_of_parameters(
+                        self._convert_jsonschema_to_list_of_parameters(
                             self._headers_converter(d.headers_schema),
                             in_=sw.header
                         )
@@ -602,7 +574,35 @@ class SwaggerV2Generator(object):
 
         return path_definitions
 
-    def _get_schema(self, schema):
+    @staticmethod
+    def _convert_jsonschema_to_list_of_parameters(obj, in_='query'):
+        """
+        Swagger is only _based_ on JSONSchema. Query string and header parameters
+        are represented as list, not as an object. This converts a JSONSchema
+        object (as return by the converters) to a list of parameters suitable for
+        swagger.
+
+        :param dict obj:
+        :param str in_: 'query' or 'header'
+        :rtype: list[dict]
+        """
+        parameters = []
+
+        assert obj['type'] == 'object'
+
+        required = obj.get('required', [])
+
+        for name, prop in sorted(obj['properties'].items(), key=lambda i: i[0]):
+            parameter = copy.deepcopy(prop)
+            parameter['required'] = name in required
+            parameter['in'] = in_
+            parameter['name'] = name
+            parameters.append(parameter)
+
+        return parameters
+
+    @staticmethod
+    def _get_schema(schema):
         ref = {sw.ref: _get_ref(get_swagger_title(schema))}
         return ref if not schema.many else {sw.type_: sw.array, sw.items: ref}
 
@@ -644,11 +644,30 @@ class SwaggerV2Generator(object):
 
 
 class SwaggerV3Generator(object):
-    """Consider changing info and servers here to be the class objects
+    """Generates a v2.0 Swagger specification from a Rebar object.
+
+    Not all things are retrievable from the Rebar object, so this
+    guy also needs some additional information to complete the job.
+
+    :param so.Info info: Swagger "Info Object" including title, version, etc.
+    :param list[so.Server] servers: List of Swagger "Server Object" including url, etc.
+
+    :param ConverterRegistry query_string_converter_registry:
+    :param ConverterRegistry request_body_converter_registry:
+    :param ConverterRegistry headers_converter_registry:
+    :param ConverterRegistry response_converter_registry:
+        ConverterRegistrys that will be used to convert Marshmallow schemas
+        to the corresponding types of swagger objects. These default to the
+        global registries.
+
+    :param Sequence[Tag] tags:
+        A list of tags used by the specification with additional metadata.
     """
     def __init__(
             self,
             info,
+            consumes=('application/json',),
+            produces=('application/json',),
             servers=None,
             query_string_converter_registry=None,
             request_body_converter_registry=None,
@@ -663,16 +682,36 @@ class SwaggerV3Generator(object):
             default_response_schema=Error(),
 
     ):
-        super().__init__(
-            query_string_converter_registry=query_string_converter_registry,
-            request_body_converter_registry=request_body_converter_registry,
-            headers_converter_registry=headers_converter_registry,
-            response_converter_registry=response_converter_registry,
-            tags=tags,
-            default_response_schema=default_response_schema,
-        )
         self.info = info
+        self.consumes = consumes
+        self.produces = produces
         self.servers = servers
+        self.tags = tags
+
+        self._query_string_converter = (
+            query_string_converter_registry
+            or global_query_string_converter_registry
+        ).convert
+        self._request_body_converter = (
+            request_body_converter_registry
+            or global_request_body_converter_registry
+        ).convert
+        self._headers_converter = (
+            headers_converter_registry
+            or global_headers_converter_registry
+        ).convert
+        self._response_converter = (
+            response_converter_registry
+            or global_response_converter_registry
+        ).convert
+
+        self.flask_converters_to_swagger_types = copy.deepcopy(FLASK_CONVERTERS_TO_SWAGGER_TYPES)
+
+        self.authenticator_converters = {
+            HeaderApiKeyAuthenticator: _convert_header_api_key_authenticator
+        }
+
+        self.default_response_schema = default_response_schema
 
     def generate(
             self,
@@ -685,7 +724,7 @@ class SwaggerV3Generator(object):
         )
         definitions = self._get_definitions(paths=registry.paths)
         paths = self._get_paths(
-            paths=registry.paths,
+            registry_paths=registry.paths,
             default_headers_schema=registry.default_headers_schema
         )
 
@@ -717,122 +756,188 @@ class SwaggerV3Generator(object):
             for i in self.servers
         ]
 
-    def _get_paths(self, paths, default_headers_schema):
-        path_definitions = {}
+    @staticmethod
+    def _get_schema(schema):
+        ref = so.Reference(
+            ref=_get_ref(get_swagger_title(schema)),
+        )
 
-        for path, methods in paths.items():
-            swagger_path, path_args = _format_path_for_swagger(path)
+        if not schema.many:
+            return ref
+        else:
+            schema = so.Schema(
+                type_=sw.array,
+                items=ref,
+            )
+            return schema
+
+    def _get_paths(self, registry_paths, default_headers_schema):
+        paths = {}
+
+        for path, methods in registry_paths.items():
+            swagger_path, path_parameters = _format_path_for_swagger(path)
 
             # Different Flask paths might correspond to the same Swagger path
             # because of Flask URL path converters. In this case, let's just
             # work off the same path definitions.
-            if swagger_path in path_definitions:
-                path_definition = path_definitions[swagger_path]
+            if swagger_path in paths:
+                path_item = paths[swagger_path]
             else:
-                path_definitions[swagger_path] = path_definition = {}
+                paths[swagger_path] = path_item = so.PathItem()
 
-            if path_args:
-                path_params = [
-                    {
-                        sw.name: path_arg.name,
-                        sw.required: True,
-                        sw.in_: sw.path,
-                        sw.type_: self.flask_converters_to_swagger_types[path_arg.type]
-
-                    }
-                    for path_arg in path_args
+            if path_parameters:
+                parameters = [
+                    so.Parameter(
+                        name=parameter.name,
+                        required=True,
+                        in_=sw.path,
+                        schema=so.Schema(
+                            # TODO: need to set other schema stuff here?
+                            type_=self.flask_converters_to_swagger_types[parameter.type],
+                        ),
+                    )
+                    for parameter in path_parameters
                 ]
 
                 # We have to check for an ugly case here. If different Flask
                 # paths that map to the same Swagger path use different URL
                 # converters for the same parameter, we have a problem. Let's
                 # just throw an error in this case.
-                if sw.parameters in path_definition:
+                if path_item.parameters:
                     _verify_parameters_are_the_same(
-                        path_definition[sw.parameters],
-                        path_params
+                        path_item.parameters,
+                        parameters
                     )
 
-                path_definition[sw.parameters] = path_params
+                path_item.parameters = parameters
 
-            for method, d in methods.items():
-                responses_definition = {
-                    sw.default: {
-                        sw.description: _get_response_description(self.default_response_schema),
-                        sw.schema: {
-                            sw.ref: _get_ref(get_swagger_title(self.default_response_schema))
-                        }
-                    }
+            for method, path_definition in methods.items():
+
+                responses = {
+                    sw.default: so.Response(
+                        description=_get_response_description(self.default_response_schema),
+                        content={
+                            media_type: so.MediaType(
+                                schema=so.Reference(
+                                    ref=_get_ref(get_swagger_title(self.default_response_schema)),
+                                ),
+                            )
+                            for media_type in self.produces
+                        },
+                    ),
                 }
 
-                if d.marshal_schema:
-                    for status_code, schema in d.marshal_schema.items():
+                if path_definition.marshal_schema:
+                    for status_code, schema in path_definition.marshal_schema.items():
                         if schema is not None:
-                            response_definition = {
-                                sw.description: _get_response_description(schema),
-                                sw.schema: self._get_schema(schema),
-                            }
+                            response = so.Response(
+                                description=_get_response_description(schema),
+                                content={
+                                    media_type: so.MediaType(
+                                        schema=self._get_schema(schema),
+                                    )
+                                    for media_type in self.produces
+                                },
+                            )
 
-                            responses_definition[str(status_code)] = response_definition
+                            responses[str(status_code)] = response
                         else:
-                            responses_definition[str(status_code)] = {
-                                sw.description: 'No response body.'
-                            }
+                            responses[str(status_code)] = so.Response(
+                                description='No response body.',
+                            )
 
-                parameters_definition = []
+                parameters = []
 
-                if d.query_string_schema:
-                    parameters_definition.extend(
-                        _convert_jsonschema_to_list_of_parameters(
-                            self._query_string_converter(d.query_string_schema),
+                if path_definition.query_string_schema:
+                    parameters.extend(
+                        # TODO: need to check for schema.many here?
+                        self._convert_jsonschema_to_list_of_parameters(
+                            self._query_string_converter(path_definition.query_string_schema),
                             in_=sw.query
                         )
                     )
 
-                if d.request_body_schema:
-                    schema = d.request_body_schema
+                if path_definition.request_body_schema:
+                    schema = path_definition.request_body_schema
 
-                    parameters_definition.append({
-                        sw.name: schema.__class__.__name__,
-                        sw.in_: sw.body,
-                        sw.required: True,
-                        sw.schema: self._get_schema(schema),
-                    })
+                    parameters.append(
+                        so.Parameter(
+                            name=schema.__class__.__name__,
+                            in_=sw.body,
+                            required=True,
+                            schema=self._get_schema(schema),
+                        )
+                    )
 
-                if d.headers_schema is USE_DEFAULT and default_headers_schema:
-                    parameters_definition.extend(
-                        _convert_jsonschema_to_list_of_parameters(
+                if path_definition.headers_schema is USE_DEFAULT and default_headers_schema:
+                    parameters.extend(
+                        self._convert_jsonschema_to_list_of_parameters(
                             self._headers_converter(default_headers_schema),
                             in_=sw.header
                         )
                     )
-                elif d.headers_schema is not USE_DEFAULT and d.headers_schema is not None:
-                    parameters_definition.extend(
-                        _convert_jsonschema_to_list_of_parameters(
-                            self._headers_converter(d.headers_schema),
+                elif path_definition.headers_schema is not USE_DEFAULT and path_definition.headers_schema is not None:
+                    parameters.extend(
+                        self._convert_jsonschema_to_list_of_parameters(
+                            self._headers_converter(path_definition.headers_schema),
                             in_=sw.header
                         )
                     )
 
+                security = []
+                if path_definition.authenticator is not None and path_definition.authenticator is not USE_DEFAULT:
+                    security = [self._get_security(path_definition.authenticator)]
+
+                operation = so.Operation(
+                    responses=responses,
+                    operation_id=path_definition.endpoint or get_swagger_title(path_definition.func),
+                    description=path_definition.func.__doc__,
+                    tags=path_definition.tags,
+                    parameters=parameters,
+                    security=security,
+                )
+
                 method_lower = method.lower()
-                path_definition[method_lower] = {
-                    sw.operation_id: d.endpoint or get_swagger_title(d.func),
-                    sw.responses: responses_definition
-                }
+                path_item[method_lower] = operation
 
-                if d.func.__doc__:
-                    path_definition[method_lower][sw.description] = d.func.__doc__
+        return paths
 
-                if parameters_definition:
-                    path_definition[method_lower][sw.parameters] = parameters_definition
+    @staticmethod
+    def _convert_jsonschema_to_list_of_parameters(obj, in_='query'):
+        """
+        Swagger is only _based_ on JSONSchema. Query string and header parameters
+        are represented as list, not as an object. This converts a JSONSchema
+        object (as return by the converters) to a list of parameters suitable for
+        swagger.
 
-                if d.authenticator is None:
-                    path_definition[method_lower][sw.security] = []
-                elif d.authenticator is not USE_DEFAULT:
-                    security = self._get_security(d.authenticator)
-                    path_definition[method_lower][sw.security] = security
+        :param dict obj:
+        :param str in_: 'query' or 'header'
+        :rtype: list[dict]
+        """
+        parameters = []
 
-                if d.tags:
-                    path_definition[method_lower][sw.tags] = d.tags
+        assert obj['type'] == 'object'
 
-        return path_definitions
+        required = obj.get('required', [])
+
+        for name, prop in sorted(obj['properties'].items(), key=lambda i: i[0]):
+            schema = so.Schema()
+            for k, v in prop.items():
+                setattr(schema, k, v)
+
+            parameter = so.Parameter(
+                name=name,
+                in_=in_,
+                description=prop.get(sw.description),
+                required=name in required,
+                schema=schema,
+            )
+            parameters.append(parameter)
+
+        return parameters
+
+    def _get_security(self, authenticator):
+        klass = authenticator.__class__
+        converter = self.authenticator_converters[klass]
+        name, _ = converter(authenticator)
+        return so.SecurityRequirement(name=name, values=[])
