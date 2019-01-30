@@ -16,6 +16,7 @@ from flask_rebar import ExternalDocumentation
 from flask_rebar import Tag
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar.rebar import Rebar
+from flask_rebar.swagger_generation import swagger_objects as so
 from flask_rebar.swagger_generation import SwaggerV2Generator
 from flask_rebar.swagger_generation import SwaggerV3Generator
 from flask_rebar.swagger_generation.swagger_generator import _PathArgument as PathArgument
@@ -519,6 +520,10 @@ class TestSwaggerV3Generator(unittest.TestCase):
             name = m.fields.String()
             other = m.fields.String()
 
+        class Error(m.Schema):
+            message = m.fields.String()
+            details = m.fields.Dict()
+
         @registry.handles(
             rule='/foos/<uuid_string:foo_uid>',
             method='GET',
@@ -570,19 +575,18 @@ class TestSwaggerV3Generator(unittest.TestCase):
         registry.set_default_authenticator(default_authenticator)
 
         servers = ('http://swag.com',)
-        title = 'Test API'
-        version = '1.2.3'
-        description = 'This is a test API'
 
-        class Error(m.Schema):
-            message = m.fields.String()
-            details = m.fields.Dict()
-
+        info = so.Info(
+            title='Test API',
+            description='This is a test API',
+            terms_of_service='Terms of service',
+            # contact=self.contact,
+            # license=self.license,
+            version='1.2.3',
+        )
         generator = SwaggerV3Generator(
+            info=info,
             servers=servers,
-            title=title,
-            version=version,
-            description=description,
             default_response_schema=Error(),
             tags=[
                 Tag(
@@ -601,9 +605,12 @@ class TestSwaggerV3Generator(unittest.TestCase):
         expected_swagger = {
             'openapi': '3.0.2',
             'info': {
-                'title': title,
-                'version': version,
-                'description': description,
+                'title': 'Test API',
+                'description': 'This is a test API',
+                'terms_of_service': 'Terms of service',
+                # contact
+                # license
+                'version': '1.2.3',
             },
             'paths': {
 

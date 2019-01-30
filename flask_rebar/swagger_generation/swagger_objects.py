@@ -157,8 +157,8 @@ class Server(SwaggerObject):
         return {}
 
 
-class PathItem(SwaggerObject):
-    """Represents a Swagger "Path Item Object"
+class Operation(SwaggerObject):
+    """Represents a Swagger "Operation Object"
 
     :param TODO
     """
@@ -168,19 +168,94 @@ class PathItem(SwaggerObject):
 
     def as_swagger(self):
         return {}
+
+
+class PathItem(SwaggerObject):
+    """Represents a Swagger "Path Item Object"
+
+    :param str ref: Allows for an external definition of this path item. The referenced structure MUST be in the format of a Path Item Object. If there are conflicts between the referenced definition and this Path Item's definition, the behavior is undefined.
+    :param str summary: An optional, string summary, intended to apply to all operations in this path.
+    :param str description: An optional, string description, intended to apply to all operations in this path. CommonMark syntax MAY be used for rich text representation.
+    :param Operation get: A definition of a GET operation on this path.
+    :param Operation put: A definition of a PUT operation on this path.
+    :param Operation post: A definition of a POST operation on this path.
+    :param Operation delete: A definition of a DELETE operation on this path.
+    :param Operation options: A definition of a OPTIONS operation on this path.
+    :param Operation head: A definition of a HEAD operation on this path.
+    :param Operation patch: A definition of a PATCH operation on this path.
+    :param Operation trace: A definition of a TRACE operation on this path.
+    :param List[Server] servers: An alternative server array to service all operations in this path.
+    :param List[Parameter|Reference] parameters: A list of parameters that are applicable for all the operations described under this path. These parameters can be overridden at the operation level, but cannot be removed there. The list MUST NOT include duplicated parameters. A unique parameter is defined by a combination of a name and location. The list can use the Reference Object to link to parameters that are defined at the OpenAPI Object's components/parameters.
+    """
+
+    def __init__(
+            self,
+            ref=None, summary=None, description=None,
+            get=None, put=None, post=None, delete=None, options=None, head=None, patch=None, trace=None,
+            servers=None, parameters=None,
+    ):
+        self.ref = ref
+        self.summary = summary
+        self.description = description
+        self.get = get
+        self.put = put
+        self.post = post
+        self.delete = delete
+        self.options = options
+        self.head = head
+        self.patch = patch
+        self.trace = trace
+        self.servers = servers
+        self.parameters = parameters
+
+    def as_swagger(self):
+        doc = {}
+        if self.ref:
+            doc[sw.ref] = self.ref
+        if self.summary:
+            doc[sw.summary] = self.summary
+        if self.description:
+            doc[sw.description] = self.description
+        if self.get:
+            doc[sw.get] = self.get.as_swagger()
+        if self.put:
+            doc[sw.put] = self.put.as_swagger()
+        if self.post:
+            doc[sw.post] = self.post.as_swagger()
+        if self.delete:
+            doc[sw.delete] = self.delete.as_swagger()
+        if self.options:
+            doc[sw.options] = self.options.as_swagger()
+        if self.head:
+            doc[sw.head] = self.head.as_swagger()
+        if self.patch:
+            doc[sw.patch] = self.patch.as_swagger()
+        if self.trace:
+            doc[sw.trace] = self.trace.as_swagger()
+        if self.servers:
+            doc[sw.servers] = [i.as_swagger() for i in self.servers]
+        if self.parameters:
+            doc[sw.parameters] = [i.as_swagger() for i in self.parameters]
+        return doc
 
 
 class Paths(SwaggerObject):
     """Represents a Swagger "Paths Object"
 
-    :param TODO
+    :param dict[str, PathItem] paths: A relative path to an individual endpoint. The field name MUST begin with a slash. The path is appended (no relative URL resolution) to the expanded URL from the Server Object's url field in order to construct the full URL. Path templating is allowed. When matching URLs, concrete (non-templated) paths would be matched before their templated counterparts. Templated paths with the same hierarchy but different templated names MUST NOT exist as they are identical. In case of ambiguous matching, it's up to the tooling to decide which one to use.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, paths):
+        self.paths = paths
 
     def as_swagger(self):
-        return {}
+        doc = {
+            sw.paths: {
+                path_key: path_item.as_swagger()
+                for path_key, path_item in self.paths.items()
+            },
+        }
+        return doc
 
 
 class Components(SwaggerObject):
@@ -248,7 +323,7 @@ class OpenAPI(SwaggerObject):
         if self.security:
             doc[sw.security] = self.security
         if self.tags:
-            doc[sw.tags] = self.tags
+            doc[sw.tags] = [i.as_swagger() for i in self.tags]
         if self.external_docs:
-            doc[sw.external_docs] = self.external_docs
+            doc[sw.external_docs] = self.external_docs.as_swagger()
         return doc
