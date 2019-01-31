@@ -14,7 +14,7 @@ import re
 from collections import namedtuple
 from collections import OrderedDict
 
-from flask_rebar.swagger_generation import openapi_objects as so
+from flask_rebar.swagger_generation import openapi_objects as oa
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.authenticators import USE_DEFAULT
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator
@@ -227,8 +227,8 @@ def _verify_parameters_are_the_same(a, b):
     def get_sort_key(parameter):
         return parameter[sw.name]
 
-    a = [i.as_swagger() if isinstance(i, so.Parameter) else i for i in a]
-    b = [i.as_swagger() if isinstance(i, so.Parameter) else i for i in b]
+    a = [i.as_swagger() if isinstance(i, oa.Parameter) else i for i in a]
+    b = [i.as_swagger() if isinstance(i, oa.Parameter) else i for i in b]
 
     sorted_a = sorted(a, key=get_sort_key)
     sorted_b = sorted(b, key=get_sort_key)
@@ -662,8 +662,8 @@ class SwaggerV3Generator(object):
     Not all things are retrievable from the Rebar object, so this
     guy also needs some additional information to complete the job.
 
-    :param so.Info info: Swagger "Info Object" including title, version, etc.
-    :param list[so.Server] servers: List of Swagger "Server Object" including url, etc.
+    :param oa.Info info: Swagger "Info Object" including title, version, etc.
+    :param list[oa.Server] servers: List of Swagger "Server Object" including url, etc.
 
     :param ConverterRegistry query_string_converter_registry:
     :param ConverterRegistry request_body_converter_registry:
@@ -741,7 +741,7 @@ class SwaggerV3Generator(object):
             default_headers_schema=registry.default_headers_schema
         )
 
-        swagger = so.OpenAPI(
+        swagger = oa.OpenAPI(
             openapi=self._get_version(),
             info=self.info,
             servers=self.servers,
@@ -772,14 +772,14 @@ class SwaggerV3Generator(object):
 
     @staticmethod
     def _get_schema(schema):
-        ref = so.Reference(
+        ref = oa.Reference(
             ref=_get_ref(get_swagger_title(schema)),
         )
 
         if not schema.many:
             return ref
         else:
-            schema = so.Schema(
+            schema = oa.Schema(
                 type_=sw.array,
                 items=ref,
             )
@@ -797,15 +797,15 @@ class SwaggerV3Generator(object):
             if swagger_path in paths:
                 path_item = paths[swagger_path]
             else:
-                paths[swagger_path] = path_item = so.PathItem()
+                paths[swagger_path] = path_item = oa.PathItem()
 
             if path_parameters:
                 parameters = [
-                    so.Parameter(
+                    oa.Parameter(
                         name=parameter.name,
                         required=True,
                         in_=sw.path,
-                        schema=so.Schema(
+                        schema=oa.Schema(
                             # TODO: need to set other schema stuff here?
                             type_=self.flask_converters_to_swagger_types[parameter.type],
                         ),
@@ -828,11 +828,11 @@ class SwaggerV3Generator(object):
             for method, path_definition in methods.items():
 
                 responses = {
-                    sw.default: so.Response(
+                    sw.default: oa.Response(
                         description=_get_response_description(self.default_response_schema),
                         content={
-                            media_type: so.MediaType(
-                                schema=so.Reference(
+                            media_type: oa.MediaType(
+                                schema=oa.Reference(
                                     ref=_get_ref(get_swagger_title(self.default_response_schema)),
                                 ),
                             )
@@ -844,10 +844,10 @@ class SwaggerV3Generator(object):
                 if path_definition.marshal_schema:
                     for status_code, schema in path_definition.marshal_schema.items():
                         if schema is not None:
-                            response = so.Response(
+                            response = oa.Response(
                                 description=_get_response_description(schema),
                                 content={
-                                    media_type: so.MediaType(
+                                    media_type: oa.MediaType(
                                         schema=self._get_schema(schema),
                                     )
                                     for media_type in self.produces
@@ -856,7 +856,7 @@ class SwaggerV3Generator(object):
 
                             responses[str(status_code)] = response
                         else:
-                            responses[str(status_code)] = so.Response(
+                            responses[str(status_code)] = oa.Response(
                                 description='No response body.',
                             )
 
@@ -875,7 +875,7 @@ class SwaggerV3Generator(object):
                     schema = path_definition.request_body_schema
 
                     parameters.append(
-                        so.Parameter(
+                        oa.Parameter(
                             name=schema.__class__.__name__,
                             in_=sw.body,
                             required=True,
@@ -902,7 +902,7 @@ class SwaggerV3Generator(object):
                 if path_definition.authenticator is not None and path_definition.authenticator is not USE_DEFAULT:
                     security = [self._get_security(path_definition.authenticator)]
 
-                operation = so.Operation(
+                operation = oa.Operation(
                     responses=responses,
                     operation_id=path_definition.endpoint or get_swagger_title(path_definition.func),
                     description=path_definition.func.__doc__,
@@ -934,12 +934,12 @@ class SwaggerV3Generator(object):
         required = obj.get('required', [])
 
         for name, prop in sorted(obj['properties'].items(), key=lambda i: i[0]):
-            schema = so.Schema()
+            schema = oa.Schema()
             for k, v in prop.items():
                 python_key = _get_python_key_from_swagger_word(k)
                 setattr(schema, python_key, v)
 
-            parameter = so.Parameter(
+            parameter = oa.Parameter(
                 name=name,
                 in_=in_,
                 description=prop.get(sw.description),
@@ -954,4 +954,4 @@ class SwaggerV3Generator(object):
         klass = authenticator.__class__
         converter = self.authenticator_converters[klass]
         name, _ = converter(authenticator)
-        return so.SecurityRequirement(name=name, values=[])
+        return oa.SecurityRequirement(name=name, values=[])

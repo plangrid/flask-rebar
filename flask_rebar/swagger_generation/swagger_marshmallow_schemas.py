@@ -1,3 +1,8 @@
+"""
+Probably not gonna use this file but not gonna delete it til I'm sure
+"""
+
+
 from marshmallow import Schema
 from marshmallow.fields import Boolean
 from marshmallow.fields import Dict
