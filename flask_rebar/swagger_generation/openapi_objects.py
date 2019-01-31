@@ -152,17 +152,55 @@ class Tag(SwaggerObject):
         return doc
 
 
+class ServerVariable(SwaggerObject):
+    """Represents a Swagger "Server Variable Object"
+
+    :param list[str] enum: An enumeration of string values to be used if the substitution options are from a limited set.
+    :param str default: REQUIRED. The default value to use for substitution, which SHALL be sent if an alternate value is not supplied. Note this behavior is different than the Schema Object's treatment of default values, because in those cases parameter values are optional.
+    :param str description: An optional description for the server variable. CommonMark syntax MAY be used for rich text representation.
+    """
+
+    def __init__(
+            self,
+            default,
+            enum=None, description=None,
+    ):
+        self.enum = enum
+        self.default = default
+        self.description = description
+
+    def as_swagger(self):
+        doc = {sw.default: self.default}
+        if self.enum:
+            doc[sw.enum] = self.enum
+        if self.description:
+            doc[sw.description] = self.description
+        return doc
+
+
 class Server(SwaggerObject):
     """Represents a Swagger "Server Object"
 
-    :param TODO
+    :param str url: REQUIRED. A URL to the target host. This URL supports Server Variables and MAY be relative, to indicate that the host location is relative to the location where the OpenAPI document is being served. Variable substitutions will be made when a variable is named in {brackets}.
+    :param str description: An optional string describing the host designated by the URL. CommonMark syntax MAY be used for rich text representation.
+    :param dict[str, ServerVariable] variables: A map between a variable name and its value. The value is used for substitution in the server's URL template.
     """
 
-    def __init__(self):
-        pass
+    def __init__(
+            self,
+            url,
+            description=None, variables=None,
+    ):
+        self.url = url
+        self.description = description
+        self.variables = variables
 
     def as_swagger(self):
-        doc = {}
+        doc = {sw.url: self.url}
+        if self.description:
+            doc[sw.description] = self.description
+        if self.variables:
+            doc[sw.variables] = {k: v.as_swagger() for k, v in self.variables}
         return doc
 
 
@@ -312,8 +350,8 @@ class Operation(SwaggerObject):
             doc[sw.callbacks] = {k: v.as_swagger() for k, v in self.callbacks.items()}
         if self.deprecated:
             doc[sw.deprecated] = self.deprecated
-        if self.security:
-            doc[sw.security] = self.security.as_swagger()
+        if self.security is not None:  # see docstring
+            doc[sw.security] = [i.as_swagger() for i in self.security]
         if self.servers:
             doc[sw.servers] = [i.as_swagger() for i in self.servers]
         return doc
@@ -408,78 +446,78 @@ class Schema(SwaggerObject):
         self.deprecated = deprecated
 
     def as_swagger(self):
-        docs = {}
+        doc = {}
         if self.title:
-            docs[sw.title] = self.title
+            doc[sw.title] = self.title
         if self.multiple_of:
-            docs[sw.multiple_of] = self.multiple_of
+            doc[sw.multiple_of] = self.multiple_of
         if self.maximum:
-            docs[sw.maximum] = self.maximum
+            doc[sw.maximum] = self.maximum
         if self.exclusive_maximum:
-            docs[sw.exclusive_maximum] = self.exclusive_maximum
+            doc[sw.exclusive_maximum] = self.exclusive_maximum
         if self.minimum:
-            docs[sw.minimum] = self.minimum
+            doc[sw.minimum] = self.minimum
         if self.exclusive_minimum:
-            docs[sw.exclusive_minimum] = self.exclusive_minimum
+            doc[sw.exclusive_minimum] = self.exclusive_minimum
         if self.max_length:
-            docs[sw.max_length] = self.max_length
+            doc[sw.max_length] = self.max_length
         if self.min_length:
-            docs[sw.min_length] = self.min_length
+            doc[sw.min_length] = self.min_length
         if self.pattern:
-            docs[sw.pattern] = self.pattern
+            doc[sw.pattern] = self.pattern
         if self.max_items:
-            docs[sw.max_items] = self.max_items
+            doc[sw.max_items] = self.max_items
         if self.min_items:
-            docs[sw.min_items] = self.min_items
+            doc[sw.min_items] = self.min_items
         if self.unique_items:
-            docs[sw.unique_items] = self.unique_items
+            doc[sw.unique_items] = self.unique_items
         if self.max_properties:
-            docs[sw.max_properties] = self.max_properties
+            doc[sw.max_properties] = self.max_properties
         if self.min_properties:
-            docs[sw.min_properties] = self.min_properties
+            doc[sw.min_properties] = self.min_properties
         if self.required:
-            docs[sw.required] = self.required
+            doc[sw.required] = self.required
         if self.enum:
-            docs[sw.enum] = self.enum
+            doc[sw.enum] = self.enum
         if self.type_:
-            docs[sw.type_] = self.type_
+            doc[sw.type_] = self.type_
         if self.all_of:
-            docs[sw.all_of] = self.all_of.as_swagger()
+            doc[sw.all_of] = self.all_of.as_swagger()
         if self.one_of:
-            docs[sw.one_of] = self.one_of.as_swagger()
+            doc[sw.one_of] = self.one_of.as_swagger()
         if self.any_of:
-            docs[sw.any_of] = self.any_of.as_swagger()
+            doc[sw.any_of] = self.any_of.as_swagger()
         if self.not_:
-            docs[sw.not_] = self.not_.as_swagger()
+            doc[sw.not_] = self.not_.as_swagger()
         if self.items:
-            docs[sw.items] = self.items.as_swagger()
+            doc[sw.items] = self.items.as_swagger()
         if self.properties:
-            docs[sw.properties] = self.properties.as_swagger()
+            doc[sw.properties] = self.properties.as_swagger()
         if self.additional_properties:
-            docs[sw.additional_properties] = self.additional_properties.as_swagger()
+            doc[sw.additional_properties] = self.additional_properties.as_swagger()
         if self.description:
-            docs[sw.description] = self.description
+            doc[sw.description] = self.description
         if self.format_:
-            docs[sw.format_] = self.format_
+            doc[sw.format_] = self.format_
         if self.default:
-            docs[sw.default] = self.default
+            doc[sw.default] = self.default
         if self.nullable:
-            docs[sw.nullable] = self.nullable
+            doc[sw.nullable] = self.nullable
         if self.discriminator:
-            docs[sw.discriminator] = self.discriminator.as_swagger()
+            doc[sw.discriminator] = self.discriminator.as_swagger()
         if self.read_only:
-            docs[sw.read_only] = self.read_only
+            doc[sw.read_only] = self.read_only
         if self.write_only:
-            docs[sw.write_only] = self.write_only
+            doc[sw.write_only] = self.write_only
         if self.xml:
-            docs[sw.xml] = self.xml.as_swagger()
+            doc[sw.xml] = self.xml.as_swagger()
         if self.external_docs:
-            docs[sw.external_docs] = self.external_docs.as_swagger()
+            doc[sw.external_docs] = self.external_docs.as_swagger()
         if self.example:
-            docs[sw.example] = self.example.as_swagger()
+            doc[sw.example] = self.example.as_swagger()
         if self.deprecated:
-            docs[sw.deprecated] = self.deprecated
-        return docs
+            doc[sw.deprecated] = self.deprecated
+        return doc
 
 
 class Parameter(SwaggerObject):
@@ -556,7 +594,7 @@ For all other cases, the name corresponds to the parameter name used by the in p
         return doc
 
 
-class PathItem(SwaggerObject, DictSetMixin):
+class PathItem(SwaggerObject):
     """Represents a Swagger "Path Item Object"
 
     :param str ref: Allows for an external definition of this path item. The referenced structure MUST be in the format of a Path Item Object. If there are conflicts between the referenced definition and this Path Item's definition, the behavior is undefined.
@@ -718,11 +756,11 @@ class OpenAPI(SwaggerObject):
             },
         }
         if self.servers:
-            doc[sw.servers] = self.servers
+            doc[sw.servers] = [i.as_swagger() for i in self.servers]
         if self.components:
-            doc[sw.components] = self.components
+            doc[sw.components] = self.components.as_swagger()
         if self.security:
-            doc[sw.security] = self.security
+            doc[sw.security] = [i.as_swagger() for i in self.security]
         if self.tags:
             doc[sw.tags] = [i.as_swagger() for i in self.tags]
         if self.external_docs:

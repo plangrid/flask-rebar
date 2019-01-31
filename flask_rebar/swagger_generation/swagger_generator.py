@@ -14,7 +14,7 @@ import re
 from collections import namedtuple
 from collections import OrderedDict
 
-from flask_rebar.swagger_generation import swagger_objects as so
+from flask_rebar.swagger_generation import openapi_objects as so
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.authenticators import USE_DEFAULT
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator
@@ -36,6 +36,16 @@ def _get_key(obj):
     :rtype: str
     """
     return obj[sw.title]
+
+
+def _get_python_key_from_swagger_word(swagger_word):
+    """Helper function for using setattr(SwaggerObject, python_friendly_key, value),
+    which has python_friendly attribute names, but what we have is a swaggerWord key
+
+    :param str swagger_word: A swaggerWord that is mapped from swagger_words.py
+    :return str python_key that maps to that swaggerWord
+    """
+    return next(k for k, v in sw.__dict__.items() if v == swagger_word)
 
 
 def _get_ref(key, path=('#', sw.definitions)):
@@ -216,6 +226,9 @@ def _convert_header_api_key_authenticator(authenticator):
 def _verify_parameters_are_the_same(a, b):
     def get_sort_key(parameter):
         return parameter[sw.name]
+
+    a = [i.as_swagger() if isinstance(i, so.Parameter) else i for i in a]
+    b = [i.as_swagger() if isinstance(i, so.Parameter) else i for i in b]
 
     sorted_a = sorted(a, key=get_sort_key)
     sorted_b = sorted(b, key=get_sort_key)
@@ -718,11 +731,11 @@ class SwaggerV3Generator(object):
             registry,
     ):
         default_authenticator = registry.default_authenticator
-        security_definitions = self._get_security_definitions(
-            paths=registry.paths,
-            default_authenticator=default_authenticator
-        )
-        definitions = self._get_definitions(paths=registry.paths)
+        # security_definitions = self._get_security_definitions(
+        #     paths=registry.paths,
+        #     default_authenticator=default_authenticator
+        # )
+        # definitions = self._get_definitions(paths=registry.paths)
         paths = self._get_paths(
             registry_paths=registry.paths,
             default_headers_schema=registry.default_headers_schema
@@ -731,6 +744,7 @@ class SwaggerV3Generator(object):
         swagger = so.OpenAPI(
             openapi=self._get_version(),
             info=self.info,
+            servers=self.servers,
             paths=paths,
         )
 
@@ -897,8 +911,7 @@ class SwaggerV3Generator(object):
                     security=security,
                 )
 
-                method_lower = method.lower()
-                path_item[method_lower] = operation
+                setattr(path_item, method.lower(), operation)
 
         return paths
 
@@ -923,7 +936,8 @@ class SwaggerV3Generator(object):
         for name, prop in sorted(obj['properties'].items(), key=lambda i: i[0]):
             schema = so.Schema()
             for k, v in prop.items():
-                setattr(schema, k, v)
+                python_key = _get_python_key_from_swagger_word(k)
+                setattr(schema, python_key, v)
 
             parameter = so.Parameter(
                 name=name,

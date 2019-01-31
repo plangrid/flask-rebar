@@ -12,11 +12,9 @@ import unittest
 import marshmallow as m
 
 from flask_rebar import compat
-from flask_rebar import ExternalDocumentation
-from flask_rebar import Tag
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar.rebar import Rebar
-from flask_rebar.swagger_generation import swagger_objects as so
+from flask_rebar.swagger_generation import openapi_objects as oa
 from flask_rebar.swagger_generation import SwaggerV2Generator
 from flask_rebar.swagger_generation import SwaggerV3Generator
 from flask_rebar.swagger_generation.swagger_generator import _PathArgument as PathArgument
@@ -247,10 +245,10 @@ class TestSwaggerV2Generator(unittest.TestCase):
             version=version,
             default_response_schema=Error(),
             tags=[
-                Tag(
+                oa.Tag(
                     name='bar',
                     description='baz',
-                    external_docs=ExternalDocumentation(url='http://bardocs.com', description='qux')
+                    external_docs=oa.ExternalDocumentation(url='http://bardocs.com', description='qux')
                 )
             ]
         )
@@ -495,6 +493,7 @@ class TestSwaggerV3Generator(unittest.TestCase):
             header='x-another',
             name='default'
         )
+        registry.set_default_authenticator(default_authenticator)
 
         class HeaderSchema(m.Schema):
             user_id = compat.set_data_key(
@@ -572,11 +571,9 @@ class TestSwaggerV3Generator(unittest.TestCase):
         def tagged_foos():
             pass
 
-        registry.set_default_authenticator(default_authenticator)
+        servers = [oa.Server(url='http://swag.com')]
 
-        servers = ('http://swag.com',)
-
-        info = so.Info(
+        info = oa.Info(
             title='Test API',
             description='This is a test API',
             terms_of_service='Terms of service',
@@ -587,17 +584,19 @@ class TestSwaggerV3Generator(unittest.TestCase):
         generator = SwaggerV3Generator(
             info=info,
             servers=servers,
-            default_response_schema=Error(),
+            consumes=('application/json',),
+            produces=('application/json',),
             tags=[
-                Tag(
+                oa.Tag(
                     name='bar',
                     description='baz',
-                    external_docs=ExternalDocumentation(
+                    external_docs=oa.ExternalDocumentation(
                         url='http://bardocs.com',
                         description='qux',
                     ),
                 ),
             ],
+            default_response_schema=Error(),
         )
 
         swagger = generator.generate(registry)
@@ -607,23 +606,184 @@ class TestSwaggerV3Generator(unittest.TestCase):
             'info': {
                 'title': 'Test API',
                 'description': 'This is a test API',
-                'terms_of_service': 'Terms of service',
+                'termsOfService': 'Terms of service',
                 # contact
                 # license
                 'version': '1.2.3',
             },
-            'paths': {
-
+            'servers': [
+                {'url': 'http://swag.com'},
+            ],
+            'paths': {  # paths
+                '/foos/{foo_uid}': {  # path item
+                    'get': {  # operation
+                        'operationId': 'get_foo',
+                        'description': 'helpful description',
+                        'responses': {
+                            'default': {
+                                'description': 'Error',
+                                'content': {
+                                    'application/json': {
+                                        'schema': {'$ref': '#/definitions/Error'},
+                                    },
+                                },
+                            },
+                            '200': {
+                                'description': 'Foo',
+                                'content': {
+                                    'application/json': {
+                                        'schema': {'$ref': '#/definitions/Foo'},
+                                    },
+                                },
+                            },
+                        },
+                        'parameters': [
+                            {
+                                'name': 'X-UserId',
+                                'in': 'header',
+                                'required': True,
+                                'schema': {
+                                    'type': 'string',
+                                },
+                            },
+                        ],
+                        'security': [],
+                    },
+                    'patch': {
+                        'operationId': 'update_foo',
+                        'responses': {
+                            '200': {
+                                'description': 'Foo',
+                                'content': {
+                                    'application/json': {
+                                        'schema': {'$ref': '#/definitions/Foo'},
+                                    },
+                                },
+                            },
+                            'default': {
+                                'description': 'Error',
+                                'content': {
+                                    'application/json': {
+                                        'schema': {'$ref': '#/definitions/Error'},
+                                    },
+                                },
+                            },
+                        },
+                        'parameters': [
+                            {
+                                'name': 'FooUpdateSchema',
+                                'in': 'body',
+                                'required': True,
+                                'schema': {'$ref': '#/definitions/FooUpdateSchema'},
+                            },
+                        ],
+                        'security': [{'sharedSecret': []}],
+                    },
+                    'parameters': [
+                        {
+                            'name': 'foo_uid',
+                            'in': 'path',
+                            'required': True,
+                            'schema': {
+                                'type': 'string'
+                            },
+                        },
+                    ],
+                },
+                '/foo_list': {
+                    'get': {
+                        'operationId': 'list_foos',
+                        'responses': {
+                            '200': {
+                                'description': 'Foo',
+                                'content': {
+                                    'application/json': {
+                                        'schema': {
+                                            'type': 'array',
+                                            'items': {'$ref': '#/definitions/Foo'},
+                                        },
+                                    },
+                                },
+                            },
+                            'default': {
+                                'description': 'Error',
+                                'content': {
+                                    'application/json': {
+                                        'schema': {'$ref': '#/definitions/Error'},
+                                    },
+                                },
+                            },
+                        },
+                        'security': [],
+                    },
+                },
+                '/foos': {
+                    'get': {
+                        'operationId': 'nested_foos',
+                        'responses': {
+                            '200': {
+                                'description': 'NestedFoosSchema',
+                                'content': {
+                                    'application/json': {
+                                        'schema': {'$ref': '#/definitions/NestedFoosSchema'},
+                                    },
+                                },
+                            },
+                            'default': {
+                                'description': 'Error',
+                                'content': {
+                                    'application/json': {
+                                        'schema': {'$ref': '#/definitions/Error'},
+                                    },
+                                },
+                            },
+                        },
+                        'parameters': [
+                            {
+                                'name': 'name',
+                                'in': 'query',
+                                'schema': {
+                                    'type': 'string',
+                                },
+                            },
+                            {
+                                'name': 'other',
+                                'in': 'query',
+                                'schema': {
+                                    'type': 'string',
+                                },
+                            },
+                        ],
+                        'security': [],
+                    },
+                },
+                '/tagged_foos': {
+                    'get': {
+                        'tags': ['bar', 'baz'],
+                        'operationId': 'tagged_foos',
+                        'responses': {
+                            'default': {
+                                'description': 'Error',
+                                'content': {
+                                    'application/json': {
+                                        'schema': {'$ref': '#/definitions/Error'},
+                                    },
+                                },
+                            },
+                        },
+                        'security': [],
+                    },
+                },
             },
         }
 
         # Uncomment these lines to just dump the result to the terminal:
-        #
-        # import json
-        # import pdb;pdb.set_trace()
-        # print(json.dumps(swagger, indent=2))
-        # print(json.dumps(expected_swagger, indent=2))
-        # self.assertTrue(False)
+
+        import json
+        import pdb;pdb.set_trace()
+        print(json.dumps(swagger, indent=2))
+        print(json.dumps(expected_swagger, indent=2))
+        self.assertTrue(False)
 
         # This will raise an error if validation fails
         validate_swagger(swagger=expected_swagger, schema_major=3)
