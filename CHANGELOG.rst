@@ -2,12 +2,12 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+v1.4.0 (2019-01-31)
+-------------------
 
 New
 ~~~
-- Add gitchangelog. [Julius Alexander]
+- Add gitchangelog (#56) [Julius Alexander IV]
 
 Other
 ~~~~~
