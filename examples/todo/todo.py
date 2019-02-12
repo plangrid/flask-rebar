@@ -4,13 +4,38 @@ from marshmallow import fields, pre_dump, Schema
 from flask_rebar import Rebar, errors, HeaderApiKeyAuthenticator
 from flask_rebar.validation import RequestSchema, ResponseSchema
 
+from flask_rebar import Tag,SwaggerV2Generator
 
 rebar = Rebar()
-registry = rebar.create_handler_registry()
+
+# add a description of the tags we're using further down (will be output to the generated swagger)
+# a bit reduntant, given the simplicity of the code, but you get the idea :) 
+generator = SwaggerV2Generator(
+    tags=[
+        Tag(
+            name='create',
+            description='All operations relating creation of todo items.'
+        ),
+        Tag(
+            name='read',
+            description='All operations relating to reading of todo items.'
+        ),
+        Tag(
+            name='update',
+            description='All operations relating to updating of todo items.'
+        )
+    ]
+)
+
+
+registry = rebar.create_handler_registry(swagger_generator=generator)
 
 # Just a mock database, for demonstration purposes
 todo_id_sequence = 0
 todo_database = {}
+
+
+
 
 
 # Rebar relies heavily on Marshmallow.
@@ -57,7 +82,7 @@ class TodoListSchema(ResponseSchema):
     rule='/todos',
     method='POST',
     request_body_schema=CreateTodoSchema(),
-
+    tags=['create'],
     # This dictionary tells framer which schema to use for which response code.
     # This is a little ugly, but tremendously helpful for generating swagger.
     marshal_schema={
@@ -87,7 +112,7 @@ def create_todo():
     rule='/todos',
     method='GET',
     query_string_schema=GetTodoListSchema(),
-
+    tags=['read'],
     # If the value for this is not a dictionary, the response code is assumed
     # to be 200
     marshal_schema=TodoListSchema()
@@ -113,7 +138,8 @@ def get_todos():
     rule='/todos/<int:todo_id>',
     method='PATCH',
     marshal_schema=TodoResourceSchema(),
-    request_body_schema=UpdateTodoSchema()
+    request_body_schema=UpdateTodoSchema(),
+    tags=['update']
 )
 def update_todo(todo_id):
     global todo_database
