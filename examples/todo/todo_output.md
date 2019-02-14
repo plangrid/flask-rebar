@@ -10,7 +10,6 @@ $ curl -s -XGET http://127.0.0.1:5000/swagger
   ],
   "definitions": {
     "CreateTodoSchema": {
-      "additionalProperties": false,
       "properties": {
         "complete": {
           "type": "boolean"
@@ -83,7 +82,6 @@ $ curl -s -XGET http://127.0.0.1:5000/swagger
       "type": "object"
     },
     "UpdateTodoSchema": {
-      "additionalProperties": false,
       "properties": {
         "complete": {
           "type": "boolean"
@@ -127,7 +125,10 @@ $ curl -s -XGET http://127.0.0.1:5000/swagger
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "tags": [
+          "todo"
+        ]
       },
       "post": {
         "operationId": "create_todo",
@@ -154,7 +155,10 @@ $ curl -s -XGET http://127.0.0.1:5000/swagger
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "tags": [
+          "todo"
+        ]
       }
     },
     "/todos/{todo_id}": {
@@ -191,15 +195,19 @@ $ curl -s -XGET http://127.0.0.1:5000/swagger
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "tags": [
+          "todo"
+        ]
       }
     }
   },
   "produces": [
-    "application/vnd.plangrid+json"
+    "application/json"
   ],
   "schemes": [
-    "http"
+    "http",
+    "https"
   ],
   "security": [
     {
@@ -213,7 +221,13 @@ $ curl -s -XGET http://127.0.0.1:5000/swagger
       "type": "apiKey"
     }
   },
-  "swagger": "2.0"
+  "swagger": "2.0",
+  "tags": [
+    {
+      "description": "All operations to managing the todo list portion of             the API",
+      "name": "todo"
+    }
+  ]
 }
 ```
 
