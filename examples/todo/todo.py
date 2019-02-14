@@ -1,29 +1,24 @@
 from flask import Flask
 from marshmallow import fields, pre_dump, Schema
 
-from flask_rebar import Rebar, errors, HeaderApiKeyAuthenticator
+from flask_rebar import Rebar, errors, HeaderApiKeyAuthenticator, Tag, \
+    SwaggerV2Generator
 from flask_rebar.validation import RequestSchema, ResponseSchema
 
-from flask_rebar import Tag,SwaggerV2Generator
 
 rebar = Rebar()
 
-# add a description of the tags we're using further down (will be output to the generated swagger)
-# a bit reduntant, given the simplicity of the code, but you get the idea :) 
+# Rebar will create a default swagger generator if none is specified. 
+# However, if you want more control over how the swagger is generated, you can 
+# provide your own. 
+# Here we've specified additional metadata for operation tags.
 generator = SwaggerV2Generator(
     tags=[
         Tag(
-            name='create',
-            description='All operations relating creation of todo items.'
+            name='todo',
+            description='All operations to managing the todo list portion of \
+            the API'
         ),
-        Tag(
-            name='read',
-            description='All operations relating to reading of todo items.'
-        ),
-        Tag(
-            name='update',
-            description='All operations relating to updating of todo items.'
-        )
     ]
 )
 
@@ -33,9 +28,6 @@ registry = rebar.create_handler_registry(swagger_generator=generator)
 # Just a mock database, for demonstration purposes
 todo_id_sequence = 0
 todo_database = {}
-
-
-
 
 
 # Rebar relies heavily on Marshmallow.
@@ -82,7 +74,7 @@ class TodoListSchema(ResponseSchema):
     rule='/todos',
     method='POST',
     request_body_schema=CreateTodoSchema(),
-    tags=['create'],
+    tags=['todo'],
     # This dictionary tells framer which schema to use for which response code.
     # This is a little ugly, but tremendously helpful for generating swagger.
     marshal_schema={
@@ -112,7 +104,7 @@ def create_todo():
     rule='/todos',
     method='GET',
     query_string_schema=GetTodoListSchema(),
-    tags=['read'],
+    tags=['todo'],
     # If the value for this is not a dictionary, the response code is assumed
     # to be 200
     marshal_schema=TodoListSchema()
@@ -139,7 +131,7 @@ def get_todos():
     method='PATCH',
     marshal_schema=TodoResourceSchema(),
     request_body_schema=UpdateTodoSchema(),
-    tags=['update']
+    tags=['todo']
 )
 def update_todo(todo_id):
     global todo_database
@@ -160,9 +152,10 @@ def create_app(name):
     app = Flask(name)
 
     authenticator = HeaderApiKeyAuthenticator(header='X-MyApp-Key')
-    # The HeaderApiKeyAuthenticator does super simple authentication, designed for
-    # service-to-service authentication inside of a protected network, by looking for a
-    # shared secret in the specified header. Here we define what that shared secret is.
+    # The HeaderApiKeyAuthenticator does super simple authentication, designed 
+    # for service-to-service authentication inside of a protected network, by 
+    # looking for a shared secret in the specified header. Here we define what 
+    # that shared secret is.
     authenticator.register_key(key='my-api-key')
     registry.set_default_authenticator(authenticator=authenticator)
 
