@@ -16,8 +16,7 @@ generator = SwaggerV2Generator(
     tags=[
         Tag(
             name='todo',
-            description='All operations to managing the todo list portion of \
-            the API'
+            description='Operations for managing TODO items.'
         ),
     ]
 )
