@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 if __name__ == '__main__':
     setup(
         name='flask-rebar',
-        version='1.4.0',
+        version='1.4.1',
         author='Barak Alon',
         author_email='barak.s.alon@gmail.com',
         description='Flask-Rebar combines flask, marshmallow, and swagger for robust REST services.',
