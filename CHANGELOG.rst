@@ -2,6 +2,15 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+
+Fix
+~~~
+- Change schemes=() default so Swagger UI infers scheme from document
+  URL (#61) [twosigmajab]
+
+
 v1.4.0 (2019-01-31)
 -------------------
 
