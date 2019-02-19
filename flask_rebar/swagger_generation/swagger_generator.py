@@ -307,7 +307,9 @@ class SwaggerV2Generator(object):
         static specification that will be used across multiple hosts (i.e.
         PlanGrid folks, don't worry about this guy. We have to override it
         manually when initializing a client anyways.
-    :param Sequence[str] schemes: "http", "https", "ws", or "wss"
+    :param Sequence[str] schemes: "http", "https", "ws", or "wss".
+        Defaults to empty. If left empty, the Swagger UI will infer the scheme
+        from the document URL, ensuring that the "Try it out" buttons work.
     :param Sequence[str] consumes: Mime Types the API accepts
     :param Sequence[str] produces: Mime Types the API returns
 
@@ -325,7 +327,7 @@ class SwaggerV2Generator(object):
     def __init__(
             self,
             host='swag.com',
-            schemes=('http', 'https'),
+            schemes=(),
             consumes=('application/json',),
             produces=('application/json',),
             version='1.0.0',
