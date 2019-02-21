@@ -36,23 +36,26 @@ from flask_rebar.swagger_ui import create_swagger_ui_blueprint
 
 # Metadata about a declared handler function. This can be used to both
 # declare the flask routing and to autogenerate swagger.
-PathDefinition = namedtuple('PathDefinition', [
-    'func',
-    'path',
-    'method',
-    'endpoint',
-    'marshal_schema',
-    'query_string_schema',
-    'request_body_schema',
-    'headers_schema',
-    'authenticator',
-    'tags'
-])
+PathDefinition = namedtuple(
+    "PathDefinition",
+    [
+        "func",
+        "path",
+        "method",
+        "endpoint",
+        "marshal_schema",
+        "query_string_schema",
+        "request_body_schema",
+        "headers_schema",
+        "authenticator",
+        "tags",
+    ],
+)
 
 
 # To catch redirection exceptions, app.errorhandler expects 301 in versions
 # below 0.11.0 but the exception itself in versions greater than 0.11.0.
-if LooseVersion(flask_version) < LooseVersion('0.11.0'):
+if LooseVersion(flask_version) < LooseVersion("0.11.0"):
     REDIRECT_ERROR = 301
 else:
     REDIRECT_ERROR = RequestRedirect
@@ -82,21 +85,21 @@ def _unpack_view_func_return_value(rv):
                 data, status = rv
         else:
             raise TypeError(
-                'The view function did not return a valid response tuple.'
-                ' The tuple must have the form (body, status, headers),'
-                ' (body, status), or (body, headers).'
+                "The view function did not return a valid response tuple."
+                " The tuple must have the form (body, status, headers),"
+                " (body, status), or (body, headers)."
             )
 
     return data, int(status), headers
 
 
 def _wrap_handler(
-        f,
-        authenticator=None,
-        query_string_schema=None,
-        request_body_schema=None,
-        headers_schema=None,
-        marshal_schema=None
+    f,
+    authenticator=None,
+    query_string_schema=None,
+    request_body_schema=None,
+    headers_schema=None,
+    marshal_schema=None,
 ):
     """
     Wraps a handler function before registering it with a Flask application.
@@ -104,6 +107,7 @@ def _wrap_handler(
     :param f:
     :returns: a new, wrapped handler function
     """
+
     @wraps(f)
     def wrapped(*args, **kwargs):
         if authenticator:
@@ -115,14 +119,10 @@ def _wrap_handler(
             )
 
         if request_body_schema:
-            g.validated_body = get_json_body_params_or_400(
-                schema=request_body_schema
-            )
+            g.validated_body = get_json_body_params_or_400(schema=request_body_schema)
 
         if headers_schema:
-            g.validated_headers = get_header_params_or_400(
-                schema=headers_schema
-            )
+            g.validated_headers = get_header_params_or_400(schema=headers_schema)
 
         rv = f(*args, **kwargs)
 
@@ -135,7 +135,7 @@ def _wrap_handler(
 
         # The schema may be declared as None to bypass marshaling (e.g. for 204 responses).
         if schema is None:
-            return make_response((data or '', status_code, headers))
+            return make_response((data or "", status_code, headers))
 
         marshaled = marshal(data=data, schema=schema)
         return response(data=marshaled, status_code=status_code, headers=headers)
@@ -180,9 +180,9 @@ def normalize_prefix(prefix):
     :param str prefix:
     :rtype: str
     """
-    if prefix and prefix.startswith('/'):
+    if prefix and prefix.startswith("/"):
         prefix = prefix[1:]
-    if prefix and prefix.endswith('/'):
+    if prefix and prefix.endswith("/"):
         prefix = prefix[:-1]
 
     return prefix
@@ -197,8 +197,8 @@ def prefix_url(prefix, url):
     :rtype: str
     """
     prefix = normalize_prefix(prefix)
-    url = url[1:] if url.startswith('/') else url
-    return '/{}/{}'.format(prefix, url)
+    url = url[1:] if url.startswith("/") else url
+    return "/{}/{}".format(prefix, url)
 
 
 class HandlerRegistry(object):
@@ -236,13 +236,13 @@ class HandlerRegistry(object):
     """
 
     def __init__(
-            self,
-            prefix=None,
-            default_authenticator=None,
-            default_headers_schema=None,
-            swagger_generator=None,
-            swagger_path='/swagger',
-            swagger_ui_path='/swagger/ui'
+        self,
+        prefix=None,
+        default_authenticator=None,
+        default_headers_schema=None,
+        swagger_generator=None,
+        swagger_path="/swagger",
+        swagger_ui_path="/swagger/ui",
     ):
         self.prefix = normalize_prefix(prefix)
         self._paths = defaultdict(dict)
@@ -317,17 +317,17 @@ class HandlerRegistry(object):
         return paths
 
     def add_handler(
-            self,
-            func,
-            rule,
-            method='GET',
-            endpoint=None,
-            marshal_schema=None,
-            query_string_schema=None,
-            request_body_schema=None,
-            headers_schema=USE_DEFAULT,
-            authenticator=USE_DEFAULT,
-            tags=None,
+        self,
+        func,
+        rule,
+        method="GET",
+        endpoint=None,
+        marshal_schema=None,
+        query_string_schema=None,
+        request_body_schema=None,
+        headers_schema=USE_DEFAULT,
+        authenticator=USE_DEFAULT,
+        tags=None,
     ):
         """
         Registers a function as a request handler.
@@ -373,16 +373,16 @@ class HandlerRegistry(object):
         )
 
     def handles(
-            self,
-            rule,
-            method='GET',
-            endpoint=None,
-            marshal_schema=None,
-            query_string_schema=None,
-            request_body_schema=None,
-            headers_schema=USE_DEFAULT,
-            authenticator=USE_DEFAULT,
-            tags=None,
+        self,
+        rule,
+        method="GET",
+        endpoint=None,
+        marshal_schema=None,
+        query_string_schema=None,
+        request_body_schema=None,
+        headers_schema=USE_DEFAULT,
+        authenticator=USE_DEFAULT,
+        tags=None,
     ):
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
@@ -420,7 +420,7 @@ class HandlerRegistry(object):
                     endpoint = definition_.func.__name__
 
                 if self.prefix:
-                    endpoint = '.'.join((self.prefix, endpoint))
+                    endpoint = ".".join((self.prefix, endpoint))
 
                 app.add_url_rule(
                     rule=definition_.path,
@@ -438,29 +438,33 @@ class HandlerRegistry(object):
                             if definition_.headers_schema is USE_DEFAULT
                             else definition_.headers_schema
                         ),
-                        marshal_schema=definition_.marshal_schema
+                        marshal_schema=definition_.marshal_schema,
                     ),
                     methods=[definition_.method],
-                    endpoint=endpoint
+                    endpoint=endpoint,
                 )
 
     def _register_swagger(self, app):
-        swagger_endpoint = 'get_swagger'
+        swagger_endpoint = "get_swagger"
 
         if self.prefix:
-            swagger_endpoint = '.'.join((self.prefix, swagger_endpoint))
+            swagger_endpoint = ".".join((self.prefix, swagger_endpoint))
 
         if self.swagger_path:
-            @app.route(self._prefixed_swagger_path(), methods=['GET'], endpoint=swagger_endpoint)
+
+            @app.route(
+                self._prefixed_swagger_path(),
+                methods=["GET"],
+                endpoint=swagger_endpoint,
+            )
             def get_swagger():
                 swagger = self.swagger_generator.generate(
-                    registry=self,
-                    host=request.host
+                    registry=self, host=request.host
                 )
                 return response(data=swagger)
 
     def _register_swagger_ui(self, app):
-        blueprint_name = 'swagger_ui'
+        blueprint_name = "swagger_ui"
 
         if self.prefix:
             blueprint_name = self.prefix + blueprint_name
@@ -472,8 +476,7 @@ class HandlerRegistry(object):
                 swagger_url=self._prefixed_swagger_path(),
             )
             app.register_blueprint(
-                blueprint=blueprint,
-                url_prefix=self._prefixed_swagger_ui_path(),
+                blueprint=blueprint, url_prefix=self._prefixed_swagger_ui_path()
             )
 
 
@@ -504,13 +507,13 @@ class Rebar(object):
         self.uncaught_exception_handlers = []
 
     def create_handler_registry(
-            self,
-            prefix=None,
-            default_authenticator=None,
-            default_headers_schema=None,
-            swagger_generator=None,
-            swagger_path='/swagger',
-            swagger_ui_path='/swagger/ui',
+        self,
+        prefix=None,
+        default_authenticator=None,
+        default_headers_schema=None,
+        swagger_generator=None,
+        swagger_path="/swagger",
+        swagger_ui_path="/swagger/ui",
     ):
         """
         Create a new handler registry and add to this extension's set of
@@ -605,15 +608,14 @@ class Rebar(object):
             return self._create_json_error_response(
                 message=error.error_message,
                 http_status_code=error.http_status_code,
-                additional_data=error.additional_data
+                additional_data=error.additional_data,
             )
 
         @app.errorhandler(404)
         @app.errorhandler(405)
         def handle_werkzeug_http_error(error):
             return self._create_json_error_response(
-                message=error.description,
-                http_status_code=error.code
+                message=error.description, http_status_code=error.code
             )
 
         @app.errorhandler(REDIRECT_ERROR)
@@ -625,7 +627,7 @@ class Rebar(object):
                     message=error.name,
                     http_status_code=error.code,
                     additional_data={"new_url": error.new_url},
-                    headers={"Location": error.new_url}
+                    headers={"Location": error.new_url},
                 )
 
         @app.errorhandler(Exception)
@@ -640,16 +642,11 @@ class Rebar(object):
                 raise error
             else:
                 return self._create_json_error_response(
-                    message=messages.internal_server_error,
-                    http_status_code=500
+                    message=messages.internal_server_error, http_status_code=500
                 )
 
     def _create_json_error_response(
-            self,
-            message,
-            http_status_code,
-            additional_data=None,
-            headers=None
+        self, message, http_status_code, additional_data=None, headers=None
     ):
         """
         Compiles a response object for an error.
@@ -663,7 +660,7 @@ class Rebar(object):
           Additional headers to attach to the response.
         :rtype: flask.Response
         """
-        body = {'message': message}
+        body = {"message": message}
         if additional_data:
             body.update(additional_data)
         resp = jsonify(body)
