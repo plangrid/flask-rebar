@@ -18,10 +18,18 @@ from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.authenticators import USE_DEFAULT
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
-from flask_rebar.swagger_generation.marshmallow_to_swagger import headers_converter_registry as global_headers_converter_registry
-from flask_rebar.swagger_generation.marshmallow_to_swagger import query_string_converter_registry as global_query_string_converter_registry
-from flask_rebar.swagger_generation.marshmallow_to_swagger import request_body_converter_registry as global_request_body_converter_registry
-from flask_rebar.swagger_generation.marshmallow_to_swagger import response_converter_registry as global_response_converter_registry
+from flask_rebar.swagger_generation.marshmallow_to_swagger import (
+    headers_converter_registry as global_headers_converter_registry,
+)
+from flask_rebar.swagger_generation.marshmallow_to_swagger import (
+    query_string_converter_registry as global_query_string_converter_registry,
+)
+from flask_rebar.swagger_generation.marshmallow_to_swagger import (
+    request_body_converter_registry as global_request_body_converter_registry,
+)
+from flask_rebar.swagger_generation.marshmallow_to_swagger import (
+    response_converter_registry as global_response_converter_registry,
+)
 from flask_rebar.validation import Error
 
 
@@ -37,7 +45,7 @@ def _get_key(obj):
     return obj[sw.title]
 
 
-def _get_ref(key, path=('#', sw.definitions)):
+def _get_ref(key, path=("#", sw.definitions)):
     """
     Constructs a path for a JSONSchema $ref.
 
@@ -50,7 +58,7 @@ def _get_ref(key, path=('#', sw.definitions)):
     :param iterable[str] path:
     :rtype: str
     """
-    return '/'.join(list(path) + [key])
+    return "/".join(list(path) + [key])
 
 
 def _get_response_description(schema):
@@ -155,7 +163,7 @@ def _flatten_array(schema, definitions):
         _flatten_array(schema=schema[sw.items], definitions=definitions)
 
 
-def _convert_jsonschema_to_list_of_parameters(obj, in_='query'):
+def _convert_jsonschema_to_list_of_parameters(obj, in_="query"):
     """
     Swagger is only _based_ on JSONSchema. Query string and header parameters
     are represented as list, not as an object. This converts a JSONSchema
@@ -168,22 +176,22 @@ def _convert_jsonschema_to_list_of_parameters(obj, in_='query'):
     """
     parameters = []
 
-    assert obj['type'] == 'object'
+    assert obj["type"] == "object"
 
-    required = obj.get('required', [])
+    required = obj.get("required", [])
 
-    for name, prop in sorted(obj['properties'].items(), key=lambda i: i[0]):
+    for name, prop in sorted(obj["properties"].items(), key=lambda i: i[0]):
         parameter = copy.deepcopy(prop)
-        parameter['required'] = name in required
-        parameter['in'] = in_
-        parameter['name'] = name
+        parameter["required"] = name in required
+        parameter["in"] = in_
+        parameter["name"] = name
         parameters.append(parameter)
 
     return parameters
 
 
-_PATH_REGEX = re.compile('<((?P<type>.+?):)?(?P<name>.+?)>')
-_PathArgument = namedtuple('PathArgument', ['name', 'type'])
+_PATH_REGEX = re.compile("<((?P<type>.+?):)?(?P<name>.+?)>")
+_PathArgument = namedtuple("PathArgument", ["name", "type"])
 
 
 def _format_path_for_swagger(path):
@@ -198,16 +206,12 @@ def _format_path_for_swagger(path):
     matches = list(_PATH_REGEX.finditer(path))
 
     args = tuple(
-        _PathArgument(
-            name=match.group('name'),
-            type=match.group('type') or 'string'
-        )
+        _PathArgument(name=match.group("name"), type=match.group("type") or "string")
         for match in matches
     )
 
     subbed_path = _PATH_REGEX.sub(
-        repl=lambda match: '{{{}}}'.format(match.group('name')),
-        string=path
+        repl=lambda match: "{{{}}}".format(match.group("name")), string=path
     )
     return subbed_path, args
 
@@ -225,7 +229,7 @@ def _convert_header_api_key_authenticator(authenticator):
     definition = {
         sw.name: authenticator.header,
         sw.in_: sw.header,
-        sw.type_: sw.api_key
+        sw.type_: sw.api_key,
     }
     return key, definition
 
@@ -239,8 +243,8 @@ def _verify_parameters_are_the_same(a, b):
 
     if sorted_a != sorted_b:
         msg = (
-            'Swagger generation does not support Flask url '
-            'converters that map to different Swagger types!'
+            "Swagger generation does not support Flask url "
+            "converters that map to different Swagger types!"
         )
         raise ValueError(msg)
 
@@ -252,6 +256,7 @@ class ExternalDocumentation(object):
     :param str url: The URL for the target documentation. Value MUST be in the format of a URL
     :param str description: A short description of the target documentation
     """
+
     def __init__(self, url, description=None):
         self.url = url
         self.description = description
@@ -276,6 +281,7 @@ class Tag(object):
     :param str description: A short description for the tag
     :param ExternalDocumentation external_docs: Additional external documentation for this tag
     """
+
     def __init__(self, name, description=None, external_docs=None):
         self.name = name
         self.description = description
@@ -324,26 +330,26 @@ class SwaggerV2Generator(object):
     :param Sequence[Tag] tags:
         A list of tags used by the specification with additional metadata. \
     """
-    def __init__(
-            self,
-            host='swag.com',
-            schemes=(),
-            consumes=('application/json',),
-            produces=('application/json',),
-            version='1.0.0',
-            title='My API',
-            description='',
-            query_string_converter_registry=None,
-            request_body_converter_registry=None,
-            headers_converter_registry=None,
-            response_converter_registry=None,
-            tags=None,
 
-            # TODO Still trying to figure out how to get this from the registry
-            # Flask error handling doesn't mesh well with Swagger responses,
-            # and I'm trying to avoid building our own layer on top of Flask's
-            # error handlers.
-            default_response_schema=Error()
+    def __init__(
+        self,
+        host="swag.com",
+        schemes=(),
+        consumes=("application/json",),
+        produces=("application/json",),
+        version="1.0.0",
+        title="My API",
+        description="",
+        query_string_converter_registry=None,
+        request_body_converter_registry=None,
+        headers_converter_registry=None,
+        response_converter_registry=None,
+        tags=None,
+        # TODO Still trying to figure out how to get this from the registry
+        # Flask error handling doesn't mesh well with Swagger responses,
+        # and I'm trying to avoid building our own layer on top of Flask's
+        # error handlers.
+        default_response_schema=Error(),
     ):
         self.host = host
         self.schemes = schemes
@@ -355,29 +361,25 @@ class SwaggerV2Generator(object):
         self.tags = tags
 
         self._query_string_converter = (
-            query_string_converter_registry
-            or global_query_string_converter_registry
+            query_string_converter_registry or global_query_string_converter_registry
         ).convert
         self._request_body_converter = (
-            request_body_converter_registry
-            or global_request_body_converter_registry
+            request_body_converter_registry or global_request_body_converter_registry
         ).convert
         self._headers_converter = (
-            headers_converter_registry
-            or global_headers_converter_registry
+            headers_converter_registry or global_headers_converter_registry
         ).convert
         self._response_converter = (
-            response_converter_registry
-            or global_response_converter_registry
+            response_converter_registry or global_response_converter_registry
         ).convert
 
         self.flask_converters_to_swagger_types = {
-            'uuid': sw.string,
-            'uuid_string': sw.string,
-            'string': sw.string,
-            'path': sw.string,
-            'int': sw.integer,
-            'float': sw.number
+            "uuid": sw.string,
+            "uuid_string": sw.string,
+            "string": sw.string,
+            "path": sw.string,
+            "int": sw.integer,
+            "float": sw.number,
         }
 
         self.authenticator_converters = {
@@ -418,13 +420,13 @@ class SwaggerV2Generator(object):
         self.authenticator_converters[authenticator_class] = converter
 
     def generate(
-            self,
-            registry,
-            host=None,
-            schemes=None,
-            consumes=None,
-            produces=None,
-            sort_keys=True,
+        self,
+        registry,
+        host=None,
+        schemes=None,
+        consumes=None,
+        produces=None,
+        sort_keys=True,
     ):
         """
         Generates a Swagger specification from a Rebar instance.
@@ -439,13 +441,11 @@ class SwaggerV2Generator(object):
         """
         default_authenticator = registry.default_authenticator
         security_definitions = self._get_security_definitions(
-            paths=registry.paths,
-            default_authenticator=default_authenticator
+            paths=registry.paths, default_authenticator=default_authenticator
         )
         definitions = self._get_definitions(paths=registry.paths)
         paths = self._get_paths(
-            paths=registry.paths,
-            default_headers_schema=registry.default_headers_schema
+            paths=registry.paths, default_headers_schema=registry.default_headers_schema
         )
 
         swagger = {
@@ -457,7 +457,7 @@ class SwaggerV2Generator(object):
             sw.produces: list(produces or self.produces),
             sw.security_definitions: security_definitions,
             sw.paths: paths,
-            sw.definitions: definitions
+            sw.definitions: definitions,
         }
 
         if default_authenticator:
@@ -473,7 +473,7 @@ class SwaggerV2Generator(object):
         return swagger
 
     def _get_version(self):
-        return '2.0'
+        return "2.0"
 
     def _get_info(self):
         # TODO: add all the parameters for populating info
@@ -495,8 +495,7 @@ class SwaggerV2Generator(object):
         authenticators = set(
             d.authenticator
             for d in self._iterate_path_definitions(paths=paths)
-            if d.authenticator is not None
-            and d.authenticator is not USE_DEFAULT
+            if d.authenticator is not None and d.authenticator is not USE_DEFAULT
         )
 
         if default_authenticator is not None:
@@ -530,8 +529,7 @@ class SwaggerV2Generator(object):
                         sw.name: path_arg.name,
                         sw.required: True,
                         sw.in_: sw.path,
-                        sw.type_: self.flask_converters_to_swagger_types[path_arg.type]
-
+                        sw.type_: self.flask_converters_to_swagger_types[path_arg.type],
                     }
                     for path_arg in path_args
                 ]
@@ -542,8 +540,7 @@ class SwaggerV2Generator(object):
                 # just throw an error in this case.
                 if sw.parameters in path_definition:
                     _verify_parameters_are_the_same(
-                        path_definition[sw.parameters],
-                        path_params
+                        path_definition[sw.parameters], path_params
                     )
 
                 path_definition[sw.parameters] = path_params
@@ -551,10 +548,14 @@ class SwaggerV2Generator(object):
             for method, d in methods.items():
                 responses_definition = {
                     sw.default: {
-                        sw.description: _get_response_description(self.default_response_schema),
+                        sw.description: _get_response_description(
+                            self.default_response_schema
+                        ),
                         sw.schema: {
-                            sw.ref: _get_ref(get_swagger_title(self.default_response_schema))
-                        }
+                            sw.ref: _get_ref(
+                                get_swagger_title(self.default_response_schema)
+                            )
+                        },
                     }
                 }
 
@@ -569,7 +570,7 @@ class SwaggerV2Generator(object):
                             responses_definition[str(status_code)] = response_definition
                         else:
                             responses_definition[str(status_code)] = {
-                                sw.description: 'No response body.'
+                                sw.description: "No response body."
                             }
 
                 parameters_definition = []
@@ -578,39 +579,42 @@ class SwaggerV2Generator(object):
                     parameters_definition.extend(
                         _convert_jsonschema_to_list_of_parameters(
                             self._query_string_converter(d.query_string_schema),
-                            in_=sw.query
+                            in_=sw.query,
                         )
                     )
 
                 if d.request_body_schema:
                     schema = d.request_body_schema
 
-                    parameters_definition.append({
-                        sw.name: schema.__class__.__name__,
-                        sw.in_: sw.body,
-                        sw.required: True,
-                        sw.schema: self._get_schema(schema),
-                    })
+                    parameters_definition.append(
+                        {
+                            sw.name: schema.__class__.__name__,
+                            sw.in_: sw.body,
+                            sw.required: True,
+                            sw.schema: self._get_schema(schema),
+                        }
+                    )
 
                 if d.headers_schema is USE_DEFAULT and default_headers_schema:
                     parameters_definition.extend(
                         _convert_jsonschema_to_list_of_parameters(
                             self._headers_converter(default_headers_schema),
-                            in_=sw.header
+                            in_=sw.header,
                         )
                     )
-                elif d.headers_schema is not USE_DEFAULT and d.headers_schema is not None:
+                elif (
+                    d.headers_schema is not USE_DEFAULT and d.headers_schema is not None
+                ):
                     parameters_definition.extend(
                         _convert_jsonschema_to_list_of_parameters(
-                            self._headers_converter(d.headers_schema),
-                            in_=sw.header
+                            self._headers_converter(d.headers_schema), in_=sw.header
                         )
                     )
 
                 method_lower = method.lower()
                 path_definition[method_lower] = {
                     sw.operation_id: d.endpoint or get_swagger_title(d.func),
-                    sw.responses: responses_definition
+                    sw.responses: responses_definition,
                 }
 
                 if d.func.__doc__:

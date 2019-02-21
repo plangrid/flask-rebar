@@ -11,10 +11,7 @@ from flask import Blueprint, render_template, current_app
 
 
 def create_swagger_ui_blueprint(
-        ui_url,
-        swagger_url,
-        name='swagger_ui',
-        page_title='Swagger UI'
+    ui_url, swagger_url, name="swagger_ui", page_title="Swagger UI"
 ):
     """
     Create a blueprint for adding Swagger UI to a service.
@@ -35,19 +32,19 @@ def create_swagger_ui_blueprint(
     blueprint = Blueprint(
         name=name,
         import_name=__name__,
-        static_folder='static',
-        template_folder='templates',
-        url_prefix=ui_url
+        static_folder="static",
+        template_folder="templates",
+        url_prefix=ui_url,
     )
 
     template_context = {
-        'blueprint_name': name,
-        'swagger_url': swagger_url,
-        'page_title': page_title
+        "blueprint_name": name,
+        "swagger_url": swagger_url,
+        "page_title": page_title,
     }
 
-    @blueprint.route('/')
+    @blueprint.route("/")
     def show():
-        return render_template('index.html.jinja2', **template_context)
+        return render_template("index.html.jinja2", **template_context)
 
     return blueprint
