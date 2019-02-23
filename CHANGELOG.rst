@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+
+Fix
+~~~
+- Do not rethrow redirect errors. [Julius Alexander]
+
+
 v1.4.1 (2019-02-19)
 -------------------
 
