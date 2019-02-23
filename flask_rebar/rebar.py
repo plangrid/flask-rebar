@@ -618,15 +618,12 @@ class Rebar(object):
 
         @app.errorhandler(REDIRECT_ERROR)
         def handle_request_redirect_error(error):
-            if current_app.debug:
-                raise error
-            else:
-                return self._create_json_error_response(
-                    message=error.name,
-                    http_status_code=error.code,
-                    additional_data={"new_url": error.new_url},
-                    headers={"Location": error.new_url}
-                )
+            return self._create_json_error_response(
+                message=error.name,
+                http_status_code=error.code,
+                additional_data={"new_url": error.new_url},
+                headers={"Location": error.new_url}
+            )
 
         @app.errorhandler(Exception)
         def handle_generic_error(error):
