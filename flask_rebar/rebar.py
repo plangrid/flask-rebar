@@ -624,7 +624,7 @@ class Rebar(object):
                 message=error.name,
                 http_status_code=error.code,
                 additional_data={"new_url": error.new_url},
-                headers={"Location": error.new_url}
+                headers={"Location": error.new_url},
             )
 
         @app.errorhandler(Exception)
