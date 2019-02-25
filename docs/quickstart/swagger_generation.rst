@@ -120,7 +120,6 @@ The method should take two arguments in addition to ``self``: ``obj`` and ``cont
 ``context`` is a namedtuple that holds some helpful information for more complex conversions:
 
 * ``convert`` - This will hold a reference to a convert method that can be used to make recursive calls
-* ``direction`` - This will be either IN or OUT, and signifies if the converter should treat the marshmallow schema as "load"ing or "dump"ing. This helps to handle things like ``load_from`` and ``dump_to`` on a Marshmallow field.
 * ``memo`` - This holds the JSONSchema object that's been converted so far. This helps convert Validators, which might depend on the type of the object they are validating.
 * ``schema`` - This is the full schema being converted (as opposes to ``obj``, which might be a specific field in the schema).
 
