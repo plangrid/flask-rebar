@@ -511,7 +511,7 @@ class RebarTest(unittest.TestCase):
         self.assertTrue(resp.headers["Location"].endswith("/with_trailing_slash/"))
 
         app.debug = True
-        resp = app.test_client().get(path='/with_trailing_slash')
+        resp = app.test_client().get(path="/with_trailing_slash")
         self.assertEqual(resp.status_code, 301)
         self.assertEqual(resp.content_type, "application/json")
         self.assertTrue(resp.headers["Location"].endswith("/with_trailing_slash/"))

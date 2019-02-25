@@ -23,6 +23,11 @@ We recommend using a `virtual environment <https://docs.python.org/3/tutorial/ve
 
    pip install -r requirements.txt
 
+We use `black` to format code and keep it all consistent within the repo. With that in mind, you'll also want to install the precommit hooks because your build will fail if your code isn't black:
+
+.. code-block:: bash
+   pre-commit install
+
 To run the test suite with the current version of Python/virtual environment, use pytest:
 
 .. code-block:: bash
