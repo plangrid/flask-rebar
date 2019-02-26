@@ -13,10 +13,11 @@ env:
 install:
   - pip install Flask==$FLASK_VERSION
   - pip install marshmallow==$MARSHMALLOW_VERSION
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pip install black==18.9b0; fi
   - pip install -r requirements.txt
   - pip freeze
 script:
-  - pytest
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then black --check --diff .; fi && pytest
 branches:
   only:
     # This prevents double building for a PR

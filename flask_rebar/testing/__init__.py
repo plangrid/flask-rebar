@@ -11,9 +11,4 @@ def validate_swagger(swagger, schema=SWAGGER_V2_JSONSCHEMA):
     :param dict schema: The JSON Schema to use to validate the swagger spec
     :raises: jsonschema.ValidationError
     """
-    jsonschema.validate(
-        instance=swagger,
-        schema=schema
-    )
-
-
+    jsonschema.validate(instance=swagger, schema=schema)

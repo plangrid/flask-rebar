@@ -35,23 +35,24 @@ class UNSET(object):
 
 
 # We'll use this to mark methods as JSONSchema attribute setters
-_method_marker = '__sets_jsonschema_attr__'
+_method_marker = "__sets_jsonschema_attr__"
 
 # Holds attributes that we can pass around in these recursive
 # calls to converters. Bit messy, but :shrug:
-_Context = namedtuple('_Context', [
-    # This will hold a reference to a convert method that can be used
-    # to make recursive calls
-    'convert',
-
-    # Only really using this for validators at the moment. It will hold the
-    # JSONSchema object that's been converter so far, so that the validator
-    # can be converted based on the type of the schema.
-    'memo',
-
-    # The current schema being converted.
-    'schema'
-])
+_Context = namedtuple(
+    "_Context",
+    [
+        # This will hold a reference to a convert method that can be used
+        # to make recursive calls
+        "convert",
+        # Only really using this for validators at the moment. It will hold the
+        # JSONSchema object that's been converter so far, so that the validator
+        # can be converted based on the type of the schema.
+        "memo",
+        # The current schema being converted.
+        "schema",
+    ],
+)
 
 
 class UnregisteredType(Exception):
@@ -82,9 +83,9 @@ def get_swagger_title(obj):
     :param obj:
     :rtype: str
     """
-    if hasattr(obj, '__swagger_title__'):
+    if hasattr(obj, "__swagger_title__"):
         return obj.__swagger_title__
-    elif hasattr(obj, '__name__'):
+    elif hasattr(obj, "__name__"):
         return obj.__name__
     else:
         return obj.__class__.__name__
@@ -109,9 +110,11 @@ def sets_swagger_attr(attr):
 
     :param str attr: The attribute to set
     """
+
     def wrapper(f):
         setattr(f, _method_marker, attr)
         return f
+
     return wrapper
 
 
@@ -228,7 +231,7 @@ class FieldConverter(MarshmallowConverter):
         jsonschema_obj = super(FieldConverter, self).convert(obj, context)
 
         if obj.dump_only:
-            jsonschema_obj['readOnly'] = True
+            jsonschema_obj["readOnly"] = True
 
         if obj.validate:
             validators = _normalize_validate(obj.validate)
@@ -241,15 +244,14 @@ class FieldConverter(MarshmallowConverter):
                             context=_Context(
                                 convert=context.convert,
                                 memo=jsonschema_obj,
-                                schema=context.schema
-                            )
+                                schema=context.schema,
+                            ),
                         )
                     )
                 except UnregisteredType as e:
                     logging.debug(
-                        'Unable to convert validator {validator}: {err}'.format(
-                            validator=validator,
-                            err=e
+                        "Unable to convert validator {validator}: {err}".format(
+                            validator=validator, err=e
                         )
                     )
 
@@ -258,11 +260,10 @@ class FieldConverter(MarshmallowConverter):
     @sets_swagger_attr(sw.default)
     def get_default(self, obj, context):
         if (
-                obj.missing is not m.missing
-
-                # Marshmallow accepts a callable for the default. This is tricky
-                # to handle, so let's just ignore this for now.
-                and not callable(obj.missing)
+            obj.missing is not m.missing
+            # Marshmallow accepts a callable for the default. This is tricky
+            # to handle, so let's just ignore this for now.
+            and not callable(obj.missing)
         ):
             return obj.missing
         else:
@@ -277,8 +278,8 @@ class FieldConverter(MarshmallowConverter):
 
     @sets_swagger_attr(sw.description)
     def get_description(self, obj, context):
-        if 'description' in obj.metadata:
-            return obj.metadata['description']
+        if "description" in obj.metadata:
+            return obj.metadata["description"]
         else:
             return UNSET
 
@@ -311,10 +312,7 @@ class NestedConverter(FieldConverter):
         inst = nested_obj()
 
         if obj.many:
-            return {
-                sw.type_: sw.array,
-                sw.items: context.convert(inst, context)
-            }
+            return {sw.type_: sw.array, sw.items: context.convert(inst, context)}
         else:
             return context.convert(inst, context)
 
@@ -412,12 +410,11 @@ class MethodConverter(FieldConverter):
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        if 'swagger_type' in obj.metadata:
-            return obj.metadata['swagger_type']
+        if "swagger_type" in obj.metadata:
+            return obj.metadata["swagger_type"]
         else:
             raise ValueError(
-                'Must include "swagger_type" '
-                'keyword argument in Method field'
+                'Must include "swagger_type" ' "keyword argument in Method field"
             )
 
 
@@ -426,12 +423,11 @@ class FunctionConverter(FieldConverter):
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        if 'swagger_type' in obj.metadata:
-            return obj.metadata['swagger_type']
+        if "swagger_type" in obj.metadata:
+            return obj.metadata["swagger_type"]
         else:
             raise ValueError(
-                'Must include "swagger_type" '
-                'keyword argument in Function field'
+                'Must include "swagger_type" ' "keyword argument in Function field"
             )
 
 
@@ -529,6 +525,7 @@ class ConverterRegistry(object):
     This registry also allows for additional converters to be added for custom
     Marshmallow types.
     """
+
     def __init__(self):
         self._type_map = {}
         self._validator_map = {}
@@ -570,10 +567,9 @@ class ConverterRegistry(object):
                 return self._type_map[cls].convert(obj=obj, context=context)
         else:
             raise UnregisteredType(
-                'No registered type found in method resolution order: {mro}\n'
-                'Registered types: {types}'.format(
-                    mro=method_resolution_order,
-                    types=list(self._type_map.keys())
+                "No registered type found in method resolution order: {mro}\n"
+                "Registered types: {types}".format(
+                    mro=method_resolution_order, types=list(self._type_map.keys())
                 )
             )
 
@@ -586,103 +582,108 @@ class ConverterRegistry(object):
         :rtype: dict
         """
         return self._convert(
-            obj=obj,
-            context=_Context(
-                convert=self._convert,
-                memo={},
-                schema=obj
-            )
+            obj=obj, context=_Context(convert=self._convert, memo={}, schema=obj)
         )
 
 
-ALL_CONVERTERS = tuple([
-    klass()
-    for _, klass in inspect.getmembers(sys.modules[__name__], inspect.isclass)
-    if issubclass(klass, MarshmallowConverter)
-])
+ALL_CONVERTERS = tuple(
+    [
+        klass()
+        for _, klass in inspect.getmembers(sys.modules[__name__], inspect.isclass)
+        if issubclass(klass, MarshmallowConverter)
+    ]
+)
 
 query_string_converter_registry = ConverterRegistry()
-query_string_converter_registry.register_types([
-    BooleanConverter(),
-    CsvArrayConverter(),
-    DateConverter(),
-    DateTimeConverter(),
-    FunctionConverter(),
-    IntegerConverter(),
-    LengthConverter(),
-    ListConverter(),
-    MethodConverter(),
-    MultiArrayConverter(),
-    NumberConverter(),
-    OneOfConverter(),
-    RangeConverter(),
-    SchemaConverter(),
-    StringConverter(),
-    UUIDConverter(),
-    ConstantConverter(),
-])
+query_string_converter_registry.register_types(
+    [
+        BooleanConverter(),
+        CsvArrayConverter(),
+        DateConverter(),
+        DateTimeConverter(),
+        FunctionConverter(),
+        IntegerConverter(),
+        LengthConverter(),
+        ListConverter(),
+        MethodConverter(),
+        MultiArrayConverter(),
+        NumberConverter(),
+        OneOfConverter(),
+        RangeConverter(),
+        SchemaConverter(),
+        StringConverter(),
+        UUIDConverter(),
+        ConstantConverter(),
+    ]
+)
 
 headers_converter_registry = ConverterRegistry()
-headers_converter_registry.register_types([
-    BooleanConverter(),
-    CsvArrayConverter(),
-    DateConverter(),
-    DateTimeConverter(),
-    FunctionConverter(),
-    IntegerConverter(),
-    LengthConverter(),
-    ListConverter(),
-    MethodConverter(),
-    MultiArrayConverter(),
-    NumberConverter(),
-    OneOfConverter(),
-    RangeConverter(),
-    SchemaConverter(),
-    StringConverter(),
-    UUIDConverter(),
-    ConstantConverter(),
-])
+headers_converter_registry.register_types(
+    [
+        BooleanConverter(),
+        CsvArrayConverter(),
+        DateConverter(),
+        DateTimeConverter(),
+        FunctionConverter(),
+        IntegerConverter(),
+        LengthConverter(),
+        ListConverter(),
+        MethodConverter(),
+        MultiArrayConverter(),
+        NumberConverter(),
+        OneOfConverter(),
+        RangeConverter(),
+        SchemaConverter(),
+        StringConverter(),
+        UUIDConverter(),
+        ConstantConverter(),
+    ]
+)
 
 request_body_converter_registry = ConverterRegistry()
-request_body_converter_registry.register_types([
-    BooleanConverter(),
-    DateConverter(),
-    DateTimeConverter(),
-    DictConverter(),
-    DisallowExtraFieldsConverter(),
-    FunctionConverter(),
-    IntegerConverter(),
-    LengthConverter(),
-    ListConverter(),
-    MethodConverter(),
-    NestedConverter(),
-    NumberConverter(),
-    OneOfConverter(),
-    RangeConverter(),
-    SchemaConverter(),
-    StringConverter(),
-    UUIDConverter(),
-    ConstantConverter(),
-])
+request_body_converter_registry.register_types(
+    [
+        BooleanConverter(),
+        DateConverter(),
+        DateTimeConverter(),
+        DictConverter(),
+        DisallowExtraFieldsConverter(),
+        FunctionConverter(),
+        IntegerConverter(),
+        LengthConverter(),
+        ListConverter(),
+        MethodConverter(),
+        NestedConverter(),
+        NumberConverter(),
+        OneOfConverter(),
+        RangeConverter(),
+        SchemaConverter(),
+        StringConverter(),
+        UUIDConverter(),
+        ConstantConverter(),
+    ]
+)
 
 response_converter_registry = ConverterRegistry()
-response_converter_registry.register_types([
-    BooleanConverter(),
-    DateConverter(),
-    DateTimeConverter(),
-    DictConverter(),
-    DisallowExtraFieldsConverter(),
-    FunctionConverter(),
-    IntegerConverter(),
-    LengthConverter(),
-    ListConverter(),
-    MethodConverter(),
-    NestedConverter(),
-    NumberConverter(),
-    OneOfConverter(),
-    RangeConverter(),
-    SchemaConverter(),
-    StringConverter(),
-    UUIDConverter(),
-    ConstantConverter(),
-])
+response_converter_registry.register_types(
+    [
+        BooleanConverter(),
+        DateConverter(),
+        DateTimeConverter(),
+        DictConverter(),
+        DisallowExtraFieldsConverter(),
+        FunctionConverter(),
+        IntegerConverter(),
+        LengthConverter(),
+        ListConverter(),
+        MethodConverter(),
+        NestedConverter(),
+        NumberConverter(),
+        OneOfConverter(),
+        RangeConverter(),
+        SchemaConverter(),
+        StringConverter(),
+        UUIDConverter(),
+        ConstantConverter(),
+    ]
+)

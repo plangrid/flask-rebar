@@ -29,7 +29,8 @@ class HeadersProxy(compat.Mapping):
 
     :param werkzeug.datastructures.EnvironHeaders headers:
     """
-    __slots__ = ('headers',)
+
+    __slots__ = ("headers",)
 
     def __init__(self, headers):
         self.headers = headers
@@ -99,12 +100,9 @@ def raise_400_for_marshmallow_errors(errs, msg):
 
     _format_marshmallow_errors_for_response_in_place(copied)
 
-    additional_data = {'errors': copied}
+    additional_data = {"errors": copied}
 
-    raise errors.BadRequest(
-        msg=msg,
-        additional_data=additional_data,
-    )
+    raise errors.BadRequest(msg=msg, additional_data=additional_data)
 
 
 def get_json_body_params_or_400(schema):
@@ -118,9 +116,7 @@ def get_json_body_params_or_400(schema):
     body = _get_json_body_or_400()
 
     return _get_data_or_400(
-        schema=schema,
-        data=body,
-        message=messages.body_validation_failed
+        schema=schema, data=body, message=messages.body_validation_failed
     )
 
 
@@ -140,7 +136,7 @@ def get_query_string_params_or_400(schema):
     return _get_data_or_400(
         schema=schema,
         data=query_multidict,
-        message=messages.query_string_validation_failed
+        message=messages.query_string_validation_failed,
     )
 
 
@@ -149,7 +145,7 @@ def get_header_params_or_400(schema):
     return _get_data_or_400(
         schema=schema,
         data=HeadersProxy(request.headers),
-        message=messages.header_validation_failed
+        message=messages.header_validation_failed,
     )
 
 
@@ -160,10 +156,7 @@ def _get_data_or_400(schema, data, message):
         return compat.load(schema=schema, data=data)
 
     except marshmallow.ValidationError as e:
-        raise_400_for_marshmallow_errors(
-            errs=e.messages,
-            msg=message
-        )
+        raise_400_for_marshmallow_errors(errs=e.messages, msg=message)
 
 
 def _get_json_body_or_400():
@@ -171,7 +164,7 @@ def _get_json_body_or_400():
     Retrieves the JSON payload of the current request, throwing a 400 error
     if the request doesn't include a valid JSON payload.
     """
-    if 'application/json' not in request.headers.get('content-type', ''):
+    if "application/json" not in request.headers.get("content-type", ""):
         raise errors.BadRequest(messages.unsupported_content_type)
 
     if (not request.data) or (len(request.data) == 0):
@@ -201,8 +194,8 @@ def _format_marshmallow_errors_for_response_in_place(errs):
     """
     # These are errors on the entire schema, not a specific field
     # Let's rename these too something slightly less cryptic
-    if '_schema' in errs:
-        errs['_general'] = errs.pop('_schema')
+    if "_schema" in errs:
+        errs["_general"] = errs.pop("_schema")
 
     for field, value in errs.items():
         # In most cases we'll only have a single error for a field,

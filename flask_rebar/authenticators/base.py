@@ -18,6 +18,7 @@ class Authenticator(object):
     Abstract authenticator class. Custom authentication methods should
     extend this class.
     """
+
     def authenticate(self):
         """
         Implementations of :class:`Authenticator` should override this method.
