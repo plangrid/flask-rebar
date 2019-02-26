@@ -1,12 +1,28 @@
 from flask import Flask
 from marshmallow import fields, pre_dump, Schema
 
-from flask_rebar import Rebar, errors, HeaderApiKeyAuthenticator
+from flask_rebar import Rebar, errors, HeaderApiKeyAuthenticator, Tag, \
+    SwaggerV2Generator
 from flask_rebar.validation import RequestSchema, ResponseSchema
 
 
 rebar = Rebar()
-registry = rebar.create_handler_registry()
+
+# Rebar will create a default swagger generator if none is specified. 
+# However, if you want more control over how the swagger is generated, you can 
+# provide your own. 
+# Here we've specified additional metadata for operation tags.
+generator = SwaggerV2Generator(
+    tags=[
+        Tag(
+            name='todo',
+            description='Operations for managing TODO items.'
+        ),
+    ]
+)
+
+
+registry = rebar.create_handler_registry(swagger_generator=generator)
 
 # Just a mock database, for demonstration purposes
 todo_id_sequence = 0
@@ -57,7 +73,7 @@ class TodoListSchema(ResponseSchema):
     rule='/todos',
     method='POST',
     request_body_schema=CreateTodoSchema(),
-
+    tags=['todo'],
     # This dictionary tells framer which schema to use for which response code.
     # This is a little ugly, but tremendously helpful for generating swagger.
     marshal_schema={
@@ -87,7 +103,7 @@ def create_todo():
     rule='/todos',
     method='GET',
     query_string_schema=GetTodoListSchema(),
-
+    tags=['todo'],
     # If the value for this is not a dictionary, the response code is assumed
     # to be 200
     marshal_schema=TodoListSchema()
@@ -113,7 +129,8 @@ def get_todos():
     rule='/todos/<int:todo_id>',
     method='PATCH',
     marshal_schema=TodoResourceSchema(),
-    request_body_schema=UpdateTodoSchema()
+    request_body_schema=UpdateTodoSchema(),
+    tags=['todo']
 )
 def update_todo(todo_id):
     global todo_database
@@ -134,9 +151,10 @@ def create_app(name):
     app = Flask(name)
 
     authenticator = HeaderApiKeyAuthenticator(header='X-MyApp-Key')
-    # The HeaderApiKeyAuthenticator does super simple authentication, designed for
-    # service-to-service authentication inside of a protected network, by looking for a
-    # shared secret in the specified header. Here we define what that shared secret is.
+    # The HeaderApiKeyAuthenticator does super simple authentication, designed 
+    # for service-to-service authentication inside of a protected network, by 
+    # looking for a shared secret in the specified header. Here we define what 
+    # that shared secret is.
     authenticator.register_key(key='my-api-key')
     registry.set_default_authenticator(authenticator=authenticator)
 
