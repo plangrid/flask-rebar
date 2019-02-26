@@ -21,6 +21,8 @@ generator = SwaggerV2Generator(
     tags=[Tag(name="todo", description="Operations for managing TODO items.")]
 )
 
+non_black_compliant = ["blah", "blah2"
+    , 'BLAH3']
 
 registry = rebar.create_handler_registry(swagger_generator=generator)
 
