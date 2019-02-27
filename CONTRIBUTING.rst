@@ -7,6 +7,12 @@ If you want to contribute a fix, or a minor change that doesn't change the API, 
 
 If you're interested in making a larger change, we recommend you to open an issue for discussion first. That way we can ensure that the change is within the scope of this project before you put a lot of effort into it.
 
+Our Commitment to You
+----------------------------------
+
+Our commitment is to review new items promptly, within 3-5 business days as a general goal. Of course, this may vary with factors such as individual workloads, complexity of the issue or pull request, etc.
+
+If you feel that an Issue or Pull Request may have fallen through the cracks, tag an admin in a comment to bring it to our attention. (You can start with @RookieRick, and/or look up who else has recently merged PRs).
 
 Issues
 ------

@@ -5,9 +5,21 @@ Changelog
 (unreleased)
 ------------
 
+Changes
+~~~~~~~
+- Enforce black on PR's (#68) [Julius Alexander, Fabian]
+- Updated todo example to show tag usage (#59) [Fabian]
+
 Fix
 ~~~
-- Do not rethrow redirect errors. [Julius Alexander]
+- Do not rethrow redirect errors (#65) [Julius Alexander]
+
+Other
+~~~~~
+- Fix minor formatting issue in docs. [Rick Riensche]
+- Add recipe for class based views (#63) [barak]
+- Adds a codeowners file (#66) [Brock Haywood]
+- Update changelog. [Julius Alexander]
 
 
 v1.4.1 (2019-02-19)
