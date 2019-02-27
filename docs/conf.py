@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = "Flask-Rebar"
-copyright = "2018, PlanGrid"
+copyright = "2018-2019, PlanGrid"
 author = "Barak Alon, et al."
 
 # The short X.Y version
