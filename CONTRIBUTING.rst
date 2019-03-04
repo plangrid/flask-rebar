@@ -10,7 +10,7 @@ If you're interested in making a larger change, we recommend you to open an issu
 Our Commitment to You
 ----------------------------------
 
-Our commitment is to review new items promptly, within 3-5 business days as a general goal. Of course, this may vary with factors such as individual workloads, complexity of the issue or pull request, etc.
+Our commitment is to review new items promptly, within 3-5 business days as a general goal. Of course, this may vary with factors such as individual workloads, complexity of the issue or pull request, etc.  After review, any open Issue should always have an assignee.
 
 If you feel that an Issue or Pull Request may have fallen through the cracks, tag an admin in a comment to bring it to our attention. (You can start with @RookieRick, and/or look up who else has recently merged PRs).
 
