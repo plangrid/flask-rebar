@@ -2,13 +2,20 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+v1.5.1 (2019-03-22)
+-------------------
 
 Fix
 ~~~
 - Werkzeug 0.14->0.15 introduced some breaking changes in redirects
   (#73) [Rick Riensche]
+
+  * fix: Werkzeug 0.14->0.15 introduced some breaking changes around 301/308 redirects, which cascaded to Flask < 0.11 . Also simplifying our unit tests for 404/405 to not care about the exact wording of the error message.
+
+Other
+~~~~~
+- Doc: Update changelog. [Rick Riensche]
+
 
 v1.5.0 (2019-03-22)
 -------------------
