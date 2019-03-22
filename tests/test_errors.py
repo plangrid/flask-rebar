@@ -60,25 +60,20 @@ class TestErrors(TestCase):
         self.assertEqual(resp.json, {"message": TestErrors.ERROR_MSG, "foo": "bar"})
 
     def test_default_404_errors_are_formatted_correctly(self):
-        msg = (
-            "The requested URL was not found on the server.  If you entered "
-            "the URL manually please check your spelling and try again."
-        )
         resp = self.app.test_client().get("/nonexistent")
-        # Update of Werkzeug 0.14 -> 0.15 broke this test with a change from double to single space in message.
-        # To avoid this sort of silliness in the future, we'll normalize to single-space:
-        msg = msg.replace("  ", " ")
-        resp.json["message"] = resp.json["message"].replace("  ", " ")
         self.assertEqual(resp.status_code, 404)
         self.assertEqual(resp.content_type, "application/json")
-        self.assertEqual(resp.json, {"message": msg})
+        self.assertTrue(
+            resp.json.get("message")
+        )  # don't care about exact message wording, just existence
 
     def test_default_405_errors_are_formatted_correctly(self):
-        msg = "The method is not allowed for the requested URL."
         resp = self.app.test_client().put("/errors")
         self.assertEqual(resp.status_code, 405)
         self.assertEqual(resp.content_type, "application/json")
-        self.assertEqual(resp.json, {"message": msg})
+        self.assertTrue(
+            resp.json.get("message")
+        )  # don't care about exact message wording, just existence
 
     def test_default_500_errors_are_formatted_correctly(self):
         resp = self.app.test_client().get("/uncaught_errors")
