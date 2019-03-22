@@ -2,20 +2,23 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+v1.5.0 (2019-03-22)
+-------------------
 
 Changes
 ~~~~~~~
-- Enforce black on PR's (#68) [Julius Alexander, Fabian]
+- Enforce black on PR's (#68) [Julius Alexander IV, Fabian]
 - Updated todo example to show tag usage (#59) [Fabian]
 
 Fix
 ~~~
-- Do not rethrow redirect errors (#65) [Julius Alexander]
+- Do not rethrow redirect errors (#65) [Julius Alexander IV]
 
 Other
 ~~~~~
+- Doc: one more minor tweak to our "SLA" (#71) [Rick Riensche]
+- Doc: minor doc cleanup, addition of "SLA-esque" statement to
+  Contributing (#70) [Rick Riensche]
 - Fix minor formatting issue in docs. [Rick Riensche]
 - Add recipe for class based views (#63) [barak]
 - Adds a codeowners file (#66) [Brock Haywood]

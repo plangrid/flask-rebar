@@ -506,12 +506,12 @@ class RebarTest(unittest.TestCase):
 
         app.debug = False
         resp = app.test_client().get(path="/with_trailing_slash")
-        self.assertEqual(resp.status_code, 301)
+        self.assertIn(resp.status_code, (301, 308))
         self.assertEqual(resp.content_type, "application/json")
         self.assertTrue(resp.headers["Location"].endswith("/with_trailing_slash/"))
 
         app.debug = True
         resp = app.test_client().get(path="/with_trailing_slash")
-        self.assertEqual(resp.status_code, 301)
+        self.assertIn(resp.status_code, (301, 308))
         self.assertEqual(resp.content_type, "application/json")
         self.assertTrue(resp.headers["Location"].endswith("/with_trailing_slash/"))

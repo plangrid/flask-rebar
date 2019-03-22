@@ -56,9 +56,11 @@ PathDefinition = namedtuple(
 # To catch redirection exceptions, app.errorhandler expects 301 in versions
 # below 0.11.0 but the exception itself in versions greater than 0.11.0.
 if LooseVersion(flask_version) < LooseVersion("0.11.0"):
-    REDIRECT_ERROR = 301
+    MOVED_PERMANENTLY_ERROR = 301
+    PERMANENT_REDIRECT_ERROR = 308
 else:
-    REDIRECT_ERROR = RequestRedirect
+    MOVED_PERMANENTLY_ERROR = RequestRedirect
+    PERMANENT_REDIRECT_ERROR = RequestRedirect
 
 
 def _unpack_view_func_return_value(rv):
@@ -618,7 +620,8 @@ class Rebar(object):
                 message=error.description, http_status_code=error.code
             )
 
-        @app.errorhandler(REDIRECT_ERROR)
+        @app.errorhandler(MOVED_PERMANENTLY_ERROR)
+        @app.errorhandler(PERMANENT_REDIRECT_ERROR)
         def handle_request_redirect_error(error):
             return self._create_json_error_response(
                 message=error.name,
