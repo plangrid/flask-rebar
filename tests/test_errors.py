@@ -65,6 +65,10 @@ class TestErrors(TestCase):
             "the URL manually please check your spelling and try again."
         )
         resp = self.app.test_client().get("/nonexistent")
+        # Update of Werkzeug 0.14 -> 0.15 broke this test with a change from double to single space in message.
+        # To avoid this sort of silliness in the future, we'll normalize to single-space:
+        msg = msg.replace("  ", " ")
+        resp.json["message"] = resp.json["message"].replace("  ", " ")
         self.assertEqual(resp.status_code, 404)
         self.assertEqual(resp.content_type, "application/json")
         self.assertEqual(resp.json, {"message": msg})
