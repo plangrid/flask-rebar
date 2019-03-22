@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+
+Fix
+~~~
+- Werkzeug 0.14->0.15 introduced some breaking changes in redirects
+  (#73) [Rick Riensche]
+
 v1.5.0 (2019-03-22)
 -------------------
 
