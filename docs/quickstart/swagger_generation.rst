@@ -23,14 +23,29 @@ Flask-Rebar adds two additional endpoints for every handler registry:
 The HTML documentation is generated with `Swagger UI <https://swagger.io/swagger-ui/>`_.
 
 
-Serverless Generation
-=====================
+Swagger Version
+===============
 
-It is possible to generate the Swagger specification without running the application by using ``SwaggerV2Generator`` directly. This is helpful for generating static Swagger specifications.
+Flask-Rebar supports both Swagger v2 and Swagger v3 (synonymous with OpenAPI v2 and OpenAPI v3, respectively).
+
+For backwards compatibility, handler registries will generate Swagger v2 by default. To have the registries generate Swagger v3 instead, specify an instance ``SwaggerV3Generator`` when instantiating the registry:
 
 .. code-block:: python
 
-   from flask_rebar import SwaggerV2Generator
+   from flask_rebar import SwaggerV3Generator
+
+   registry = rebar.create_handler_registry(
+       swagger_generator=SwaggerV3Generator()
+   )
+
+Serverless Generation
+=====================
+
+It is possible to generate the Swagger specification without running the application by using ``SwaggerV2Generator`` or ``SwaggerV3Generator`` directly. This is helpful for generating static Swagger specifications.
+
+.. code-block:: python
+
+   from flask_rebar import SwaggerV3Generator
    from flask_rebar import Rebar
 
    rebar = Rebar()
@@ -39,7 +54,7 @@ It is possible to generate the Swagger specification without running the applica
    # ...
    # register handlers and what not
 
-   generator = SwaggerV2Generator()
+   generator = SwaggerV3Generator()
    swagger = generator.generate(registry)
 
 Extending Swagger Generation
@@ -122,6 +137,7 @@ The method should take two arguments in addition to ``self``: ``obj`` and ``cont
 * ``convert`` - This will hold a reference to a convert method that can be used to make recursive calls
 * ``memo`` - This holds the JSONSchema object that's been converted so far. This helps convert Validators, which might depend on the type of the object they are validating.
 * ``schema`` - This is the full schema being converted (as opposes to ``obj``, which might be a specific field in the schema).
+* ``openapi_version`` - This is the major version of OpenAPI being converter for
 
 We then add an instance of the new converter to the ``request_body_converter_registry``, meaning this field will only be valid for request bodies. We can add it to multiple converter registries or choose to omit it from some if we don't think a particular type of field should be valid in certain situations (e.g. the query_string_converter_registry doesn't support ``Nested`` fields).
 
@@ -210,6 +226,34 @@ Optionally, to include additional metadata about tags, pass the metadata directl
            Tag(
                name='beta',
                description='These operations are still in beta!'
+           )
+       ]
+   )
+
+Servers
+~~~~~~~
+
+OpenAPI 3+ replaces "host" with `servers <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#serverObject>`_.
+
+Servers can be specified by creating ``Server`` instances and passing them to the generator:
+
+.. code-block:: python
+
+   from flask_rebar import Server, ServerVariable
+
+   generator = SwaggerV3Generator(
+       servers=[
+           Server(
+               url="https://{username}.gigantic-server.com:{port}/{basePath}",
+               description="The production API server",
+               variables={
+                   "username": ServerVariable(
+                       default="demo",
+                       description="this value is assigned by the service provider, in this example `gigantic-server.com`",
+                   ),
+                   "port": ServerVariable(default="8443", enum=["8443", "443"]),
+                   "basePath": ServerVariable(default="v2"),
+               },
            )
        ]
    )

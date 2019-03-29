@@ -51,6 +51,8 @@ _Context = namedtuple(
         "memo",
         # The current schema being converted.
         "schema",
+        # The major version of OpenAPI being converter for
+        "openapi_version",
     ],
 )
 
@@ -118,6 +120,20 @@ def sets_swagger_attr(attr):
     return wrapper
 
 
+def get_schema_fields(schema):
+    """Retrieve all the names and field objects for a marshmallow Schema
+
+    :param m.Schema schema:
+    :returns: Yields tuples of the field name and the field itself
+    :rtype: typing.Iterator[typing.Tuple[str, m.fields.Field]]
+    """
+    fields = []
+    for name, field in schema.fields.items():
+        prop = compat.get_data_key(field)
+        fields.append((prop, field))
+    return sorted(fields)
+
+
 class MarshmallowConverter(object):
     """
     Abstract class for objects that convert Marshmallow objects to
@@ -181,8 +197,7 @@ class SchemaConverter(MarshmallowConverter):
 
         properties = {}
 
-        for name, field in obj.fields.items():
-            prop = compat.get_data_key(field)
+        for prop, field in get_schema_fields(obj):
             properties[prop] = context.convert(field, context)
 
         return properties
@@ -247,6 +262,7 @@ class FieldConverter(MarshmallowConverter):
                                 convert=context.convert,
                                 memo=jsonschema_obj,
                                 schema=context.schema,
+                                openapi_version=context.openapi_version,
                             ),
                         )
                     )
@@ -256,6 +272,9 @@ class FieldConverter(MarshmallowConverter):
                             validator=validator, err=e
                         )
                     )
+
+        if context.openapi_version == 3 and obj.allow_none:
+            jsonschema_obj = {sw.any_of: [{sw.type_: sw.null}, jsonschema_obj]}
 
         return jsonschema_obj
 
@@ -273,7 +292,7 @@ class FieldConverter(MarshmallowConverter):
 
     @sets_swagger_attr(sw.nullable)
     def get_nullable(self, obj, context):
-        if obj.allow_none is not False:
+        if context.openapi_version == 2 and obj.allow_none is not False:
             return True
         else:
             return UNSET
@@ -446,7 +465,11 @@ class CsvArrayConverter(ListConverter):
 
     @sets_swagger_attr(sw.collection_format)
     def get_collection_format(self, obj, context):
-        return sw.csv
+        return sw.csv if context.openapi_version == 2 else UNSET
+
+    @sets_swagger_attr(sw.style)
+    def get_style(self, obj, context):
+        return sw.simple if context.openapi_version == 3 else UNSET
 
 
 class MultiArrayConverter(ListConverter):
@@ -454,7 +477,11 @@ class MultiArrayConverter(ListConverter):
 
     @sets_swagger_attr(sw.collection_format)
     def get_collection_format(self, obj, context):
-        return sw.multi
+        return sw.multi if context.openapi_version == 2 else UNSET
+
+    @sets_swagger_attr(sw.explode)
+    def get_explode(self, obj, context):
+        return True if context.openapi_version == 3 else UNSET
 
 
 class RangeConverter(ValidatorConverter):
@@ -575,16 +602,23 @@ class ConverterRegistry(object):
                 )
             )
 
-    def convert(self, obj):
+    def convert(self, obj, openapi_version=2):
         """
         Converts a Marshmallow object to a JSONSchema dictionary.
 
         :param m.Schema|m.fields.Field|Validator obj:
             The Marshmallow object to be converted
+        :param int openapi_version: major version of OpenAPI to convert obj for
         :rtype: dict
         """
         return self._convert(
-            obj=obj, context=_Context(convert=self._convert, memo={}, schema=obj)
+            obj=obj,
+            context=_Context(
+                convert=self._convert,
+                memo={},
+                schema=obj,
+                openapi_version=openapi_version,
+            ),
         )
 
 

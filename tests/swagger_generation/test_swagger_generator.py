@@ -7,404 +7,176 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-import unittest
+import json
 
 import marshmallow as m
+import pytest
 
-from flask_rebar import compat
-from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar.rebar import Rebar
 from flask_rebar.swagger_generation import ExternalDocumentation
 from flask_rebar.swagger_generation import SwaggerV2Generator
+from flask_rebar.swagger_generation import SwaggerV3Generator
+from flask_rebar.swagger_generation import Server
+from flask_rebar.swagger_generation import ServerVariable
 from flask_rebar.swagger_generation import Tag
-from flask_rebar.swagger_generation.swagger_generator import (
-    _PathArgument as PathArgument,
-)
-from flask_rebar.swagger_generation.swagger_generator import _flatten as flatten
-from flask_rebar.swagger_generation.swagger_generator import (
-    _format_path_for_swagger as format_path_for_swagger,
-)
 from flask_rebar.testing import validate_swagger
+from flask_rebar.testing.swagger_jsonschema import (
+    SWAGGER_V2_JSONSCHEMA,
+    SWAGGER_V3_JSONSCHEMA,
+)
+
+from tests.swagger_generation.registries import legacy
+from tests.swagger_generation.registries import exploded_query_string
 
 
-class TestFlatten(unittest.TestCase):
-    def setUp(self):
-        super(TestFlatten, self).setUp()
-        self.maxDiff = None
+def _assert_dicts_equal(a, b):
+    result = json.dumps(a, indent=2, sort_keys=True)
+    expected = json.dumps(b, indent=2, sort_keys=True)
 
-    def test_flatten(self):
-        input_ = {
-            "type": "object",
-            "title": "x",
-            "properties": {
-                "a": {
-                    "type": "object",
-                    "title": "y",
-                    "properties": {"b": {"type": "integer"}},
-                },
-                "b": {"type": "string"},
-            },
-        }
-
-        expected_schema = {"$ref": "#/definitions/x"}
-
-        expected_definitions = {
-            "x": {
-                "type": "object",
-                "title": "x",
-                "properties": {
-                    "a": {"$ref": "#/definitions/y"},
-                    "b": {"type": "string"},
-                },
-            },
-            "y": {
-                "type": "object",
-                "title": "y",
-                "properties": {"b": {"type": "integer"}},
-            },
-        }
-
-        schema, definitions = flatten(input_)
-        self.assertEqual(schema, expected_schema)
-        self.assertEqual(definitions, expected_definitions)
-
-    def test_flatten_array(self):
-        input_ = {
-            "type": "array",
-            "title": "x",
-            "items": {
-                "type": "array",
-                "title": "y",
-                "items": {
-                    "type": "object",
-                    "title": "z",
-                    "properties": {"a": {"type": "integer"}},
-                },
-            },
-        }
-
-        expected_schema = {
-            "type": "array",
-            "title": "x",
-            "items": {
-                "type": "array",
-                "title": "y",
-                "items": {"$ref": "#/definitions/z"},
-            },
-        }
-
-        expected_definitions = {
-            "z": {
-                "type": "object",
-                "title": "z",
-                "properties": {"a": {"type": "integer"}},
-            }
-        }
-
-        schema, definitions = flatten(input_)
-        self.assertEqual(schema, expected_schema)
-        self.assertEqual(definitions, expected_definitions)
+    assert result == expected
 
 
-class TestFormatPathForSwagger(unittest.TestCase):
-    def test_format_path(self):
-        res, args = format_path_for_swagger(
-            "/projects/<uuid:project_uid>/foos/<foo_uid>"
-        )
+def test_swagger_v2_generator_non_registry_parameters():
+    host = "swag.com"
+    schemes = ["http"]
+    consumes = ["application/json"]
+    produces = ["application/json"]
+    title = "Test API"
+    version = "2.1.0"
+    description = "Foo Bar Baz"
 
-        self.assertEqual(res, "/projects/{project_uid}/foos/{foo_uid}")
+    class Error(m.Schema):
+        message = m.fields.String()
+        details = m.fields.Dict()
 
-        self.assertEqual(
-            args,
-            (
-                PathArgument(name="project_uid", type="uuid"),
-                PathArgument(name="foo_uid", type="string"),
-            ),
-        )
-
-    def test_no_args(self):
-        res, args = format_path_for_swagger("/health")
-
-        self.assertEqual(res, "/health")
-        self.assertEqual(args, tuple())
-
-
-class TestSwaggerV2Generator(unittest.TestCase):
-    def setUp(self):
-        super(TestSwaggerV2Generator, self).setUp()
-        self.maxDiff = None
-
-    def test_generate_swagger(self):
-        rebar = Rebar()
-        registry = rebar.create_handler_registry()
-
-        authenticator = HeaderApiKeyAuthenticator(header="x-auth")
-        default_authenticator = HeaderApiKeyAuthenticator(
-            header="x-another", name="default"
-        )
-
-        class HeaderSchema(m.Schema):
-            user_id = compat.set_data_key(
-                field=m.fields.String(required=True), key="X-UserId"
+    generator = SwaggerV2Generator(
+        host=host,
+        schemes=schemes,
+        consumes=consumes,
+        produces=produces,
+        title=title,
+        version=version,
+        description=description,
+        default_response_schema=Error(),
+        tags=[
+            Tag(
+                name="bar",
+                description="baz",
+                external_docs=ExternalDocumentation(
+                    url="http://bardocs.com", description="qux"
+                ),
             )
+        ],
+    )
 
-        class FooSchema(m.Schema):
-            __swagger_title__ = "Foo"
+    rebar = Rebar()
+    registry = rebar.create_handler_registry()
 
-            uid = m.fields.String()
-            name = m.fields.String()
+    swagger = generator.generate(registry)
 
-        class NestedFoosSchema(m.Schema):
-            data = m.fields.Nested(FooSchema, many=True)
+    expected_swagger = {
+        "swagger": "2.0",
+        "host": host,
+        "info": {"title": title, "version": version, "description": description},
+        "schemes": schemes,
+        "consumes": consumes,
+        "produces": produces,
+        "securityDefinitions": {},
+        "tags": [
+            {
+                "name": "bar",
+                "description": "baz",
+                "externalDocs": {"url": "http://bardocs.com", "description": "qux"},
+            }
+        ],
+        "paths": {},
+        "definitions": {
+            "Error": {
+                "type": "object",
+                "title": "Error",
+                "properties": {
+                    "message": {"type": "string"},
+                    "details": {"type": "object"},
+                },
+            }
+        },
+    }
 
-        class FooUpdateSchema(m.Schema):
-            __swagger_title = "FooUpdate"
+    validate_swagger(expected_swagger)
+    _assert_dicts_equal(swagger, expected_swagger)
 
-            name = m.fields.String()
 
-        class NameAndOtherSchema(m.Schema):
-            name = m.fields.String()
-            other = m.fields.String()
+def test_swagger_v3_generator_non_registry_parameters():
+    title = "Test API"
+    version = "3.0.0"
+    description = "testing testing 123"
 
-        @registry.handles(
-            rule="/foos/<uuid_string:foo_uid>",
-            method="GET",
-            marshal_schema={200: FooSchema()},
-            headers_schema=HeaderSchema(),
-        )
-        def get_foo(foo_uid):
-            """helpful description"""
-            pass
+    class Error(m.Schema):
+        message = m.fields.String()
+        details = m.fields.Dict()
 
-        @registry.handles(
-            rule="/foos/<foo_uid>",
-            method="PATCH",
-            marshal_schema={200: FooSchema()},
-            request_body_schema=FooUpdateSchema(),
-            authenticator=authenticator,
-        )
-        def update_foo(foo_uid):
-            pass
-
-        # Test using Schema(many=True) without using a nested Field.
-        # https://github.com/plangrid/flask-rebar/issues/41
-        @registry.handles(
-            rule="/foo_list",
-            method="GET",
-            marshal_schema={200: FooSchema(many=True)},
-            authenticator=None,  # Override the default!
-        )
-        def list_foos():
-            pass
-
-        @registry.handles(
-            rule="/foos",
-            method="GET",
-            marshal_schema={200: NestedFoosSchema()},
-            query_string_schema=NameAndOtherSchema(),
-            authenticator=None,  # Override the default!
-        )
-        def nested_foos():
-            pass
-
-        @registry.handles(rule="/tagged_foos", tags=["bar", "baz"])
-        def tagged_foos():
-            pass
-
-        registry.set_default_authenticator(default_authenticator)
-
-        host = "swag.com"
-        schemes = ["http"]
-        consumes = ["application/json"]
-        produces = ["application/json"]
-        title = "Test API"
-        version = "2.1.0"
-
-        class Error(m.Schema):
-            message = m.fields.String()
-            details = m.fields.Dict()
-
-        generator = SwaggerV2Generator(
-            host=host,
-            schemes=schemes,
-            consumes=consumes,
-            produces=produces,
-            title=title,
-            version=version,
-            default_response_schema=Error(),
-            tags=[
-                Tag(
-                    name="bar",
-                    description="baz",
-                    external_docs=ExternalDocumentation(
-                        url="http://bardocs.com", description="qux"
+    generator = SwaggerV3Generator(
+        version=version,
+        title=title,
+        description=description,
+        default_response_schema=Error(),
+        tags=[
+            Tag(
+                name="bar",
+                description="baz",
+                external_docs=ExternalDocumentation(
+                    url="http://bardocs.com", description="qux"
+                ),
+            )
+        ],
+        servers=[
+            Server(
+                url="https://{username}.gigantic-server.com:{port}/{basePath}",
+                description="The production API server",
+                variables={
+                    "username": ServerVariable(
+                        default="demo",
+                        description="this value is assigned by the service provider, in this example `gigantic-server.com`",
                     ),
-                )
-            ],
-        )
+                    "port": ServerVariable(default="8443", enum=["8443", "443"]),
+                    "basePath": ServerVariable(default="v2"),
+                },
+            )
+        ],
+    )
 
-        swagger = generator.generate(registry)
+    rebar = Rebar()
+    registry = rebar.create_handler_registry()
 
-        expected_swagger = {
-            "swagger": "2.0",
-            "host": host,
-            "info": {"title": title, "version": version, "description": ""},
-            "schemes": schemes,
-            "consumes": consumes,
-            "produces": produces,
-            "security": [{"default": []}],
-            "securityDefinitions": {
-                "sharedSecret": {"type": "apiKey", "in": "header", "name": "x-auth"},
-                "default": {"type": "apiKey", "in": "header", "name": "x-another"},
-            },
-            "tags": [
-                {
-                    "name": "bar",
-                    "description": "baz",
-                    "externalDocs": {"url": "http://bardocs.com", "description": "qux"},
-                }
-            ],
-            "paths": {
-                "/foos/{foo_uid}": {
-                    "parameters": [
-                        {
-                            "name": "foo_uid",
-                            "in": "path",
-                            "required": True,
-                            "type": "string",
-                        }
-                    ],
-                    "get": {
-                        "operationId": "get_foo",
-                        "description": "helpful description",
-                        "responses": {
-                            "200": {
-                                "description": "Foo",
-                                "schema": {"$ref": "#/definitions/Foo"},
-                            },
-                            "default": {
-                                "description": "Error",
-                                "schema": {"$ref": "#/definitions/Error"},
-                            },
-                        },
-                        "parameters": [
-                            {
-                                "name": "X-UserId",
-                                "in": "header",
-                                "required": True,
-                                "type": "string",
-                            }
-                        ],
+    swagger = generator.generate(registry)
+
+    expected_swagger = {
+        "openapi": "3.0.2",
+        "info": {"title": title, "version": version, "description": description},
+        "tags": [
+            {
+                "name": "bar",
+                "description": "baz",
+                "externalDocs": {"url": "http://bardocs.com", "description": "qux"},
+            }
+        ],
+        "servers": [
+            {
+                "url": "https://{username}.gigantic-server.com:{port}/{basePath}",
+                "description": "The production API server",
+                "variables": {
+                    "username": {
+                        "default": "demo",
+                        "description": "this value is assigned by the service provider, in this example `gigantic-server.com`",
                     },
-                    "patch": {
-                        "operationId": "update_foo",
-                        "responses": {
-                            "200": {
-                                "description": "Foo",
-                                "schema": {"$ref": "#/definitions/Foo"},
-                            },
-                            "default": {
-                                "description": "Error",
-                                "schema": {"$ref": "#/definitions/Error"},
-                            },
-                        },
-                        "parameters": [
-                            {
-                                "name": "FooUpdateSchema",
-                                "in": "body",
-                                "required": True,
-                                "schema": {"$ref": "#/definitions/FooUpdateSchema"},
-                            }
-                        ],
-                        "security": [{"sharedSecret": []}],
-                    },
+                    "port": {"enum": ["8443", "443"], "default": "8443"},
+                    "basePath": {"default": "v2"},
                 },
-                "/foo_list": {
-                    "get": {
-                        "operationId": "list_foos",
-                        "responses": {
-                            "200": {
-                                "description": "Foo",
-                                "schema": {
-                                    "type": "array",
-                                    "items": {"$ref": "#/definitions/Foo"},
-                                },
-                            },
-                            "default": {
-                                "description": "Error",
-                                "schema": {"$ref": "#/definitions/Error"},
-                            },
-                        },
-                        "security": [],
-                    }
-                },
-                "/foos": {
-                    "get": {
-                        "operationId": "nested_foos",
-                        "responses": {
-                            "200": {
-                                "description": "NestedFoosSchema",
-                                "schema": {"$ref": "#/definitions/NestedFoosSchema"},
-                            },
-                            "default": {
-                                "description": "Error",
-                                "schema": {"$ref": "#/definitions/Error"},
-                            },
-                        },
-                        "parameters": [
-                            {
-                                "name": "name",
-                                "in": "query",
-                                "required": False,
-                                "type": "string",
-                            },
-                            {
-                                "name": "other",
-                                "in": "query",
-                                "required": False,
-                                "type": "string",
-                            },
-                        ],
-                        "security": [],
-                    }
-                },
-                "/tagged_foos": {
-                    "get": {
-                        "tags": ["bar", "baz"],
-                        "operationId": "tagged_foos",
-                        "responses": {
-                            "default": {
-                                "description": "Error",
-                                "schema": {"$ref": "#/definitions/Error"},
-                            }
-                        },
-                    }
-                },
-            },
-            "definitions": {
-                "Foo": {
-                    "type": "object",
-                    "title": "Foo",
-                    "properties": {
-                        "uid": {"type": "string"},
-                        "name": {"type": "string"},
-                    },
-                },
-                "FooUpdateSchema": {
-                    "type": "object",
-                    "title": "FooUpdateSchema",
-                    "properties": {"name": {"type": "string"}},
-                },
-                "NestedFoosSchema": {
-                    "type": "object",
-                    "title": "NestedFoosSchema",
-                    "properties": {
-                        "data": {
-                            "type": "array",
-                            "items": {"$ref": "#/definitions/Foo"},
-                        }
-                    },
-                },
+            }
+        ],
+        "paths": {},
+        "components": {
+            "schemas": {
                 "Error": {
                     "type": "object",
                     "title": "Error",
@@ -412,39 +184,56 @@ class TestSwaggerV2Generator(unittest.TestCase):
                         "message": {"type": "string"},
                         "details": {"type": "object"},
                     },
-                },
-            },
-        }
+                }
+            }
+        },
+    }
 
-        # Uncomment these lines to just dump the result to the terminal:
+    validate_swagger(expected_swagger, SWAGGER_V3_JSONSCHEMA)
+    _assert_dicts_equal(swagger, expected_swagger)
 
-        # import json
-        # print(json.dumps(swagger, indent=2))
-        # print(json.dumps(expected_swagger, indent=2))
-        # self.assertTrue(False)
 
-        # This will raise an error if validation fails
-        validate_swagger(expected_swagger)
+@pytest.mark.parametrize("generator", [SwaggerV2Generator(), SwaggerV3Generator()])
+def test_path_parameter_types_must_be_the_same_for_same_path(generator):
+    rebar = Rebar()
+    registry = rebar.create_handler_registry()
 
-        self.assertEqual(swagger, expected_swagger)
+    @registry.handles(rule="/foos/<string:foo_uid>", method="GET")
+    def get_foo(foo_uid):
+        pass
 
-    def test_path_parameter_types_must_be_the_same_for_same_path(self):
-        rebar = Rebar()
-        registry = rebar.create_handler_registry()
+    @registry.handles(rule="/foos/<int:foo_uid>", method="PATCH")
+    def update_foo(foo_uid):
+        pass
 
-        @registry.handles(rule="/foos/<string:foo_uid>", method="GET")
-        def get_foo(foo_uid):
-            pass
+    with pytest.raises(ValueError):
+        generator.generate(registry)
 
-        @registry.handles(rule="/foos/<int:foo_uid>", method="PATCH")
-        def update_foo(foo_uid):
-            pass
 
+@pytest.mark.parametrize(
+    "registry, swagger_version, expected_swagger",
+    [
+        (legacy.registry, 2, legacy.EXPECTED_SWAGGER_V2),
+        (legacy.registry, 3, legacy.EXPECTED_SWAGGER_V3),
+        (exploded_query_string.registry, 2, exploded_query_string.EXPECTED_SWAGGER_V2),
+        (exploded_query_string.registry, 3, exploded_query_string.EXPECTED_SWAGGER_V3),
+    ],
+)
+def test_swagger_generator_v2(registry, swagger_version, expected_swagger):
+    if swagger_version == 2:
+        swagger_jsonschema = SWAGGER_V2_JSONSCHEMA
         generator = SwaggerV2Generator()
+    elif swagger_version == 3:
+        swagger_jsonschema = SWAGGER_V3_JSONSCHEMA
+        generator = SwaggerV3Generator()
+    else:
+        raise ValueError("Unknown swagger_version: {}".format(swagger_version))
 
-        with self.assertRaises(ValueError):
-            generator.generate(registry)
+    validate_swagger(expected_swagger, schema=swagger_jsonschema)
 
+    swagger = generator.generate(registry)
 
-if __name__ == "__main__":
-    unittest.main()
+    result = json.dumps(swagger, indent=2, sort_keys=True)
+    expected = json.dumps(expected_swagger, indent=2, sort_keys=True)
+
+    assert result == expected

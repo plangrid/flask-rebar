@@ -224,7 +224,7 @@ class HandlerRegistry(object):
         Authenticator to use for all handlers as a default.
     :param marshmallow.Schema default_headers_schema:
         Schema to validate the headers on all requests as a default.
-    :param swagger_generator:
+    :param flask_rebar.swagger_generation.swagger_generator.SwaggerGeneratorI swagger_generator:
         Object to generate a Swagger specification from this registry. This will be
         the Swagger generator that is used in the endpoints swagger and swagger UI
         that are added to the API.
@@ -460,8 +460,8 @@ class HandlerRegistry(object):
                 endpoint=swagger_endpoint,
             )
             def get_swagger():
-                swagger = self.swagger_generator.generate(
-                    registry=self, host=request.host
+                swagger = self.swagger_generator.generate_swagger(
+                    registry=self, host=request.host_url.rstrip("/")
                 )
                 return response(data=swagger)
 
@@ -526,6 +526,23 @@ class Rebar(object):
 
         Parameters are the same for the :class:`HandlerRegistry` constructor.
 
+        :param str prefix:
+            URL prefix for all handlers registered with this registry instance.
+        :param flask_rebar.authenticators.Authenticator default_authenticator:
+            Authenticator to use for all handlers as a default.
+        :param marshmallow.Schema default_headers_schema:
+            Schema to validate the headers on all requests as a default.
+        :param flask_rebar.swagger_generation.swagger_generator.SwaggerGeneratorI swagger_generator:
+            Object to generate a Swagger specification from this registry. This will be
+            the Swagger generator that is used in the endpoints swagger and swagger UI
+            that are added to the API.
+            If left as None, a `SwaggerV2Generator` instance will be used.
+        :param str swagger_path:
+            The Swagger specification as a JSON document will be hosted at this URL.
+            If set as None, no swagger specification will be hosted.
+        :param str swagger_ui_path:
+            The HTML Swagger UI will be hosted at this URL.
+            If set as None, no Swagger UI will be hosted.
         :rtype: HandlerRegistry
         """
         registry = HandlerRegistry(
