@@ -109,6 +109,14 @@ Documentation
 More extensive documentation can be found  `here <https://flask-rebar.readthedocs.io>`_.
 
 
+Extensions
+----------
+
+Flask-Rebar is extensible! Here are some open source extensions:
+
+* `Flask-Rebar-Auth0 <https://github.com/Sytten/flask-rebar-auth0>`_ - `Auth0 <https://auth0.com/>`_ authenticator for Flask-Rebar
+
+
 Contributing
 ------------
 
