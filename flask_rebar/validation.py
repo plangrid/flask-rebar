@@ -23,13 +23,14 @@ class CommaSeparatedList(fields.List):
     deserialized from a comma separated list of values.
     e.g. ?foo=bar,baz -> {'foo': ['bar', 'baz']}
     """
+
     def _deserialize(self, value, attr, data):
-        items = value.split(',')
+        items = value.split(",")
         return super(CommaSeparatedList, self)._deserialize(items, attr, data)
 
     def _serialize(self, value, attr, obj):
         items = super(CommaSeparatedList, self)._serialize(value, attr, obj)
-        return ','.join([str(i) for i in items])
+        return ",".join([str(i) for i in items])
 
 
 class QueryParamList(fields.List):
@@ -39,6 +40,7 @@ class QueryParamList(fields.List):
     times where each param is an item in the list.
     e.g. ?foo=bar&foo=baz -> {'foo': ['bar', 'baz']}
     """
+
     def _deserialize(self, value, attr, data):
         # data is a MultiDict of query params, so pull out all of the items
         # with getlist instead of just the first
@@ -55,6 +57,7 @@ class ActuallyRequireOnDumpMixin(object):
     missing required fields when `marshmallow.Schema.dump` is called, or if one of
     the required fields fails a validator.
     """
+
     @post_dump(pass_many=True)
     def require_output_fields(self, data, many):
         errors = self.validate(data)
@@ -74,6 +77,7 @@ class DisallowExtraFieldsMixin(object):
     This is a `marshmallow.Schema` mixin that will throw an error when an object has
     unrecognized fields.
     """
+
     @validates_schema(pass_original=True)
     def disallow_extra_fields(self, processed_data, original_data):
         # If the input data isn't a dict just short-circuit and let the Marshmallow unmarshaller
@@ -88,9 +92,13 @@ class DisallowExtraFieldsMixin(object):
             if field.load_from is not None
         ]
         excluded_fields = self.exclude
-        unsupported_fields = set(input_fields) - set(expected_fields) - set(excluded_fields)
+        unsupported_fields = (
+            set(input_fields) - set(expected_fields) - set(excluded_fields)
+        )
         if len(unsupported_fields) > 0:
-            raise ValidationError(message=messages.unsupported_fields(unsupported_fields))
+            raise ValidationError(
+                message=messages.unsupported_fields(unsupported_fields)
+            )
 
 
 # Marshmallow version 3 starts "disallowing" extra fields by default

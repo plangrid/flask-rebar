@@ -37,9 +37,9 @@ class HeaderApiKeyAuthenticator(Authenticator):
 
     # This authenticator allows multiple applications to have different keys.
     # This is the default name, if someone doesn't need about this feature.
-    DEFAULT_APP_NAME = 'default'
+    DEFAULT_APP_NAME = "default"
 
-    def __init__(self, header, name='sharedSecret'):
+    def __init__(self, header, name="sharedSecret"):
         self.header = header
         self.keys = {}
         self.name = name

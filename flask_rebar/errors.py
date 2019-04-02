@@ -27,6 +27,7 @@ class HttpJsonError(Exception):
         Note that these keys and values are added to the root object of the
         response, not nested under "additional_data".
     """
+
     default_message = None
     http_status_code = None
 
@@ -37,19 +38,19 @@ class HttpJsonError(Exception):
 
 
 class BadRequest(HttpJsonError):
-    http_status_code, default_message = 400, 'Bad Request'
+    http_status_code, default_message = 400, "Bad Request"
 
 
 class Unauthorized(HttpJsonError):
-    http_status_code, default_message = 401, 'Unauthorized'
+    http_status_code, default_message = 401, "Unauthorized"
 
 
 class PaymentRequired(HttpJsonError):
-    http_status_code, default_message = 402, 'Payment Required'
+    http_status_code, default_message = 402, "Payment Required"
 
 
 class Forbidden(HttpJsonError):
-    http_status_code, default_message = 403, 'Forbidden'
+    http_status_code, default_message = 403, "Forbidden"
 
 
 class NotFound(HttpJsonError):
@@ -73,43 +74,43 @@ class RequestTimeout(HttpJsonError):
 
 
 class Conflict(HttpJsonError):
-    http_status_code, default_message = 409, 'Conflict'
+    http_status_code, default_message = 409, "Conflict"
 
 
 class Gone(HttpJsonError):
-    http_status_code, default_message = 410, 'Gone'
+    http_status_code, default_message = 410, "Gone"
 
 
 class LengthRequired(HttpJsonError):
-    http_status_code, default_message = 411, 'Length Required'
+    http_status_code, default_message = 411, "Length Required"
 
 
 class PreconditionFailed(HttpJsonError):
-    http_status_code, default_message = 412, 'Precondition Failed'
+    http_status_code, default_message = 412, "Precondition Failed"
 
 
 class RequestEntityTooLarge(HttpJsonError):
-    http_status_code, default_message = 413, 'Request Entity Too Large'
+    http_status_code, default_message = 413, "Request Entity Too Large"
 
 
 class RequestUriTooLong(HttpJsonError):
-    http_status_code, default_message = 414, 'Request URI Too Long'
+    http_status_code, default_message = 414, "Request URI Too Long"
 
 
 class UnsupportedMediaType(HttpJsonError):
-    http_status_code, default_message = 415, 'Unsupported Media Type'
+    http_status_code, default_message = 415, "Unsupported Media Type"
 
 
 class RequestedRangeNotSatisfiable(HttpJsonError):
-    http_status_code, default_message = 416, 'Requested Range Not Satisfiable'
+    http_status_code, default_message = 416, "Requested Range Not Satisfiable"
 
 
 class ExpectationFailed(HttpJsonError):
-    http_status_code, default_message = 417, 'Expectation Failed'
+    http_status_code, default_message = 417, "Expectation Failed"
 
 
 class UnprocessableEntity(HttpJsonError):
-    http_status_code, default_message = 422, 'Unprocessable Entity'
+    http_status_code, default_message = 422, "Unprocessable Entity"
 
 
 class InternalError(HttpJsonError):
@@ -117,16 +118,16 @@ class InternalError(HttpJsonError):
 
 
 class NotImplemented(HttpJsonError):
-    http_status_code, default_message = 501, 'Not Implemented'
+    http_status_code, default_message = 501, "Not Implemented"
 
 
 class BadGateway(HttpJsonError):
-    http_status_code, default_message = 502, 'Bad Gateway'
+    http_status_code, default_message = 502, "Bad Gateway"
 
 
 class ServiceUnavailable(HttpJsonError):
-    http_status_code, default_message = 503, 'Service Unavailable'
+    http_status_code, default_message = 503, "Service Unavailable"
 
 
 class GatewayTimeout(HttpJsonError):
-    http_status_code, default_message = 504, 'Gateway Timeout'
+    http_status_code, default_message = 504, "Gateway Timeout"

@@ -98,5 +98,6 @@ Here's what a basic Flask-Rebar application looks like:
    quickstart/swagger_generation
    quickstart/authentication
    api_reference
+   recipes
    contributing
    changelog
