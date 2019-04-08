@@ -376,6 +376,7 @@ class SwaggerV2Generator(object):
         self.flask_converters_to_swagger_types = {
             "uuid": sw.string,
             "uuid_string": sw.string,
+            "oid_string": sw.string,
             "string": sw.string,
             "path": sw.string,
             "int": sw.integer,
