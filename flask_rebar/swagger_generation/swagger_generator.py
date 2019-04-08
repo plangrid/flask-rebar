@@ -87,7 +87,7 @@ def _get_response_description(schema):
         return get_swagger_title(schema)
 
 
-def _flatten(schema):
+def _flatten(jsonschema_obj):
     """
     Recursively flattens a JSONSchema to a dictionary of keyed JSONSchemas,
     replacing nested objects with a reference to that object.
@@ -125,23 +125,23 @@ def _flatten(schema):
     This is useful for decomposing complex object generated from Marshmallow
     into a definitions object in Swagger.
 
-    :param dict schema:
+    :param dict jsonschema_obj:
     :rtype: tuple(dict, dict)
     :returns: A tuple where the first item is the input object with any nested
     objects replaces with references, and the second item is the flattened
     definitions dictionary.
     """
-    schema = copy.deepcopy(schema)
+    jsonschema_obj = copy.deepcopy(jsonschema_obj)
 
     definitions = {}
 
-    if schema[sw.type_] == sw.object_:
-        _flatten_object(schema=schema, definitions=definitions)
-        schema = {sw.ref: _get_ref(_get_key(schema))}
-    elif schema[sw.type_] == sw.array:
-        _flatten_array(schema=schema, definitions=definitions)
+    if jsonschema_obj[sw.type_] == sw.object_:
+        _flatten_object(schema=jsonschema_obj, definitions=definitions)
+        jsonschema_obj = {sw.ref: _get_ref(_get_key(jsonschema_obj))}
+    elif jsonschema_obj[sw.type_] == sw.array:
+        _flatten_array(schema=jsonschema_obj, definitions=definitions)
 
-    return schema, definitions
+    return jsonschema_obj, definitions
 
 
 def _flatten_object(schema, definitions):
@@ -285,6 +285,11 @@ def _recursively_order_dicts(obj):
 
 
 def _iterate_path_definitions(paths):
+    """
+    For each path (e.g. '/foos/')
+    For each method (e.g. 'get')
+    Yield each definition (i.e. a schema defined in marshal or request)
+    """
     for methods in paths.values():
         for definition in methods.values():
             yield definition
@@ -747,7 +752,7 @@ class SwaggerV2Generator(object):
 
 
 class SwaggerV3Generator(object):
-    """Generates a v2.0 Swagger specification from a Rebar object.
+    """Generates a Open API 3.0 specification from a Rebar object.
 
     Not all things are retrievable from the Rebar object, so this
     guy also needs some additional information to complete the job.
@@ -825,7 +830,7 @@ class SwaggerV3Generator(object):
         #     paths=registry.paths,
         #     default_authenticator=default_authenticator
         # )
-        # definitions = self._get_definitions(paths=registry.paths)
+        components = self._get_components(paths=registry.paths)
         paths = self._get_paths(
             registry_paths=registry.paths,
             default_headers_schema=registry.default_headers_schema
@@ -836,6 +841,7 @@ class SwaggerV3Generator(object):
             info=self.info,
             servers=self.servers,
             paths=paths,
+            components=components,
         )
 
         # if default_authenticator:
@@ -1045,3 +1051,41 @@ class SwaggerV3Generator(object):
         converter = self.authenticator_converters[klass]
         name, _ = converter(authenticator)
         return oa.SecurityRequirement(name=name, values=[])
+
+    def _get_components(self, paths):
+        marshmallow_schemas = set()
+
+        converted = []
+
+        marshmallow_schemas.add(self.default_response_schema)
+        converted.append(self._response_converter(self.default_response_schema))
+
+        for d in _iterate_path_definitions(paths=paths):
+            if d.marshal_schema:
+                for marshmallow_schema in d.marshal_schema.values():
+                    if marshmallow_schema is None:
+                        # Responses that don't have a response body have None
+                        # for a schema
+                        continue
+
+                    if marshmallow_schema not in marshmallow_schemas:
+                        converted.append(self._response_converter(marshmallow_schema))
+                    marshmallow_schemas.add(marshmallow_schema)
+
+            if d.request_body_schema:
+                marshmallow_schema = d.request_body_schema
+
+                if marshmallow_schema not in marshmallow_schemas:
+                    converted.append(self._request_body_converter(marshmallow_schema))
+
+                marshmallow_schemas.add(marshmallow_schema)
+
+        flattened = {}
+
+        for jsonschema_obj in converted:
+            _, flattened_definitions = _flatten(jsonschema_obj)
+            flattened.update(flattened_definitions)
+
+        for title, jsonschema_obj in flattened.items():
+
+        return flattened

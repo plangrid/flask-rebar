@@ -694,13 +694,52 @@ class PathItem(SwaggerObject):
 class Components(SwaggerObject):
     """Represents a Swagger "Components Object"
 
-    :param TODO
+    :param dict(str, Schema or Reference) schemas: An object to hold reusable Schema Objects.
+    :param dict(str, Response or Reference) responses: An object to hold reusable Response Objects.
+    :param dict(str, Parameter or Reference) parameters: An object to hold reusable Parameter Objects.
+    :param dict(str, Example or Reference) examples: An object to hold reusable Example Objects.
+    :param dict(str, RequestBody or Reference) request_bodies: An object to hold reusable Request Body Objects.
+    :param dict(str, Header or Reference) headers: An object to hold reusable Header Objects.
+    :param dict(str, SecurityScheme or Reference) security_schemes: An object to hold reusable Security Scheme Objects.
+    :param dict(str, Link or Reference) links: An object to hold reusable Link Objects.
+    :param dict(str, Callback or Reference) callbacks: An object to hold reusable Callback Objects.
     """
 
-    def __init__(self):
-        pass
+    def __init__(
+            self,
+            schemas=None, responses=None, parameters=None, examples=None, request_bodies=None, headers=None,
+            security_schemes=None, links=None, callbacks=None
+    ):
+        self.schemas = schemas
+        self.responses = responses
+        self.parameters = parameters
+        self.examples = examples
+        self.request_bodies = request_bodies
+        self.headers = headers
+        self.security_schemes = security_schemes
+        self.links = links
+        self.callbacks = callbacks
 
     def as_swagger(self):
+        doc = {}
+        if self.schemas:
+            doc[sw.schemas] = {k: v.as_swagger() for k, v in self.schemas.items()}
+        if self.responses:
+            doc[sw.responses] = {k: v.as_swagger() for k, v in self.responses.items()}
+        if self.parameters:
+            doc[sw.parameters] = {k: v.as_swagger() for k, v in self.parameters.items()}
+        if self.examples:
+            doc[sw.examples] = {k: v.as_swagger() for k, v in self.examples.items()}
+        if self.request_bodies:
+            doc[sw.request_bodies] = {k: v.as_swagger() for k, v in self.request_bodies.items()}
+        if self.headers:
+            doc[sw.headers] = {k: v.as_swagger() for k, v in self.headers.items()}
+        if self.security_schemes:
+            doc[sw.security_schemes] = {k: v.as_swagger() for k, v in self.security_schemes.items()}
+        if self.links:
+            doc[sw.links] = {k: v.as_swagger() for k, v in self.links.items()}
+        if self.callbacks:
+            doc[sw.callbacks] = {k: v.as_swagger() for k, v in self.callbacks.items()}
         return {}
 
 
