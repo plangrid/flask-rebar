@@ -189,6 +189,7 @@ class TestConverterRegistry(unittest.TestCase):
 
     def test_required(self):
         class Foo(m.Schema):
+            b = m.fields.Integer(required=True)
             a = m.fields.Integer(required=True)
 
         schema = Foo()
@@ -199,8 +200,8 @@ class TestConverterRegistry(unittest.TestCase):
             {
                 "type": "object",
                 "title": "Foo",
-                "properties": {"a": {"type": "integer"}},
-                "required": ["a"],
+                "properties": {"b": {"type": "integer"}, "a": {"type": "integer"}},
+                "required": ["a", "b"],
             },
         )
 
