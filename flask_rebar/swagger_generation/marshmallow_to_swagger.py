@@ -199,7 +199,9 @@ class SchemaConverter(MarshmallowConverter):
                 prop = compat.get_data_key(field)
                 required.append(prop)
 
-        return sorted(required) if required else UNSET
+        if required and not obj.ordered:
+            required = sorted(required)
+        return required if required else UNSET
 
     @sets_swagger_attr(sw.description)
     def get_description(self, obj, context):
