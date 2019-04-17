@@ -1,4 +1,6 @@
 language: python
+sudo: required
+dist: xenial
 python:
   - '2.7'
   - '3.4'
@@ -29,7 +31,7 @@ branches:
 jobs:
   include:
     - stage: release
-      python: '3.6'
+      python: '3.7'
       env: skip
       script: skip
       install: skip
