@@ -2,6 +2,13 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- Doc: List Flask-Rebar-Auth0 as an extension (#76) [barak]
+- Minor changelog manual cleanup. [Rick Riensche]
+- Doc: update changelog. [Rick Riensche]
+
+
 v1.5.1 (2019-03-22)
 -------------------
 

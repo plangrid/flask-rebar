@@ -1,23 +1,27 @@
 language: python
+sudo: required
+dist: xenial
 python:
   - '2.7'
   - '3.4'
   - '3.5'
   - '3.6'
+  - '3.7'
 env:
   - MARSHMALLOW_VERSION='2.13.*' FLASK_VERSION='0.10.*'
   - MARSHMALLOW_VERSION='2.14.*' FLASK_VERSION='0.11.*'
   - MARSHMALLOW_VERSION='2.15.*' FLASK_VERSION='0.12.*'
   - MARSHMALLOW_VERSION='2.15.*' FLASK_VERSION='1.0.*'
-  - MARSHMALLOW_VERSION='3.0.0b20' FLASK_VERSION='1.0.*'
+  - MARSHMALLOW_VERSION='3.0.0rc5' FLASK_VERSION='1.0.*'
 install:
   - pip install Flask==$FLASK_VERSION
   - pip install marshmallow==$MARSHMALLOW_VERSION
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pip install black==18.9b0; fi
+  # Updating black?  Run pre-commit autoupdate to ref latest version in .pre-commit-config.yaml and keep in sync
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.7' ]]; then pip install black==19.3b0; fi
   - pip install -r requirements.txt
   - pip freeze
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then black --check --diff .; fi && pytest
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.7' ]]; then black --check --diff .; fi && pytest
 branches:
   only:
     # This prevents double building for a PR
@@ -27,7 +31,7 @@ branches:
 jobs:
   include:
     - stage: release
-      python: '3.6'
+      python: '3.7'
       env: skip
       script: skip
       install: skip
