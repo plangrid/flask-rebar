@@ -176,7 +176,7 @@ class TestConverterRegistry(unittest.TestCase):
 
         schema = Foo()
         json_schema = registry.convert(schema)
-        print(json_schema)
+
         self.assertEqual(
             json_schema,
             {
