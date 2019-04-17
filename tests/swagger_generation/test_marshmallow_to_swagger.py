@@ -176,7 +176,7 @@ class TestConverterRegistry(unittest.TestCase):
 
         schema = Foo()
         json_schema = registry.convert(schema)
-
+        print(json_schema)
         self.assertEqual(
             json_schema,
             {
@@ -191,6 +191,7 @@ class TestConverterRegistry(unittest.TestCase):
         class Foo(m.Schema):
             b = m.fields.Integer(required=True)
             a = m.fields.Integer(required=True)
+            c = m.fields.Integer()
 
         schema = Foo()
         json_schema = self.registry.convert(schema)
@@ -200,8 +201,38 @@ class TestConverterRegistry(unittest.TestCase):
             {
                 "type": "object",
                 "title": "Foo",
-                "properties": {"b": {"type": "integer"}, "a": {"type": "integer"}},
+                "properties": {
+                    "b": {"type": "integer"},
+                    "a": {"type": "integer"},
+                    "c": {"type": "integer"},
+                },
                 "required": ["a", "b"],
+            },
+        )
+
+    def test_ordered_required(self):
+        class Foo(m.Schema):
+            b = m.fields.Integer(required=True)
+            a = m.fields.Integer(required=True)
+            c = m.fields.Integer()
+
+            class Meta:
+                ordered = True
+
+        schema = Foo()
+        json_schema = self.registry.convert(schema)
+
+        self.assertEqual(
+            json_schema,
+            {
+                "type": "object",
+                "title": "Foo",
+                "properties": {
+                    "b": {"type": "integer"},
+                    "a": {"type": "integer"},
+                    "c": {"type": "integer"},
+                },
+                "required": ["b", "a"],
             },
         )
 
