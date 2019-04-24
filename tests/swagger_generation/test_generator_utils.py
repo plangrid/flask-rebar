@@ -92,6 +92,67 @@ class TestFlatten(unittest.TestCase):
         self.assertEqual(schema, expected_schema)
         self.assertEqual(definitions, expected_definitions)
 
+    def test_flatten_subschemas(self):
+        input_ = {
+            "anyOf": [
+                {"type": "null"},
+                {
+                    "type": "object",
+                    "title": "a",
+                    "properties": {"a": {"type": "string"}},
+                },
+                {
+                    "type": "array",
+                    "title": "b",
+                    "items": {
+                        "type": "object",
+                        "title": "c",
+                        "properties": {"a": {"type": "string"}},
+                    },
+                },
+                {
+                    "anyOf": [
+                        {
+                            "type": "object",
+                            "title": "d",
+                            "properties": {"a": {"type": "string"}},
+                        }
+                    ]
+                },
+            ]
+        }
+
+        expected_schema = {
+            "anyOf": [
+                {"type": "null"},
+                {"$ref": "#/definitions/a"},
+                {"type": "array", "title": "b", "items": {"$ref": "#/definitions/c"}},
+                {"anyOf": [{"$ref": "#/definitions/d"}]},
+            ]
+        }
+
+        expected_definitions = {
+            "a": {
+                "type": "object",
+                "title": "a",
+                "properties": {"a": {"type": "string"}},
+            },
+            "c": {
+                "type": "object",
+                "title": "c",
+                "properties": {"a": {"type": "string"}},
+            },
+            "d": {
+                "type": "object",
+                "title": "d",
+                "properties": {"a": {"type": "string"}},
+            },
+        }
+
+        schema, definitions = flatten(input_, base="#/definitions")
+        self.assertEqual(schema, expected_schema)
+        self.assertEqual(definitions, expected_definitions)
+
 
 class TestFormatPathForSwagger(unittest.TestCase):
     def test_format_path(self):

@@ -114,48 +114,44 @@ def flatten(schema, base):
     definitions dictionary.
     """
     schema = copy.deepcopy(schema)
-
     definitions = {}
-
-    if schema[sw.type_] == sw.object_:
-        _flatten_object(schema=schema, definitions=definitions, base=base)
-        schema = {sw.ref: create_ref(base, get_key(schema))}
-    elif schema[sw.type_] == sw.array:
-        _flatten_array(schema=schema, definitions=definitions, base=base)
-
+    schema = _flatten(schema=schema, definitions=definitions, base=base)
     return schema, definitions
 
 
-def _flatten_object(schema, definitions, base):
-    if sw.title not in schema:
-        # No need to flatten an object that doesn't have a title.
-        # These are probably super simple objects that don't need
-        # to be flattened.
-        return
+def _flatten(schema, definitions, base):
+    schema_type = schema.get(sw.type_)
+    subschema_keyword = _get_subschema_keyword(schema)
 
-    for field, obj in schema[sw.properties].items():
-        if obj[sw.type_] == sw.object_:
-            obj_key = _flatten_object(schema=obj, definitions=definitions, base=base)
-            if obj_key:
-                schema[sw.properties][field] = {sw.ref: create_ref(base, obj_key)}
-        elif obj[sw.type_] == sw.array:
-            _flatten_array(schema=obj, definitions=definitions, base=base)
+    if schema_type == sw.object_:
+        properties = schema.get(sw.properties, {})
+        for key, prop in properties.items():
+            properties[key] = _flatten(schema=prop, definitions=definitions, base=base)
 
-    key = get_key(schema)
-    definitions[key] = schema
+        if sw.title in schema:
+            definitions_key = get_key(schema)
+            definitions[definitions_key] = schema
+            schema = {sw.ref: create_ref(base, definitions_key)}
 
-    return key
-
-
-def _flatten_array(schema, definitions, base):
-    if schema[sw.items][sw.type_] == sw.object_:
-        obj_key = _flatten_object(
+    elif schema_type == sw.array:
+        schema[sw.items] = _flatten(
             schema=schema[sw.items], definitions=definitions, base=base
         )
-        if obj_key:
-            schema[sw.items] = {sw.ref: create_ref(base, obj_key)}
-    elif schema[sw.items][sw.type_] == sw.array:
-        _flatten_array(schema=schema[sw.items], definitions=definitions, base=base)
+
+    elif subschema_keyword:
+        subschemas = schema[subschema_keyword]
+        for i, subschema in enumerate(subschemas):
+            subschemas[i] = _flatten(
+                schema=subschema, definitions=definitions, base=base
+            )
+
+    return schema
+
+
+def _get_subschema_keyword(schema):
+    for keyword in (sw.any_of, sw.one_of, sw.all_of):
+        if keyword in schema:
+            return keyword
 
 
 _PATH_REGEX = re.compile("<((?P<type>.+?):)?(?P<name>.+?)>")
