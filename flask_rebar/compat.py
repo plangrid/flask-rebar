@@ -1,15 +1,21 @@
+import abc
+import collections
 import sys
 import pkg_resources
 
 import marshmallow
 
-PY2 = int(sys.version_info[0]) == 2
 
-
-if PY2:
-    from collections import Mapping
+if int(sys.version_info[0]) == 2:
+    Mapping = collections.Mapping
 else:
-    from collections.abc import Mapping
+    Mapping = collections.abc.Mapping
+
+
+if sys.version_info >= (3, 4):
+    ABC = abc.ABC
+else:
+    ABC = abc.ABCMeta("ABC", (), {})
 
 
 MARSHMALLOW_DISTRIBUTION = pkg_resources.get_distribution("marshmallow")

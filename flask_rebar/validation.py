@@ -12,6 +12,7 @@ from marshmallow import ValidationError
 from marshmallow import fields
 from marshmallow import post_dump
 from marshmallow import validates_schema
+from werkzeug.datastructures import MultiDict
 
 from flask_rebar import messages
 from flask_rebar.compat import MARSHMALLOW_V2
@@ -44,6 +45,12 @@ class QueryParamList(fields.List):
     def _deserialize(self, value, attr, data):
         # data is a MultiDict of query params, so pull out all of the items
         # with getlist instead of just the first
+        if not isinstance(data, MultiDict):
+            raise ValueError(
+                "{} only deserializes {} instances".format(
+                    self.__class__.__name__, MultiDict
+                )
+            )
         items = data.getlist(attr)
         return super(QueryParamList, self)._deserialize(items, attr, data)
 

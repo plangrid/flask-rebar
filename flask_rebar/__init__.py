@@ -17,5 +17,8 @@ from flask_rebar.validation import ResponseSchema, RequestSchema
 from flask_rebar.swagger_generation import (
     ExternalDocumentation,
     SwaggerV2Generator,
+    SwaggerV3Generator,
     Tag,
+    Server,
+    ServerVariable,
 )

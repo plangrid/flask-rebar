@@ -127,6 +127,33 @@ class TestConverterRegistry(unittest.TestCase):
                 {"type": "object", "title": "Foo", "properties": {"a": result}},
             )
 
+    def test_primitive_types_openapi_v3(self):
+        for field, result in [
+            (
+                m.fields.Integer(allow_none=True),
+                {"anyOf": [{"type": "null"}, {"type": "integer"}]},
+            ),
+            (
+                QueryParamList(m.fields.Integer()),
+                {"type": "array", "items": {"type": "integer"}, "explode": True},
+            ),
+            (
+                CommaSeparatedList(m.fields.Integer()),
+                {"type": "array", "items": {"type": "integer"}, "style": "simple"},
+            ),
+        ]:
+
+            class Foo(m.Schema):
+                a = field
+
+            schema = Foo()
+            json_schema = self.registry.convert(schema, openapi_version=3)
+
+            self.assertEqual(
+                json_schema,
+                {"type": "object", "title": "Foo", "properties": {"a": result}},
+            )
+
     @skip_if_marshmallow_not_v2
     def test_dump_to(self):
         class Foo(m.Schema):
