@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+v1.6.0 (2019-05-02)
+-------------------
 - Add OpenAPI 3 Support (#80) [barak]
 - Sort required array (#81) [Brandon Weng]
 - Doc: List Flask-Rebar-Auth0 as an extension (#76) [barak]
