@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Add OpenAPI 3 Support (#80) [barak]
+- Sort required array (#81) [Brandon Weng]
 - Doc: List Flask-Rebar-Auth0 as an extension (#76) [barak]
 - Minor changelog manual cleanup. [Rick Riensche]
 - Doc: update changelog. [Rick Riensche]
