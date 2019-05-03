@@ -65,7 +65,7 @@ Flask-Rebar uses `semantic versions <https://semver.org/>`_. Once you know the a
    git checkout -b your-release-branch
    bumpversion minor
    gitchangelog
-   git commit -m "@cosmetic - changelog"
+   git commit -a -m "@cosmetic - changelog"
 
 
 Then push the new commit and tags:
