@@ -19,7 +19,7 @@ from functools import wraps
 
 import marshmallow
 from flask import __version__ as flask_version
-from flask import current_app, g, jsonify, make_response, request
+from flask import current_app, g, jsonify, request
 from werkzeug.datastructures import Headers
 from werkzeug.routing import RequestRedirect
 
