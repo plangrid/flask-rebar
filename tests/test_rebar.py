@@ -268,7 +268,7 @@ class RebarTest(unittest.TestCase):
             marshal_schema={204: MeSchema()},
         )
         def delete_me2():
-            return "", 204
+            return {"user_name": ""}, 204
 
         app = create_rebar_app(rebar)
 
