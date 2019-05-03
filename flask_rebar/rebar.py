@@ -137,7 +137,7 @@ def _wrap_handler(
 
         # The schema may be declared as None to bypass marshaling (e.g. for 204 responses).
         if schema is None:
-            return make_response((data or "", status_code, headers))
+            return response(data=data or "", status_code=status_code, headers=headers)
 
         marshaled = marshal(data=data, schema=schema)
         return response(data=marshaled, status_code=status_code, headers=headers)
