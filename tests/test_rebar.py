@@ -252,6 +252,7 @@ class RebarTest(unittest.TestCase):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
+        # Test DELETE with None return schema
         @registry.handles(
             rule="/me",
             method="DELETE",
@@ -260,9 +261,26 @@ class RebarTest(unittest.TestCase):
         def delete_me():
             return None, 204
 
+        # Test DELETE with non-None return schema
+        @registry.handles(
+            rule="/me2",
+            method="DELETE",
+            marshal_schema={204: MeSchema()},
+        )
+        def delete_me2():
+            return "", 204
+
         app = create_rebar_app(rebar)
 
         resp = app.test_client().delete(path="/me")
+        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(resp.data.decode("utf-8"), "")
+        self.assertEqual(
+            next(header[1] for header in resp.headers.to_list() if header[0] == "Content-Type"),
+            "application/json"
+        )
+
+        resp = app.test_client().delete(path="/me2")
         self.assertEqual(resp.status_code, 204)
         self.assertEqual(resp.data.decode("utf-8"), "")
         self.assertEqual(
