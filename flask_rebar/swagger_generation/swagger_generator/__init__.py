@@ -1,4 +1,4 @@
-# hack to reintroduce backward-compatibility as SwaggerV2Generator used to live in swagger_generator_base.py
+# hack to reintroduce backward-compatibility as SwaggerV2Generator used to live in swagger_generator.py
 
 from flask_rebar.swagger_generation.swagger_generator_base import SwaggerGenerator
 from flask_rebar.swagger_generation.swagger_generator_v2 import (
