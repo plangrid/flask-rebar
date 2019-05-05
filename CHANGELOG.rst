@@ -2,6 +2,15 @@ Changelog
 =========
 
 
+v1.6.1 (2019-05-03)
+-------------------
+
+Fix
+~~~
+- Quick rehacktor to unbreak import statements like "from flask_rebar.swagger_generation.swagger_generator import SwaggerV2Generator"
+  (#86) [Rick Riensche]
+
+
 v1.6.0 (2019-05-02)
 -------------------
 - Add OpenAPI 3 Support (#80) [barak]

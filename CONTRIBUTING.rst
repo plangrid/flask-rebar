@@ -58,18 +58,20 @@ Releasing to PyPI
 
 Travis CI handles releasing package versions to PyPI.
 
-Flask-Rebar uses `semantic versions <https://semver.org/>`_. Once you know the appropriate version part to bump, use the ``bumpversion`` tool to bump the package version, add a commit, and tag the commit appropriately:
+Flask-Rebar uses `semantic versions <https://semver.org/>`_. Once you know the appropriate version part to bump, use the ``bumpversion`` tool which will bump the package version, add a commit, and tag the commit appropriately.  Note, it's not a bad idea to do a manual inspection and any cleanup you deem necessary after running ``gitchangelog`` to ensure it looks good before then committing a "@cosmetic" update.
 
 .. code-block:: bash
 
-   git checkout master
-   gitchangelog
+   git checkout -b your-release-branch
    bumpversion minor
+   gitchangelog
+   git commit -a -m "@cosmetic - changelog"
 
-Then push the new commit and tags to master:
+
+Then push the new commit and tags:
 
 .. code-block:: bash
 
-   git push origin master --tags
+   git push -u origin your-release-branch --tags
 
-Voila.
+Create a Pull Request and merge back into master.  Voila.
