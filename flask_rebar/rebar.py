@@ -49,6 +49,7 @@ PathDefinition = namedtuple(
         "headers_schema",
         "authenticator",
         "tags",
+        "produces",
     ],
 )
 
@@ -102,6 +103,7 @@ def _wrap_handler(
     request_body_schema=None,
     headers_schema=None,
     marshal_schema=None,
+    produces=None,
 ):
     """
     Wraps a handler function before registering it with a Flask application.
@@ -137,10 +139,15 @@ def _wrap_handler(
 
         # The schema may be declared as None to bypass marshaling (e.g. for 204 responses).
         if schema is None:
-            return response(data=data or "", status_code=status_code, headers=headers)
+            flask_response = response(data=data or "", status_code=status_code, headers=headers)
+        else:
+            marshaled = marshal(data=data, schema=schema)
+            flask_response = response(data=marshaled, status_code=status_code, headers=headers)
 
-        marshaled = marshal(data=data, schema=schema)
-        return response(data=marshaled, status_code=status_code, headers=headers)
+        if produces:
+            flask_response.headers["Content-Type"] = produces
+
+        return flask_response
 
     return wrapped
 
@@ -314,6 +321,7 @@ class HandlerRegistry(object):
                     headers_schema=definition_.headers_schema,
                     authenticator=definition_.authenticator,
                     tags=definition_.tags,
+                    produces=definition_.produces,
                 )
 
         return paths
@@ -330,6 +338,7 @@ class HandlerRegistry(object):
         headers_schema=USE_DEFAULT,
         authenticator=USE_DEFAULT,
         tags=None,
+        produces=None,
     ):
         """
         Registers a function as a request handler.
@@ -357,6 +366,8 @@ class HandlerRegistry(object):
             Set to None to make this an unauthenticated handler.
         :param Sequence[str] tags:
             Arbitrary strings to tag the handler with. These will translate to Swagger operation tags.
+        :param str produces:
+            Content-Type this handler returns.
         """
         if isinstance(marshal_schema, marshmallow.Schema):
             marshal_schema = {200: marshal_schema}
@@ -372,6 +383,7 @@ class HandlerRegistry(object):
             headers_schema=headers_schema,
             authenticator=authenticator,
             tags=tags,
+            produces=produces,
         )
 
     def handles(
@@ -385,6 +397,7 @@ class HandlerRegistry(object):
         headers_schema=USE_DEFAULT,
         authenticator=USE_DEFAULT,
         tags=None,
+        produces=None,
     ):
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
@@ -403,6 +416,7 @@ class HandlerRegistry(object):
                 headers_schema=headers_schema,
                 authenticator=authenticator,
                 tags=tags,
+                produces=produces,
             )
             return f
 
@@ -441,6 +455,7 @@ class HandlerRegistry(object):
                             else definition_.headers_schema
                         ),
                         marshal_schema=definition_.marshal_schema,
+                        produces=definition_.produces,
                     ),
                     methods=[definition_.method],
                     endpoint=endpoint,

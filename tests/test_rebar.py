@@ -248,7 +248,7 @@ class RebarTest(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
 
-    def test_validate_headers_delete(self):
+    def test_delete_content_type_default_json(self):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
@@ -286,6 +286,27 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(
             next(header[1] for header in resp.headers.to_list() if header[0] == "Content-Type"),
             "application/json"
+        )
+
+    def test_response_header_produces_content_type(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        @registry.handles(
+            rule="/me",
+            method="GET",
+            marshal_schema={200: MeSchema()},
+            produces="custom/type",
+        )
+        def get_me():
+            return {"user_name": ""}
+
+        app = create_rebar_app(rebar)
+
+        resp = app.test_client().get(path="/me")
+        self.assertEqual(
+            next(header[1] for header in resp.headers.to_list() if header[0] == "Content-Type"),
+            "custom/type"
         )
 
     def test_view_function_tuple_response(self):
