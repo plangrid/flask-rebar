@@ -10,6 +10,7 @@
 from __future__ import unicode_literals
 
 import copy
+import json
 
 import marshmallow
 from flask import jsonify
@@ -51,6 +52,10 @@ class HeadersProxy(compat.Mapping):
         return self.headers[key]
 
 
+def get_json_from_resp(resp):
+    return json.loads(resp.data.decode("utf-8"))
+
+
 def response(data, status_code=200, headers=None):
     """
     Constructs a flask.jsonify response.
@@ -60,6 +65,10 @@ def response(data, status_code=200, headers=None):
     :rtype: flask.Response
     """
     resp = jsonify(data)
+
+    if not get_json_from_resp(resp=resp):
+        resp.data = ""
+
     resp.status_code = status_code
 
     if headers:

@@ -20,6 +20,7 @@ from flask_rebar import messages
 from flask_rebar.compat import set_data_key
 from flask_rebar.rebar import Rebar
 from flask_rebar.rebar import prefix_url
+from flask_rebar.request_utils import get_json_from_resp
 from flask_rebar.testing import validate_swagger
 from flask_rebar.testing.swagger_jsonschema import SWAGGER_V3_JSONSCHEMA
 
@@ -54,10 +55,6 @@ class HeadersSchema(m.Schema):
 
 class MeSchema(m.Schema):
     user_name = m.fields.String()
-
-
-def get_json_from_resp(resp):
-    return json.loads(resp.data.decode("utf-8"))
 
 
 def get_swagger(test_client, prefix=None):
