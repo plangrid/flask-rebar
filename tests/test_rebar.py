@@ -248,65 +248,52 @@ class RebarTest(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
 
-    def test_delete_content_type_default_json(self):
+    def test_content_type_default_json_for_null_response_schema(self):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
-        # Test DELETE with None return schema
-        @registry.handles(
-            rule="/me",
-            method="DELETE",
-            marshal_schema={204: None},
-        )
+        @registry.handles(rule="/me", method="DELETE", marshal_schema={204: None})
         def delete_me():
             return None, 204
 
-        # Test DELETE with non-None return schema
-        @registry.handles(
-            rule="/me2",
-            method="DELETE",
-            marshal_schema={204: MeSchema()},
-        )
-        def delete_me2():
-            return {"user_name": ""}, 204
+        app = create_rebar_app(rebar)
+        resp = app.test_client().delete(path="/me")
+
+        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(resp.data.decode("utf-8"), "")
+        self.assertEqual(resp.headers["Content-Type"], "application/json")
+
+    def test_content_type_default_json_for_empty_response_schema(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        @registry.handles(rule="/me", method="DELETE", marshal_schema={204: m.Schema()})
+        def delete_me():
+            return {}, 204
 
         app = create_rebar_app(rebar)
-
         resp = app.test_client().delete(path="/me")
+
         self.assertEqual(resp.status_code, 204)
         self.assertEqual(resp.data.decode("utf-8"), "")
-        self.assertEqual(
-            next(header[1] for header in resp.headers.to_list() if header[0] == "Content-Type"),
-            "application/json"
-        )
+        self.assertEqual(resp.headers["Content-Type"], "application/json")
 
-        resp = app.test_client().delete(path="/me2")
-        self.assertEqual(resp.status_code, 204)
-        self.assertEqual(resp.data.decode("utf-8"), "")
-        self.assertEqual(
-            next(header[1] for header in resp.headers.to_list() if header[0] == "Content-Type"),
-            "application/json"
-        )
-
-    def test_response_header_produces_content_type(self):
+    def test_custom_response_headers(self):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
         @registry.handles(
             rule="/me",
             marshal_schema={200: MeSchema()},
-            produces="custom/type",
+            response_headers={"Content-Type": "content/type"},
         )
         def get_me():
             return {"user_name": ""}
 
         app = create_rebar_app(rebar)
-
         resp = app.test_client().get(path="/me")
-        self.assertEqual(
-            next(header[1] for header in resp.headers.to_list() if header[0] == "Content-Type"),
-            "custom/type"
-        )
+
+        self.assertEqual(resp.headers["Content-Type"], "content/type")
 
     def test_view_function_tuple_response(self):
         header_key = "X-Foo"

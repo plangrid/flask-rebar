@@ -49,7 +49,7 @@ PathDefinition = namedtuple(
         "headers_schema",
         "authenticator",
         "tags",
-        "produces",
+        "response_headers",
     ],
 )
 
@@ -74,7 +74,7 @@ def _unpack_view_func_return_value(rv):
     :return: (body, status, headers)
     :rtype: tuple
     """
-    data, status, headers = rv, 200, None
+    data, status, headers = rv, 200, {}
 
     if isinstance(rv, tuple):
         len_rv = len(rv)
@@ -103,7 +103,7 @@ def _wrap_handler(
     request_body_schema=None,
     headers_schema=None,
     marshal_schema=None,
-    produces=None,
+    response_headers=None,
 ):
     """
     Wraps a handler function before registering it with a Flask application.
@@ -134,20 +134,16 @@ def _wrap_handler(
             return rv
 
         data, status_code, headers = _unpack_view_func_return_value(rv)
+        headers.update(response_headers or {})
 
         schema = marshal_schema[status_code]  # May raise KeyError.
 
         # The schema may be declared as None to bypass marshaling (e.g. for 204 responses).
         if schema is None:
-            flask_response = response(data=data or "", status_code=status_code, headers=headers)
-        else:
-            marshaled = marshal(data=data, schema=schema)
-            flask_response = response(data=marshaled, status_code=status_code, headers=headers)
+            return response(data=data or "", status_code=status_code, headers=headers)
 
-        if produces:
-            flask_response.headers["Content-Type"] = produces
-
-        return flask_response
+        marshaled = marshal(data=data, schema=schema)
+        return response(data=marshaled, status_code=status_code, headers=headers)
 
     return wrapped
 
@@ -321,7 +317,7 @@ class HandlerRegistry(object):
                     headers_schema=definition_.headers_schema,
                     authenticator=definition_.authenticator,
                     tags=definition_.tags,
-                    produces=definition_.produces,
+                    response_headers=definition_.response_headers,
                 )
 
         return paths
@@ -338,7 +334,7 @@ class HandlerRegistry(object):
         headers_schema=USE_DEFAULT,
         authenticator=USE_DEFAULT,
         tags=None,
-        produces=None,
+        response_headers=None,
     ):
         """
         Registers a function as a request handler.
@@ -366,8 +362,8 @@ class HandlerRegistry(object):
             Set to None to make this an unauthenticated handler.
         :param Sequence[str] tags:
             Arbitrary strings to tag the handler with. These will translate to Swagger operation tags.
-        :param str produces:
-            Content-Type this handler returns.
+        :param dict[str, str] response_headers:
+            Additional headers to add to the response schema (e.g. a custom Content-Type)
         """
         if isinstance(marshal_schema, marshmallow.Schema):
             marshal_schema = {200: marshal_schema}
@@ -383,7 +379,7 @@ class HandlerRegistry(object):
             headers_schema=headers_schema,
             authenticator=authenticator,
             tags=tags,
-            produces=produces,
+            response_headers=response_headers,
         )
 
     def handles(
@@ -397,7 +393,7 @@ class HandlerRegistry(object):
         headers_schema=USE_DEFAULT,
         authenticator=USE_DEFAULT,
         tags=None,
-        produces=None,
+        response_headers=None,
     ):
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
@@ -416,7 +412,7 @@ class HandlerRegistry(object):
                 headers_schema=headers_schema,
                 authenticator=authenticator,
                 tags=tags,
-                produces=produces,
+                response_headers=response_headers,
             )
             return f
 
@@ -455,7 +451,7 @@ class HandlerRegistry(object):
                             else definition_.headers_schema
                         ),
                         marshal_schema=definition_.marshal_schema,
-                        produces=definition_.produces,
+                        response_headers=definition_.response_headers,
                     ),
                     methods=[definition_.method],
                     endpoint=endpoint,

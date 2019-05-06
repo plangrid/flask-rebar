@@ -14,6 +14,7 @@ import copy
 import marshmallow
 from flask import jsonify
 from flask import request
+from werkzeug.datastructures import Headers
 from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
 
 from flask_rebar import compat
@@ -60,7 +61,12 @@ def response(data, status_code=200, headers=None):
     """
     resp = jsonify(data)
     resp.status_code = status_code
-    resp.headers.extend(headers or {})
+
+    if headers:
+        response_headers = dict(resp.headers)
+        response_headers.update(headers)
+        resp.headers = Headers(response_headers)
+
     return resp
 
 
