@@ -294,7 +294,6 @@ class RebarTest(unittest.TestCase):
 
         @registry.handles(
             rule="/me",
-            method="GET",
             marshal_schema={200: MeSchema()},
             produces="custom/type",
         )
