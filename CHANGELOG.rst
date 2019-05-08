@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+v1.6.2 (2019-05-08)
+-------------------
+
+Fix
+~~~
+- DELETE requests should return specified Content-Type (#85) [Joe Bryan]
+
+
 v1.6.1 (2019-05-03)
 -------------------
 
