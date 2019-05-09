@@ -263,7 +263,7 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.data.decode("utf-8"), "")
         self.assertEqual(resp.headers["Content-Type"], "content/type")
 
-    def test_default_mimetype_not_used_for_non_null_response_schema(self):
+    def test_default_mimetype_for_non_null_response_schema(self):
         rebar = Rebar()
         registry = rebar.create_handler_registry(default_mimetype="content/type")
 
@@ -276,7 +276,7 @@ class RebarTest(unittest.TestCase):
 
         self.assertEqual(resp.status_code, 204)
         self.assertEqual(resp.data.decode("utf-8"), "")
-        self.assertEqual(resp.headers["Content-Type"], "application/json")
+        self.assertEqual(resp.headers["Content-Type"], "content/type")
 
     def test_handler_mimetype_for_null_response_schema(self):
         rebar = Rebar()
@@ -298,7 +298,7 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.data.decode("utf-8"), "")
         self.assertEqual(resp.headers["Content-Type"], "content/type")
 
-    def test_handler_mimetype_not_used_for_non_null_response_schema(self):
+    def test_handler_mimetype_for_non_null_response_schema(self):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
@@ -316,7 +316,27 @@ class RebarTest(unittest.TestCase):
 
         self.assertEqual(resp.status_code, 204)
         self.assertEqual(resp.data.decode("utf-8"), "")
-        self.assertEqual(resp.headers["Content-Type"], "application/json")
+        self.assertEqual(resp.headers["Content-Type"], "content/type")
+
+    def test_handler_mimetype_overrides_default_mimetype(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry(default_mimetype="default/type")
+
+        @registry.handles(
+            rule="/me",
+            method="DELETE",
+            marshal_schema={204: m.Schema()},
+            mimetype="handler/type",
+        )
+        def delete_me():
+            return {}, 204
+
+        app = create_rebar_app(rebar)
+        resp = app.test_client().delete(path="/me")
+
+        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(resp.data.decode("utf-8"), "")
+        self.assertEqual(resp.headers["Content-Type"], "handler/type")
 
     def test_view_function_tuple_response(self):
         header_key = "X-Foo"

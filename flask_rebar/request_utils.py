@@ -62,13 +62,12 @@ def response(data, status_code=200, headers=None, mimetype=None):
     :param str mimetype: Default Content-Type response header
     :rtype: flask.Response
     """
-    if data is None:
-        resp = Response(mimetype=mimetype)
-    else:
-        resp = jsonify(data)
+    resp = jsonify(data) if data is not None else Response()
 
     resp.status_code = status_code
 
+    if mimetype:
+        headers.update({"Content-Type": mimetype})
     if headers:
         response_headers = dict(resp.headers)
         response_headers.update(headers)
