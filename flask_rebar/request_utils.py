@@ -52,17 +52,18 @@ class HeadersProxy(compat.Mapping):
         return self.headers[key]
 
 
-def response(data, status_code=200, headers=None):
+def response(data, status_code=200, headers=None, mimetype=None):
     """
     Constructs a flask.jsonify response.
 
     :param dict data: The JSON body of the response
     :param int status_code: HTTP status code to use in the response
     :param dict headers: Additional headers to attach to the response
+    :param str mimetype: Default Content-Type response header
     :rtype: flask.Response
     """
     if data is None:
-        resp = Response(mimetype="application/json")
+        resp = Response(mimetype=mimetype)
     else:
         resp = jsonify(data)
 

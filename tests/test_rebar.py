@@ -248,9 +248,9 @@ class RebarTest(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
 
-    def test_content_type_default_json_for_null_response_schema(self):
+    def test_default_mimetype_for_null_response_schema(self):
         rebar = Rebar()
-        registry = rebar.create_handler_registry()
+        registry = rebar.create_handler_registry(default_mimetype="content/type")
 
         @registry.handles(rule="/me", method="DELETE", marshal_schema={204: None})
         def delete_me():
@@ -261,11 +261,11 @@ class RebarTest(unittest.TestCase):
 
         self.assertEqual(resp.status_code, 204)
         self.assertEqual(resp.data.decode("utf-8"), "")
-        self.assertEqual(resp.headers["Content-Type"], "application/json")
+        self.assertEqual(resp.headers["Content-Type"], "content/type")
 
-    def test_content_type_default_json_for_empty_response_schema(self):
+    def test_default_mimetype_not_used_for_non_null_response_schema(self):
         rebar = Rebar()
-        registry = rebar.create_handler_registry()
+        registry = rebar.create_handler_registry(default_mimetype="content/type")
 
         @registry.handles(rule="/me", method="DELETE", marshal_schema={204: m.Schema()})
         def delete_me():
@@ -278,22 +278,45 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.data.decode("utf-8"), "")
         self.assertEqual(resp.headers["Content-Type"], "application/json")
 
-    def test_custom_response_headers(self):
+    def test_handler_mimetype_for_null_response_schema(self):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
         @registry.handles(
             rule="/me",
-            marshal_schema={200: MeSchema()},
-            response_headers={"Content-Type": "content/type"},
+            method="DELETE",
+            marshal_schema={204: None},
+            mimetype="content/type",
         )
-        def get_me():
-            return {"user_name": ""}
+        def delete_me():
+            return None, 204
 
         app = create_rebar_app(rebar)
-        resp = app.test_client().get(path="/me")
+        resp = app.test_client().delete(path="/me")
 
+        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(resp.data.decode("utf-8"), "")
         self.assertEqual(resp.headers["Content-Type"], "content/type")
+
+    def test_handler_mimetype_not_used_for_non_null_response_schema(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        @registry.handles(
+            rule="/me",
+            method="DELETE",
+            marshal_schema={204: m.Schema()},
+            mimetype="content/type",
+        )
+        def delete_me():
+            return {}, 204
+
+        app = create_rebar_app(rebar)
+        resp = app.test_client().delete(path="/me")
+
+        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(resp.data.decode("utf-8"), "")
+        self.assertEqual(resp.headers["Content-Type"], "application/json")
 
     def test_view_function_tuple_response(self):
         header_key = "X-Foo"
