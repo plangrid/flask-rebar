@@ -49,7 +49,7 @@ PathDefinition = namedtuple(
         "headers_schema",
         "authenticator",
         "tags",
-        "response_headers",
+        "mimetype",
     ],
 )
 
@@ -103,7 +103,7 @@ def _wrap_handler(
     request_body_schema=None,
     headers_schema=None,
     marshal_schema=None,
-    response_headers=None,
+    mimetype=None,
 ):
     """
     Wraps a handler function before registering it with a Flask application.
@@ -134,16 +134,19 @@ def _wrap_handler(
             return rv
 
         data, status_code, headers = _unpack_view_func_return_value(rv)
-        headers.update(response_headers or {})
 
         schema = marshal_schema[status_code]  # May raise KeyError.
 
         # The schema may be declared as None to bypass marshaling (e.g. for 204 responses).
         if schema is None:
-            return response(data=data or {}, status_code=status_code, headers=headers)
+            return response(
+                data=data, status_code=status_code, headers=headers, mimetype=mimetype
+            )
 
         marshaled = marshal(data=data, schema=schema)
-        return response(data=marshaled, status_code=status_code, headers=headers)
+        return response(
+            data=marshaled, status_code=status_code, headers=headers, mimetype=mimetype
+        )
 
     return wrapped
 
@@ -227,6 +230,8 @@ class HandlerRegistry(object):
         Authenticator to use for all handlers as a default.
     :param marshmallow.Schema default_headers_schema:
         Schema to validate the headers on all requests as a default.
+    :param str default_mimetype:
+        Default response content-type if no content and not otherwise specified by the handler.
     :param flask_rebar.swagger_generation.swagger_generator.SwaggerGeneratorI swagger_generator:
         Object to generate a Swagger specification from this registry. This will be
         the Swagger generator that is used in the endpoints swagger and swagger UI
@@ -245,6 +250,7 @@ class HandlerRegistry(object):
         prefix=None,
         default_authenticator=None,
         default_headers_schema=None,
+        default_mimetype=None,
         swagger_generator=None,
         swagger_path="/swagger",
         swagger_ui_path="/swagger/ui",
@@ -253,6 +259,7 @@ class HandlerRegistry(object):
         self._paths = defaultdict(dict)
         self.default_authenticator = default_authenticator
         self.default_headers_schema = default_headers_schema
+        self.default_mimetype = default_mimetype
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.swagger_path = swagger_path
         self.swagger_ui_path = swagger_ui_path
@@ -317,7 +324,7 @@ class HandlerRegistry(object):
                     headers_schema=definition_.headers_schema,
                     authenticator=definition_.authenticator,
                     tags=definition_.tags,
-                    response_headers=definition_.response_headers,
+                    mimetype=definition_.mimetype,
                 )
 
         return paths
@@ -334,7 +341,7 @@ class HandlerRegistry(object):
         headers_schema=USE_DEFAULT,
         authenticator=USE_DEFAULT,
         tags=None,
-        response_headers=None,
+        mimetype=USE_DEFAULT,
     ):
         """
         Registers a function as a request handler.
@@ -362,8 +369,8 @@ class HandlerRegistry(object):
             Set to None to make this an unauthenticated handler.
         :param Sequence[str] tags:
             Arbitrary strings to tag the handler with. These will translate to Swagger operation tags.
-        :param dict[str, str] response_headers:
-            Additional headers to add to the response schema (e.g. a custom Content-Type)
+        :param Type[USE_DEFAULT]|None|str mimetype:
+            Content-Type header to add to the response schema
         """
         if isinstance(marshal_schema, marshmallow.Schema):
             marshal_schema = {200: marshal_schema}
@@ -379,7 +386,7 @@ class HandlerRegistry(object):
             headers_schema=headers_schema,
             authenticator=authenticator,
             tags=tags,
-            response_headers=response_headers,
+            mimetype=mimetype,
         )
 
     def handles(
@@ -393,7 +400,7 @@ class HandlerRegistry(object):
         headers_schema=USE_DEFAULT,
         authenticator=USE_DEFAULT,
         tags=None,
-        response_headers=None,
+        mimetype=USE_DEFAULT,
     ):
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
@@ -412,7 +419,7 @@ class HandlerRegistry(object):
                 headers_schema=headers_schema,
                 authenticator=authenticator,
                 tags=tags,
-                response_headers=response_headers,
+                mimetype=mimetype,
             )
             return f
 
@@ -451,7 +458,11 @@ class HandlerRegistry(object):
                             else definition_.headers_schema
                         ),
                         marshal_schema=definition_.marshal_schema,
-                        response_headers=definition_.response_headers,
+                        mimetype=(
+                            self.default_mimetype
+                            if definition_.mimetype is USE_DEFAULT
+                            else definition_.mimetype
+                        ),
                     ),
                     methods=[definition_.method],
                     endpoint=endpoint,
@@ -524,6 +535,7 @@ class Rebar(object):
         prefix=None,
         default_authenticator=None,
         default_headers_schema=None,
+        default_mimetype=None,
         swagger_generator=None,
         swagger_path="/swagger",
         swagger_ui_path="/swagger/ui",
@@ -543,6 +555,8 @@ class Rebar(object):
             Authenticator to use for all handlers as a default.
         :param marshmallow.Schema default_headers_schema:
             Schema to validate the headers on all requests as a default.
+        :param str default_mimetype:
+            Default response content-type if no content and not otherwise specified by the handler.
         :param flask_rebar.swagger_generation.swagger_generator.SwaggerGeneratorI swagger_generator:
             Object to generate a Swagger specification from this registry. This will be
             the Swagger generator that is used in the endpoints swagger and swagger UI
@@ -560,6 +574,7 @@ class Rebar(object):
             prefix=prefix,
             default_authenticator=default_authenticator,
             default_headers_schema=default_headers_schema,
+            default_mimetype=default_mimetype,
             swagger_generator=swagger_generator,
             swagger_path=swagger_path,
             swagger_ui_path=swagger_ui_path,

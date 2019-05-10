@@ -10,9 +10,9 @@
 from __future__ import unicode_literals
 
 import copy
-import json
 
 import marshmallow
+from flask import Response
 from flask import jsonify
 from flask import request
 from werkzeug.datastructures import Headers
@@ -52,25 +52,22 @@ class HeadersProxy(compat.Mapping):
         return self.headers[key]
 
 
-def get_json_from_resp(resp):
-    return json.loads(resp.data.decode("utf-8"))
-
-
-def response(data, status_code=200, headers=None):
+def response(data, status_code=200, headers=None, mimetype=None):
     """
     Constructs a flask.jsonify response.
 
     :param dict data: The JSON body of the response
     :param int status_code: HTTP status code to use in the response
+    :param dict headers: Additional headers to attach to the response
+    :param str mimetype: Default Content-Type response header
     :rtype: flask.Response
     """
-    resp = jsonify(data)
-
-    if not get_json_from_resp(resp=resp):
-        resp.data = ""
+    resp = jsonify(data) if data is not None else Response()
 
     resp.status_code = status_code
 
+    if mimetype:
+        headers.update({"Content-Type": mimetype})
     if headers:
         response_headers = dict(resp.headers)
         response_headers.update(headers)
