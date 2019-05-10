@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- Respect user-provided content type in all cases. [Joe Bryan]
+- Add default_mimetype to registry. [Joe Bryan]
+- Return empty object not empty string, if an empty non-null object
+  response is specified. [Joe Bryan]
+
+
 v1.6.2 (2019-05-08)
 -------------------
 
