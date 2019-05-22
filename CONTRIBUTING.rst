@@ -3,22 +3,26 @@ Contributing
 
 We're excited about new contributors and want to make it easy for you to help improve this project. If you run into problems, please open a GitHub issue.
 
-If you want to contribute a fix, or a minor change that doesn't change the API, go ahead and open a pull requests, see details on pull requests below.
+If you want to contribute a fix, or a minor change that doesn't change the API, go ahead and open a pull request; see details on pull requests below.
 
 If you're interested in making a larger change, we recommend you to open an issue for discussion first. That way we can ensure that the change is within the scope of this project before you put a lot of effort into it.
 
-Our Commitment to You
-----------------------------------
-
-Our commitment is to review new items promptly, within 3-5 business days as a general goal. Of course, this may vary with factors such as individual workloads, complexity of the issue or pull request, etc.  After review, any open Issue should always have an assignee.
-
-If you feel that an Issue or Pull Request may have fallen through the cracks, tag an admin in a comment to bring it to our attention. (You can start with @RookieRick, and/or look up who else has recently merged PRs).
-
 Issues
 ------
+We use GitHub issues to track public bugs and feature requests. Please ensure your description is clear and, if reporting a bug, include sufficient instructions to be able to reproduce the issue.
 
-We use GitHub issues to track public bugs. Please ensure your description is clear and has sufficient instructions to be able to reproduce the issue.
+Our Commitment to You
+----------------------------------
+Our commitment is to review new items promptly, within 3-5 business days as a general goal. Of course, this may vary with factors such as individual workloads, complexity of the issue or pull request, etc.  Issues that have been reviewed will have a "triaged" label applied by the reviewer if they are to be kept open.
 
+If you feel that an issue or pull request may have fallen through the cracks, tag an admin in a comment to bring it to our attention. (You can start with @RookieRick, and/or look up who else has recently merged PRs).
+
+Process
+-------
+Flask-Rebar is developed both internally within PlanGrid and via open-source contributions.  To coordinate and avoid duplication of effort, we use two mechanisms:
+
+1. We use the "triaged" label to mark issues as having been reviewed.  Unless there are outstanding questions that need to be ironed out, you can assume that if an issue is marked as "triaged," we have generated an internal ticket, meaning someone will *eventually* address it.  Timing of this will largely depend on whether there's a driving need within our own codebases that relies on Flask-Rebar.
+2. Because internal ticketing is a black-box to our open source contributors, we will also make use of the "assignee" feature.  If someone has picked up an internal ticket, there will be an assignee on the issue.  If you see an open issue that doesn't have an assignee and that you would like to tackle please tag a maintainer in a comment requesting assignment, and/or open an early "WIP" pull request so we'll know the issue is already being worked, and can coordinate development efforts as needed.
 
 Developing
 ----------
