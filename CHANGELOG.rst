@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- Fix #96 - Flask no longer treats redirects as errors (#97) [Rick
+  Riensche]
+- Updating Contributing page to reflect revised issue review
+  process plus some minor cleanup and reorganizing. [Rick Riensche]
+
+
 v1.6.3 (2019-05-10)
 -------------------
 - Respect user-provided content type in all cases. [Joe Bryan]
