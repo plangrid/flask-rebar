@@ -656,6 +656,7 @@ class Rebar(object):
                 additional_data=error.additional_data,
             )
 
+        @app.errorhandler(400)
         @app.errorhandler(404)
         @app.errorhandler(405)
         def handle_werkzeug_http_error(error):
