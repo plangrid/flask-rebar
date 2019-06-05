@@ -14,7 +14,7 @@ import json
 from flask import Flask
 from flask_testing import TestCase
 from marshmallow import fields
-
+from werkzeug.exceptions import BadRequest
 
 from flask_rebar import messages, validation, response, Rebar
 from flask_rebar.compat import MARSHMALLOW_V2
@@ -43,6 +43,10 @@ class TestErrors(TestCase):
                 msg=TestErrors.ERROR_MSG, additional_data={"foo": "bar"}
             )
 
+        @app.route("/route_that_fails_validation", methods=["GET"])
+        def validation_fails_handler():
+            raise BadRequest()
+
         Rebar().init_app(app=app)
 
         return app
@@ -58,6 +62,14 @@ class TestErrors(TestCase):
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.content_type, "application/json")
         self.assertEqual(resp.json, {"message": TestErrors.ERROR_MSG, "foo": "bar"})
+
+    def test_default_400_errors_are_formatted_correctly(self):
+        resp = self.app.test_client().get("/route_that_fails_validation")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.content_type, "application/json")
+        self.assertTrue(
+            resp.json.get("message")
+        )  # don't care about exact message wording, just existence
 
     def test_default_404_errors_are_formatted_correctly(self):
         resp = self.app.test_client().get("/nonexistent")
