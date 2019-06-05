@@ -2,12 +2,18 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+v1.7.0 (2019-06-05)
+-------------------
+- Fixes a bug where http 400s are returned as http 500s (#99) [Brock
+  Haywood]
+
+  this is for a case where a werkzeug badrequest exception is raised
+  before the rebar handlers get invoked. this was causing the
+  default rebar exception handler to run, thus returning a 500
+- Updating Contributing page to reflect revised issue review process
+  (#95) [Rick Riensche]
 - Fix #96 - Flask no longer treats redirects as errors (#97) [Rick
   Riensche]
-- Updating Contributing page to reflect revised issue review
-  process plus some minor cleanup and reorganizing. [Rick Riensche]
 
 
 v1.6.3 (2019-05-10)
