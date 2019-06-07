@@ -75,8 +75,6 @@ class TestParameterDeprecation(unittest.TestCase):
                 ("old_param1" in msg1 and "old_param2" in msg2)
                 or ("old_param1" in msg2 and "old_param2" in msg1)
             )
-            self.assertIn("old_param1", str(w[0].message))
-            self.assertIn("old_param2", str(w[1].message))
             self.assertIs(w[0].category, FutureWarning)
 
     def test_parameter_deprecation_warning_type(self):
