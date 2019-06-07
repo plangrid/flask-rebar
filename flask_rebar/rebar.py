@@ -33,6 +33,7 @@ from flask_rebar.request_utils import get_json_body_params_or_400
 from flask_rebar.request_utils import get_query_string_params_or_400
 from flask_rebar.swagger_generation import SwaggerV2Generator
 from flask_rebar.swagger_ui import create_swagger_ui_blueprint
+from flask_rebar.utils import deprecated_parameters
 
 # Metadata about a declared handler function. This can be used to both
 # declare the flask routing and to autogenerate swagger.
@@ -56,6 +57,7 @@ PathDefinition = namedtuple(
 
 # To catch redirection exceptions, app.errorhandler expects 301 in versions
 # below 0.11.0 but the exception itself in versions greater than 0.11.0.
+# NOTE: as of Flask 1.0.3, redirects are no longer bubbled up as exceptions
 if LooseVersion(flask_version) < LooseVersion("0.11.0"):
     MOVED_PERMANENTLY_ERROR = 301
     PERMANENT_REDIRECT_ERROR = 308
@@ -96,13 +98,14 @@ def _unpack_view_func_return_value(rv):
     return data, int(status), headers
 
 
+@deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
 def _wrap_handler(
     f,
     authenticator=None,
     query_string_schema=None,
     request_body_schema=None,
     headers_schema=None,
-    marshal_schema=None,
+    response_body_schema=None,
     mimetype=None,
 ):
     """
@@ -130,12 +133,12 @@ def _wrap_handler(
 
         rv = f(*args, **kwargs)
 
-        if not marshal_schema:
+        if not response_body_schema:
             return rv
 
         data, status_code, headers = _unpack_view_func_return_value(rv)
 
-        schema = marshal_schema[status_code]  # May raise KeyError.
+        schema = response_body_schema[status_code]  # May raise KeyError.
 
         # The schema may be declared as None to bypass marshaling (e.g. for 204 responses).
         if schema is None:
@@ -329,13 +332,14 @@ class HandlerRegistry(object):
 
         return paths
 
+    @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
     def add_handler(
         self,
         func,
         rule,
         method="GET",
         endpoint=None,
-        marshal_schema=None,
+        response_body_schema=None,
         query_string_schema=None,
         request_body_schema=None,
         headers_schema=USE_DEFAULT,
@@ -353,7 +357,7 @@ class HandlerRegistry(object):
         :param str method:
             The HTTP method this handler accepts
         :param str endpoint:
-        :param dict[int, marshmallow.Schema] marshal_schema:
+        :param dict[int, marshmallow.Schema] response_body_schema:
             Dictionary mapping response codes to schemas to use to marshal
             the response. For now this assumes everything is JSON.
         :param marshmallow.Schema query_string_schema:
@@ -372,15 +376,15 @@ class HandlerRegistry(object):
         :param Type[USE_DEFAULT]|None|str mimetype:
             Content-Type header to add to the response schema
         """
-        if isinstance(marshal_schema, marshmallow.Schema):
-            marshal_schema = {200: marshal_schema}
+        if isinstance(response_body_schema, marshmallow.Schema):
+            response_body_schema = {200: response_body_schema}
 
         self._paths[rule][method] = PathDefinition(
             func=func,
             path=rule,
             method=method,
             endpoint=endpoint,
-            marshal_schema=marshal_schema,
+            marshal_schema=response_body_schema,
             query_string_schema=query_string_schema,
             request_body_schema=request_body_schema,
             headers_schema=headers_schema,
@@ -389,12 +393,13 @@ class HandlerRegistry(object):
             mimetype=mimetype,
         )
 
+    @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
     def handles(
         self,
         rule,
         method="GET",
         endpoint=None,
-        marshal_schema=None,
+        response_body_schema=None,
         query_string_schema=None,
         request_body_schema=None,
         headers_schema=USE_DEFAULT,
@@ -413,7 +418,7 @@ class HandlerRegistry(object):
                 rule=rule,
                 method=method,
                 endpoint=endpoint,
-                marshal_schema=marshal_schema,
+                response_body_schema=response_body_schema,
                 query_string_schema=query_string_schema,
                 request_body_schema=request_body_schema,
                 headers_schema=headers_schema,
@@ -457,7 +462,7 @@ class HandlerRegistry(object):
                             if definition_.headers_schema is USE_DEFAULT
                             else definition_.headers_schema
                         ),
-                        marshal_schema=definition_.marshal_schema,
+                        response_body_schema=definition_.marshal_schema,
                         mimetype=(
                             self.default_mimetype
                             if definition_.mimetype is USE_DEFAULT

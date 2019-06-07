@@ -25,7 +25,7 @@ Let's take a look at a very basic API using Flask-Rebar:
    @registry.handles(
       rule='/todos/<id>',
       method='GET',
-      marshal_schema=TodoSchema()
+      response_body_schema=TodoSchema()  # for versions <= 1.7.0, use marshal_schema
    )
    def get_todo(id):
        ...
@@ -47,7 +47,7 @@ We then create a handler registry that we will use to declare handlers for the s
 
 ``method`` is the HTTP method that the handler will accept. To register multiple methods for a single handler function, decorate the function multiple times.
 
-``marshal_schema`` is a Marshmallow schema that will be used marshal the return value of the function. `marshmallow.Schema.dump <http://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema.dump>`_ will be called on the return value. ``marshal_schema`` can also be a dictionary mapping status codes to Marshmallow schemas - see :ref:`Marshaling`.
+``response_body_schema`` is a Marshmallow schema that will be used marshal the return value of the function. `marshmallow.Schema.dump <http://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema.dump>`_ will be called on the return value. ``marshal_schema`` can also be a dictionary mapping status codes to Marshmallow schemas - see :ref:`Marshaling`.  *NOTE: In Flask-Rebar 1.0-1.7.0, this was referred to as ``marshal_schema``. It is being renamed and both names will function until version 2.0*
 
 The handler function should accept any arguments specified in ``rule``, just like a Flask view function.
 
@@ -155,7 +155,7 @@ This default can be overriden in any particular handler by setting ``headers_sch
 Marshaling
 ==========
 
-The ``marshal_schema`` argument of ``HandlerRegistry.handles`` can be one of three types: a ``marshmallow.Schema``, a dictionary mapping integers to ``marshmallow.Schema``, or ``None``.
+The ``response_body_schema`` (previously ``marshal_schema``) argument of ``HandlerRegistry.handles`` can be one of three types: a ``marshmallow.Schema``, a dictionary mapping integers to ``marshmallow.Schema``, or ``None``.
 
 In the case of a ``marshmallow.Schema``, that schema is used to ``dump`` the return value of the handler function.
 
@@ -166,7 +166,7 @@ In the case of a dictionary mapping integers to ``marshmallow.Schemas``, the int
    @registry.handles(
       rule='/todos',
       method='POST',
-      marshal_schema={
+      response_body_schema={
           201: TodoSchema()
       }
    )
@@ -176,7 +176,7 @@ In the case of a dictionary mapping integers to ``marshmallow.Schemas``, the int
 
 The schema to use for marshaling will be retrieved based on the status code the handler function returns. This isn't the prettiest part of Flask-Rebar, but it's done this way to help with the automatic Swagger generation.
 
-In the case of ``None`` (which is also the default), no marshaling takes place, and the return value is passed directly through to Flask. This means the if ``marshal_schema`` is ``None``, the return value must be a return value that Flask supports, e.g. a string or a ``Flask.Response`` object.
+In the case of ``None`` (which is also the default), no marshaling takes place, and the return value is passed directly through to Flask. This means the if ``response_body_schema`` is ``None``, the return value must be a return value that Flask supports, e.g. a string or a ``Flask.Response`` object.
 
 .. code-block:: python
 
@@ -184,7 +184,7 @@ In the case of ``None`` (which is also the default), no marshaling takes place, 
    @registry.handles(
       rule='/todos',
       method='GET',
-      marshal_schema=None
+      response_body_schema=None
    )
    def get_todos():
        ...

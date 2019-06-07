@@ -65,7 +65,7 @@ Example
        rule='/todos',
        method='GET',
        query_string_schema=GetTodosQueryStringSchema(),
-       marshal_schema=GetTodosResponseSchema(),
+       response_body_schema=GetTodosResponseSchema(), # for versions <= 1.7.0, use marshal_schema
    )
    def get_todos():
        """

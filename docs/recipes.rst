@@ -53,7 +53,7 @@ Here is a simple recipe for using Flask-Rebar with these pluggable views:
        registry.add_handler(
            func=Todo.as_view(method + "_todo", database=database),
            rule="/todos/<id>",
-           marshal_schema=TodoSchema(),
+           response_body_schema=TodoSchema(),  # for versions <= 1.7.0, use marshal_schema
            method=method,
            request_body_schema=request_body_schema,
        )
