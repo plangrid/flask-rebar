@@ -69,6 +69,12 @@ class TestParameterDeprecation(unittest.TestCase):
             result = _add(old_param1=1, old_param2=2)
             self.assertEqual(result, 3)
             self.assertEqual(len(w), 2)
+            msg1 = str(w[0].message)
+            msg2 = str(w[1].message)
+            self.assertTrue(
+                ("old_param1" in msg1 and "old_param2" in msg2)
+                or ("old_param1" in msg2 and "old_param2" in msg1)
+            )
             self.assertIn("old_param1", str(w[0].message))
             self.assertIn("old_param2", str(w[1].message))
             self.assertIs(w[0].category, FutureWarning)
