@@ -216,8 +216,8 @@ class SwaggerV2Generator(SwaggerGenerator):
                     }
                 }
 
-                if d.marshal_schema:
-                    for status_code, schema in d.marshal_schema.items():
+                if d.response_body_schema:
+                    for status_code, schema in d.response_body_schema.items():
                         if schema is not None:
                             response_definition = {
                                 sw.description: get_response_description(schema),

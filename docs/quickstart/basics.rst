@@ -47,7 +47,7 @@ We then create a handler registry that we will use to declare handlers for the s
 
 ``method`` is the HTTP method that the handler will accept. To register multiple methods for a single handler function, decorate the function multiple times.
 
-``response_body_schema`` is a Marshmallow schema that will be used marshal the return value of the function. `marshmallow.Schema.dump <http://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema.dump>`_ will be called on the return value. ``marshal_schema`` can also be a dictionary mapping status codes to Marshmallow schemas - see :ref:`Marshaling`.  *NOTE: In Flask-Rebar 1.0-1.7.0, this was referred to as ``marshal_schema``. It is being renamed and both names will function until version 2.0*
+``response_body_schema`` is a Marshmallow schema that will be used marshal the return value of the function. `marshmallow.Schema.dump <http://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema.dump>`_ will be called on the return value. ``response_body_schema`` can also be a dictionary mapping status codes to Marshmallow schemas - see :ref:`Marshaling`.  *NOTE: In Flask-Rebar 1.0-1.7.0, this was referred to as ``marshal_schema``. It is being renamed and both names will function until version 2.0*
 
 The handler function should accept any arguments specified in ``rule``, just like a Flask view function.
 

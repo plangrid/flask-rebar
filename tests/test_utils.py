@@ -9,7 +9,7 @@
 """
 import unittest
 import warnings
-from flask_rebar.utils import deprecated_parameters
+from flask_rebar.utils import deprecated_parameters, deprecated, deprecation_config
 
 
 @deprecated_parameters(old_param1="new_param1", old_param2=("new_param2", "v99"))
@@ -17,13 +17,19 @@ def _add(new_param1=42, new_param2=99):
     return new_param1 + new_param2
 
 
-@deprecated_parameters(
-    warn_type=DeprecationWarning,
-    old_param1="new_param1",
-    old_param2=("new_param2", "v99"),
-)
-def _subtract(new_param1=42, new_param2=99):
-    return new_param1 - new_param2
+@deprecated()
+def _deprecated_func1():
+    return 1
+
+
+@deprecated("new_func2")
+def _deprecated_func2():
+    return 2
+
+
+@deprecated(("new_func3", "99"))
+def _deprecated_func3():
+    return 3
 
 
 class TestParameterDeprecation(unittest.TestCase):
@@ -78,10 +84,46 @@ class TestParameterDeprecation(unittest.TestCase):
             self.assertIs(w[0].category, FutureWarning)
 
     def test_parameter_deprecation_warning_type(self):
-        """Function with deprecated params supports specifying type of warning"""
+        """Deprecation supports specifying type of warning"""
+        deprecation_config.warning_type = DeprecationWarning
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            result = _subtract(old_param1=50, new_param2=0)
+            result = _add(old_param1=50, new_param2=0)
             self.assertEqual(result, 50)
             self.assertEqual(len(w), 1)
             self.assertIs(w[0].category, DeprecationWarning)
+        # reset (as deprecation_config is "global")
+        deprecation_config.warning_type = FutureWarning
+
+
+class TestFunctionDeprecation(unittest.TestCase):
+    def test_bare_deprecation(self):
+        """Deprecate function with no specified alternative"""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = _deprecated_func1()
+            self.assertEqual(result, 1)
+            self.assertEqual(len(w), 1)
+            self.assertEqual(str(w[0].message), "_deprecated_func1 is deprecated")
+
+    def test_versionless_replacement(self):
+        """Deprecate function with specified alternative, no end-of-life version"""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = _deprecated_func2()
+            self.assertEqual(result, 2)
+            self.assertEqual(len(w), 1)
+            self.assertIn("_deprecated_func2 is deprecated", str(w[0].message))
+            self.assertIn("use new_func2", str(w[0].message))
+            self.assertNotIn("version", str(w[0].message))
+
+    def test_versioned_replacement(self):
+        """Deprecate function with specified alternative, specified end-of-life version"""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = _deprecated_func3()
+            self.assertEqual(result, 3)
+            self.assertEqual(len(w), 1)
+            self.assertIn("_deprecated_func3 is deprecated", str(w[0].message))
+            self.assertIn("use new_func3", str(w[0].message))
+            self.assertIn("version 99", str(w[0].message))

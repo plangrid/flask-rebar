@@ -11,6 +11,7 @@
 from __future__ import unicode_literals
 
 import sys
+import warnings
 from collections import defaultdict
 from collections import namedtuple
 from copy import copy
@@ -33,26 +34,7 @@ from flask_rebar.request_utils import get_json_body_params_or_400
 from flask_rebar.request_utils import get_query_string_params_or_400
 from flask_rebar.swagger_generation import SwaggerV2Generator
 from flask_rebar.swagger_ui import create_swagger_ui_blueprint
-from flask_rebar.utils import deprecated_parameters
-
-# Metadata about a declared handler function. This can be used to both
-# declare the flask routing and to autogenerate swagger.
-PathDefinition = namedtuple(
-    "PathDefinition",
-    [
-        "func",
-        "path",
-        "method",
-        "endpoint",
-        "marshal_schema",
-        "query_string_schema",
-        "request_body_schema",
-        "headers_schema",
-        "authenticator",
-        "tags",
-        "mimetype",
-    ],
-)
+from flask_rebar.utils import deprecated, deprecated_parameters
 
 
 # To catch redirection exceptions, app.errorhandler expects 301 in versions
@@ -212,6 +194,38 @@ def prefix_url(prefix, url):
     return "/{}/{}".format(prefix, url)
 
 
+# Metadata about a declared handler function. This can be used to both
+# declare the flask routing and to autogenerate swagger.
+class PathDefinition(
+    namedtuple(
+        "_PathDefinition",
+        [
+            "func",
+            "path",
+            "method",
+            "endpoint",
+            "response_body_schema",
+            "query_string_schema",
+            "request_body_schema",
+            "headers_schema",
+            "authenticator",
+            "tags",
+            "mimetype",
+        ],
+    )
+):
+    __slots__ = ()
+
+    @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
+    def __new__(cls, *args, **kwargs):
+        return super(PathDefinition, cls).__new__(cls, *args, **kwargs)
+
+    @property
+    @deprecated("response_body_schema", "2.0")
+    def marshal_schema(self):
+        return self.response_body_schema
+
+
 class HandlerRegistry(object):
     """
     Registry for request handlers.
@@ -321,7 +335,7 @@ class HandlerRegistry(object):
                     path=path,
                     method=definition_.method,
                     endpoint=definition_.endpoint,
-                    marshal_schema=definition_.marshal_schema,
+                    response_body_schema=definition_.response_body_schema,
                     query_string_schema=definition_.query_string_schema,
                     request_body_schema=definition_.request_body_schema,
                     headers_schema=definition_.headers_schema,
@@ -384,7 +398,7 @@ class HandlerRegistry(object):
             path=rule,
             method=method,
             endpoint=endpoint,
-            marshal_schema=response_body_schema,
+            response_body_schema=response_body_schema,
             query_string_schema=query_string_schema,
             request_body_schema=request_body_schema,
             headers_schema=headers_schema,
@@ -462,7 +476,7 @@ class HandlerRegistry(object):
                             if definition_.headers_schema is USE_DEFAULT
                             else definition_.headers_schema
                         ),
-                        response_body_schema=definition_.marshal_schema,
+                        response_body_schema=definition_.response_body_schema,
                         mimetype=(
                             self.default_mimetype
                             if definition_.mimetype is USE_DEFAULT

@@ -233,8 +233,8 @@ def get_unique_schema_definitions(
     converted.append(response_converter(default_response_schema))
 
     for d in iterate_path_definitions(paths=registry.paths):
-        if d.marshal_schema:
-            for schema in d.marshal_schema.values():
+        if d.response_body_schema:
+            for schema in d.response_body_schema.values():
                 if schema is None:
                     # Responses that don't have a response body have None
                     # for a schema

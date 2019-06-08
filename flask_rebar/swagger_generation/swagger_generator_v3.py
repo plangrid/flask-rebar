@@ -172,8 +172,8 @@ class SwaggerV3Generator(SwaggerGenerator):
                     )
                 }
 
-                if d.marshal_schema:
-                    for status_code, schema in d.marshal_schema.items():
+                if d.response_body_schema:
+                    for status_code, schema in d.response_body_schema.items():
                         if schema is not None:
                             response_definition = self._get_response_definition(schema)
                         else:
