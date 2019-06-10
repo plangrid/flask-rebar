@@ -400,7 +400,14 @@ class RebarTest(unittest.TestCase):
         app = create_rebar_app(rebar)
 
         resp = app.test_client().get("/swagger/ui/")
+        self.assertEqual(resp.status_code, 200)
 
+    def test_swagger_ui_without_trailing_slash(self):
+        rebar = Rebar()
+        rebar.create_handler_registry()
+        app = create_rebar_app(rebar)
+
+        resp = app.test_client().get("/swagger/ui")
         self.assertEqual(resp.status_code, 200)
 
     def test_swagger_can_be_set_to_v3(self):
