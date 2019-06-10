@@ -44,6 +44,7 @@ def create_swagger_ui_blueprint(
     }
 
     @blueprint.route("/")
+    @blueprint.route("")
     def show():
         return render_template("index.html.jinja2", **template_context)
 
