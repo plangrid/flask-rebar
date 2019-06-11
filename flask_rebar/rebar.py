@@ -11,7 +11,6 @@
 from __future__ import unicode_literals
 
 import sys
-import warnings
 from collections import defaultdict
 from collections import namedtuple
 from copy import copy
@@ -27,14 +26,14 @@ from werkzeug.routing import RequestRedirect
 from flask_rebar import messages
 from flask_rebar.authenticators import USE_DEFAULT
 from flask_rebar import errors
-from flask_rebar.request_utils import marshal
-from flask_rebar.request_utils import response
-from flask_rebar.request_utils import get_header_params_or_400
-from flask_rebar.request_utils import get_json_body_params_or_400
-from flask_rebar.request_utils import get_query_string_params_or_400
+from flask_rebar.utils.request_utils import marshal
+from flask_rebar.utils.request_utils import response
+from flask_rebar.utils.request_utils import get_header_params_or_400
+from flask_rebar.utils.request_utils import get_json_body_params_or_400
+from flask_rebar.utils.request_utils import get_query_string_params_or_400
+from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
 from flask_rebar.swagger_generation import SwaggerV2Generator
 from flask_rebar.swagger_ui import create_swagger_ui_blueprint
-from flask_rebar.utils import deprecated, deprecated_parameters
 
 
 # To catch redirection exceptions, app.errorhandler expects 301 in versions

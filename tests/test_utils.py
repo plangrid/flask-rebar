@@ -9,7 +9,8 @@
 """
 import unittest
 import warnings
-from flask_rebar.utils import deprecated_parameters, deprecated, deprecation_config
+from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
+from flask_rebar.utils.deprecation import config as deprecation_config
 
 
 @deprecated_parameters(old_param1="new_param1", old_param2=("new_param2", "v99"))

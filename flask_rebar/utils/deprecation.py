@@ -17,7 +17,7 @@ from werkzeug.local import LocalProxy as module_property  # noqa
 # ref http://jtushman.github.io/blog/2014/05/02/module-properties/ for background on
 # use of werkzeug LocalProxy to simulate "module properties"
 # end result: singleton config can be accessed by, e.g.,
-#    from flask_rebar.utils import deprecation_config
+#    from flask_rebar.utils.deprecation import config as deprecation_config
 #    deprecation_config.warning_type = YourFavoriteWarning
 
 
@@ -45,7 +45,7 @@ class DeprecationConfig:
 
 
 @module_property
-def deprecation_config():
+def config():
     return DeprecationConfig.getInstance()
 
 
@@ -121,4 +121,4 @@ def _deprecation_warning(old_name, new_name, eol_version):
     )
     replacement_clause = "; use {}".format(new_name) if new_name else ""
     msg = "{} is deprecated{}{}".format(old_name, eol_clause, replacement_clause)
-    warnings.warn(msg, deprecation_config.warning_type)
+    warnings.warn(msg, config.warning_type)

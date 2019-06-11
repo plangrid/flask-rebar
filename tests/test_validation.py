@@ -18,7 +18,7 @@ from werkzeug.datastructures import MultiDict
 
 from flask_rebar import compat
 from flask_rebar import messages
-from flask_rebar.request_utils import normalize_schema
+from flask_rebar.utils.request_utils import normalize_schema
 from tests.helpers import skip_if_marshmallow_not_v2
 from flask_rebar.validation import ActuallyRequireOnDumpMixin
 from flask_rebar.validation import CommaSeparatedList

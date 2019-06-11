@@ -19,8 +19,8 @@ from werkzeug.exceptions import BadRequest
 from flask_rebar import messages, validation, response, Rebar
 from flask_rebar.compat import MARSHMALLOW_V2
 from flask_rebar import errors
-from flask_rebar.request_utils import get_json_body_params_or_400
-from flask_rebar.request_utils import get_query_string_params_or_400
+from flask_rebar.utils.request_utils import get_json_body_params_or_400
+from flask_rebar.utils.request_utils import get_query_string_params_or_400
 
 
 class TestErrors(TestCase):
