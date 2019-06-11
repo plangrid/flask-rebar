@@ -77,7 +77,9 @@ class TodoListSchema(ResponseSchema):
     tags=["todo"],
     # This dictionary tells framer which schema to use for which response code.
     # This is a little ugly, but tremendously helpful for generating swagger.
-    marshal_schema={201: TodoResourceSchema()},
+    response_body_schema={
+        201: TodoResourceSchema()
+    },  # for versions <= 1.7.0, use marshal_schema
 )
 def create_todo():
     global todo_id_sequence, todo_database
@@ -105,7 +107,7 @@ def create_todo():
     tags=["todo"],
     # If the value for this is not a dictionary, the response code is assumed
     # to be 200
-    marshal_schema=TodoListSchema(),
+    response_body_schema=TodoListSchema(),  # for versions <= 1.7.0, use marshal_schema
 )
 def get_todos():
     global todo_database
@@ -127,7 +129,7 @@ def get_todos():
 @registry.handles(
     rule="/todos/<int:todo_id>",
     method="PATCH",
-    marshal_schema=TodoResourceSchema(),
+    response_body_schema=TodoResourceSchema(),  # for versions <= 1.7.0, use marshal_schema
     request_body_schema=UpdateTodoSchema(),
     tags=["todo"],
 )

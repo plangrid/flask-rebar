@@ -92,7 +92,7 @@ def register_endpoint(
     path="/foos/<foo_uid>",
     method="GET",
     endpoint=None,
-    marshal_schema=None,
+    response_body_schema=None,
     query_string_schema=None,
     request_body_schema=None,
     headers_schema=None,
@@ -106,7 +106,7 @@ def register_endpoint(
         rule=path,
         method=method,
         endpoint=endpoint,
-        marshal_schema=marshal_schema or {200: FooSchema()},
+        response_body_schema=response_body_schema or {200: FooSchema()},
         query_string_schema=query_string_schema,
         request_body_schema=request_body_schema,
         headers_schema=headers_schema,
@@ -173,7 +173,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule="/foos/<foo_uid>",
             method="PATCH",
-            marshal_schema={200: FooSchema()},
+            response_body_schema={200: FooSchema()},
             request_body_schema=FooUpdateSchema(),
         )
         def update_foo(foo_uid):
@@ -203,7 +203,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule="/foos",
             method="GET",
-            marshal_schema={200: ListOfFooSchema()},
+            response_body_schema={200: ListOfFooSchema()},
             query_string_schema=FooListSchema(),
         )
         def list_foos():
@@ -228,7 +228,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule="/me",
             method="GET",
-            marshal_schema={200: MeSchema()},
+            response_body_schema={200: MeSchema()},
             headers_schema=HeadersSchema(),
         )
         def get_me():
@@ -252,7 +252,7 @@ class RebarTest(unittest.TestCase):
         rebar = Rebar()
         registry = rebar.create_handler_registry(default_mimetype="content/type")
 
-        @registry.handles(rule="/me", method="DELETE", marshal_schema={204: None})
+        @registry.handles(rule="/me", method="DELETE", response_body_schema={204: None})
         def delete_me():
             return None, 204
 
@@ -267,7 +267,9 @@ class RebarTest(unittest.TestCase):
         rebar = Rebar()
         registry = rebar.create_handler_registry(default_mimetype="content/type")
 
-        @registry.handles(rule="/me", method="DELETE", marshal_schema={204: m.Schema()})
+        @registry.handles(
+            rule="/me", method="DELETE", response_body_schema={204: m.Schema()}
+        )
         def delete_me():
             return {}, 204
 
@@ -285,7 +287,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule="/me",
             method="DELETE",
-            marshal_schema={204: None},
+            response_body_schema={204: None},
             mimetype="content/type",
         )
         def delete_me():
@@ -305,7 +307,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule="/me",
             method="DELETE",
-            marshal_schema={204: m.Schema()},
+            response_body_schema={204: m.Schema()},
             mimetype="content/type",
         )
         def delete_me():
@@ -325,7 +327,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule="/me",
             method="DELETE",
-            marshal_schema={204: m.Schema()},
+            response_body_schema={204: m.Schema()},
             mimetype="handler/type",
         )
         def delete_me():
@@ -343,7 +345,13 @@ class RebarTest(unittest.TestCase):
         header_value = "bar"
         headers = {header_key: header_value}
 
-        for marshal_schema, rv, expected_status, expected_body, expected_headers in [
+        for (
+            response_body_schema,
+            rv,
+            expected_status,
+            expected_body,
+            expected_headers,
+        ) in [
             (FooSchema(), DEFAULT_RESPONSE, 200, DEFAULT_RESPONSE, {}),
             ({201: FooSchema()}, (DEFAULT_RESPONSE, 201), 201, DEFAULT_RESPONSE, {}),
             ({201: FooSchema()}, (DEFAULT_RESPONSE, 200), 500, DEFAULT_ERROR, {}),
@@ -368,7 +376,7 @@ class RebarTest(unittest.TestCase):
             rebar = Rebar()
             registry = rebar.create_handler_registry()
 
-            @registry.handles(rule="/foo", marshal_schema=marshal_schema)
+            @registry.handles(rule="/foo", response_body_schema=response_body_schema)
             def foo():
                 return rv
 
@@ -426,7 +434,7 @@ class RebarTest(unittest.TestCase):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
-        common_kwargs = {"method": "GET", "marshal_schema": {200: FooSchema()}}
+        common_kwargs = {"method": "GET", "response_body_schema": {200: FooSchema()}}
 
         @registry.handles(rule="/bars/<foo_uid>", endpoint="bar", **common_kwargs)
         @registry.handles(rule="/foos/<foo_uid>", endpoint="foo", **common_kwargs)
@@ -453,7 +461,7 @@ class RebarTest(unittest.TestCase):
 
         common_kwargs = {
             "rule": "/foos/<foo_uid>",
-            "marshal_schema": {200: FooSchema()},
+            "response_body_schema": {200: FooSchema()},
         }
 
         @registry.handles(method="GET", endpoint="get_foo", **common_kwargs)
@@ -483,14 +491,14 @@ class RebarTest(unittest.TestCase):
         registry = rebar.create_handler_registry()
         registry.set_default_headers_schema(HeadersSchema())
 
-        @registry.handles(rule="/me", method="GET", marshal_schema=MeSchema())
+        @registry.handles(rule="/me", method="GET", response_body_schema=MeSchema())
         def get_me():
             return {"user_name": rebar.validated_headers["name"]}
 
         @registry.handles(
             rule="/myself",
             method="GET",
-            marshal_schema=MeSchema(),
+            response_body_schema=MeSchema(),
             # Let's make sure this can be overridden
             headers_schema=None,
         )
