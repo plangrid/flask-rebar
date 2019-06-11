@@ -2,6 +2,22 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+
+New
+~~~
+- Graceful deprecation rename of marshal_schema to response_body_schema
+  (#101) [Rick Riensche]
+
+- Refactor utilities into a separate utils package including new deprecation utility
+
+Changes
+~~~~~~~
+- Allow /swagger/ui to resolve to swagger UI without redirect (#102)
+  [Michael Bryant]
+
+
 v1.7.0 (2019-06-05)
 -------------------
 - Fixes a bug where http 400s are returned as http 500s (#99) [Brock
