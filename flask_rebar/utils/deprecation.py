@@ -88,8 +88,8 @@ def deprecated_parameters(**aliases):
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            new_args = _remap_kwargs(f.__name__, kwargs, aliases)
-            return f(*args, **new_args)
+            new_kwargs = _remap_kwargs(f.__name__, kwargs, aliases)
+            return f(*args, **new_kwargs)
 
         return wrapper
 
