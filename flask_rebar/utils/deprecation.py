@@ -11,6 +11,7 @@
 import copy
 import functools
 import warnings
+from collections import namedtuple
 
 from werkzeug.local import LocalProxy as module_property  # noqa
 
@@ -55,21 +56,19 @@ def deprecated(new_func=None, eol_version=None):
     :param Union[str, (str, str)] new_func: Name (or name and end-of-life version) of replacement
     :param str eol_version: Version in which this function may no longer work
     :return:
+    Raise a deprecation warning for decorated function.
+    Tuple is supported for new_func just in case somebody infers it as an option based on the way we
+    deprecate params..
+    If tuple form is used for new_func AND eol_version is provided, eol_version will trump whatever is
+    found in the tuple; caveat emptor
     """
 
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            new = None
-            eol = eol_version
-            if (
-                type(new_func) is tuple
-            ):  # in case somebody inferred this from the way we deprecate params..
-                new = str(new_func[0])
-                eol = str(new_func[1])
-            elif new_func:
-                new = str(new_func)
-            _deprecation_warning(f.__name__, new, eol)
+            new, eol = _validated_deprecation_spec(new_func)
+            eol = eol_version or eol
+            _deprecation_warning(f.__name__, new, eol, stacklevel=3)
             return f(*args, **kwargs)
 
         return wrapper
@@ -96,6 +95,30 @@ def deprecated_parameters(**aliases):
     return decorator
 
 
+def _validated_deprecation_spec(spec):
+    """
+    :param Union[new_name, (new_name, eol_version)] spec:  new name and/or expected end-of-life version
+    :return: (str new_name, str eol_version), normalized to tuple and sanitized to deal with malformed inputs
+    Parse a deprecation spec (string or tuple) to a standardized namedtuple form.
+    If spec is provided as a bare value (presumably string), we'll treat as new name with no end-of-life version
+    If spec is provided (likely on accident) as a 1-element tuple, we'll treat same as a bare value
+    If spec is provided as a tuple with more than 2 elements, we'll simply ignore the extraneous
+    """
+    new_name = None
+    eol_version = None
+    if type(spec) is tuple:
+        if len(spec) > 0:
+            new_name = str(spec[0]) if spec[0] else None
+        if len(spec) > 1:
+            eol_version = str(spec[1]) if spec[1] else None
+    elif spec:
+        new_name = str(spec)
+    validated = namedtuple("deprecation_spec", ["new_name", "eol_version"])(
+        new_name, eol_version
+    )
+    return validated
+
+
 def _remap_kwargs(func_name, kwargs, aliases):
     """
     Adapted from https://stackoverflow.com/a/49802489/977046
@@ -103,28 +126,23 @@ def _remap_kwargs(func_name, kwargs, aliases):
     remapped_args = copy.deepcopy(kwargs)
     for alias, new_spec in aliases.items():
         if alias in remapped_args:
-            eol_version = None
-            if type(new_spec) is tuple:
-                new = str(new_spec[0])
-                if len(new_spec) >= 2:
-                    eol_version = str(new_spec[1]) if new_spec[1] else None
-            else:
-                new = str(new_spec)
+            new, eol_version = _validated_deprecation_spec(new_spec)
             if new in remapped_args:
                 raise TypeError(
                     "{} received both {} and {}".format(func_name, alias, new)
                 )
             else:
-                _deprecation_warning(alias, new, eol_version)
-                remapped_args[new] = remapped_args.pop(alias)
+                _deprecation_warning(alias, new, eol_version, stacklevel=4)
+                if new:
+                    remapped_args[new] = remapped_args.pop(alias)
 
     return remapped_args
 
 
-def _deprecation_warning(old_name, new_name, eol_version):
+def _deprecation_warning(old_name, new_name, eol_version, stacklevel=1):
     eol_clause = (
         " and may be removed in version {}".format(eol_version) if eol_version else ""
     )
     replacement_clause = "; use {}".format(new_name) if new_name else ""
     msg = "{} is deprecated{}{}".format(old_name, eol_clause, replacement_clause)
-    warnings.warn(msg, config.warning_type)
+    warnings.warn(message=msg, category=config.warning_type, stacklevel=stacklevel)
