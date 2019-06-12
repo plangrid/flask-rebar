@@ -8,6 +8,7 @@
     :license: MIT, see LICENSE for details.
 """
 
+import copy
 import functools
 import warnings
 
@@ -87,32 +88,37 @@ def deprecated_parameters(**aliases):
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            _rename_kwargs(f.__name__, kwargs, aliases)
-            return f(*args, **kwargs)
+            new_kwargs = _remap_kwargs(f.__name__, kwargs, aliases)
+            return f(*args, **new_kwargs)
 
         return wrapper
 
     return decorator
 
 
-def _rename_kwargs(func_name, kwargs, aliases):
+def _remap_kwargs(func_name, kwargs, aliases):
     """
     Adapted from https://stackoverflow.com/a/49802489/977046
     """
+    remapped_args = copy.deepcopy(kwargs)
     for alias, new_spec in aliases.items():
-        if alias in kwargs:
+        if alias in remapped_args:
+            eol_version = None
             if type(new_spec) is tuple:
                 new = str(new_spec[0])
-                eol_version = str(new_spec[1])
+                if len(new_spec) >= 2:
+                    eol_version = str(new_spec[1]) if new_spec[1] else None
             else:
                 new = str(new_spec)
-                eol_version = None
-            if new in kwargs:
+            if new in remapped_args:
                 raise TypeError(
                     "{} received both {} and {}".format(func_name, alias, new)
                 )
-            _deprecation_warning(alias, new, eol_version)
-            kwargs[new] = kwargs.pop(alias)
+            else:
+                _deprecation_warning(alias, new, eol_version)
+                remapped_args[new] = remapped_args.pop(alias)
+
+    return remapped_args
 
 
 def _deprecation_warning(old_name, new_name, eol_version):

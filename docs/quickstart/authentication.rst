@@ -67,3 +67,9 @@ An authenticator can be added as the default headers schema for all handlers via
 This default can be overriden in any particular handler by setting ``authenticator`` to something else, including ``None`` to bypass any authentication.
 
 This Header API Key authentication mechanism was designed to work for services behind some sort of reverse proxy that is handling the harder bits of client authentication.
+
+Extensions for Authentication
+=============================
+For situations that require something more robust than the basic header-based authentication, Flask-Rebar can be extended.  For example, see the following  open-source Flask-Rebar extension(s):
+
+* `Flask-Rebar-Auth0 <https://github.com/Sytten/flask-rebar-auth0>`_ - `Auth0 <https://auth0.com/>`_ authenticator for Flask-Rebar

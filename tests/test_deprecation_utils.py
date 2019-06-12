@@ -13,9 +13,14 @@ from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
 from flask_rebar.utils.deprecation import config as deprecation_config
 
 
-@deprecated_parameters(old_param1="new_param1", old_param2=("new_param2", "v99"))
-def _add(new_param1=42, new_param2=99):
-    return new_param1 + new_param2
+@deprecated_parameters(
+    old_param1="new_param1",
+    old_param2=("new_param2", "v99"),
+    old_param3=("new_param3",),
+    old_param4=("new_param4", None),
+)
+def _add(new_param1=0, new_param2=0, new_param3=0, new_param4=0):
+    return new_param1 + new_param2 + new_param3 + new_param4
 
 
 @deprecated()
@@ -81,6 +86,20 @@ class TestParameterDeprecation(unittest.TestCase):
             self.assertTrue(
                 ("old_param1" in msg1 and "old_param2" in msg2)
                 or ("old_param1" in msg2 and "old_param2" in msg1)
+            )
+            self.assertIs(w[0].category, FutureWarning)
+
+        # with both (using poorly formed tuples)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = _add(old_param3=3, old_param4=4)
+            self.assertEqual(result, 7)
+            self.assertEqual(len(w), 2)
+            msg1 = str(w[0].message)
+            msg2 = str(w[1].message)
+            self.assertTrue(
+                ("old_param3" in msg1 and "old_param4" in msg2)
+                or ("old_param3" in msg2 and "old_param4" in msg1)
             )
             self.assertIs(w[0].category, FutureWarning)
 
