@@ -8,7 +8,6 @@
     :license: MIT, see LICENSE for details.
 """
 
-import copy
 import functools
 import warnings
 from collections import namedtuple
@@ -123,7 +122,7 @@ def _remap_kwargs(func_name, kwargs, aliases):
     """
     Adapted from https://stackoverflow.com/a/49802489/977046
     """
-    remapped_args = copy.deepcopy(kwargs)
+    remapped_args = dict(kwargs)
     for alias, new_spec in aliases.items():
         if alias in remapped_args:
             new, eol_version = _validated_deprecation_spec(new_spec)
