@@ -14,13 +14,35 @@ from flask_rebar.utils.deprecation import config as deprecation_config
 
 
 @deprecated_parameters(
-    old_param1="new_param1",
-    old_param2=("new_param2", "v99"),
-    old_param3=("new_param3",),
-    old_param4=("new_param4", None),
+    old_param1="new_param1",  # rename with no predicted end-of-life version
+    old_param2=("new_param2", "v99"),  # rename with predicted end-of-life version
+    old_param3=("new_param3",),  # rename with a poorly formed tuple
+    old_param4=("new_param4", None),  # rename with explicitly None end-of-life version
+    old_param5=(None, "v99.5"),  # no rename with explicit end-of-life version
+    old_param6=None,  # deprecated param with no replacement, no specific end-of-life-version
+    old_param7=(None, None),  # same as 6, but for the truly pedantic
+    old_param8=(),  # could imagine someone accidentally doing this.. :P
 )
-def _add(new_param1=0, new_param2=0, new_param3=0, new_param4=0):
-    return new_param1 + new_param2 + new_param3 + new_param4
+def _add(
+    new_param1=0,
+    new_param2=0,
+    new_param3=0,
+    new_param4=0,
+    old_param5=0,
+    old_param6=0,
+    old_param7=0,
+    old_param8=0,
+):
+    return (
+        new_param1
+        + new_param2
+        + new_param3
+        + new_param4
+        + old_param5
+        + old_param6
+        + old_param7
+        + old_param8
+    )
 
 
 @deprecated()
@@ -102,6 +124,42 @@ class TestParameterDeprecation(unittest.TestCase):
                 or ("old_param3" in msg2 and "old_param4" in msg1)
             )
             self.assertIs(w[0].category, FutureWarning)
+
+        # with no replacement but specific expiration
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = _add(new_param1=1, old_param5=5)
+            self.assertEqual(result, 6)
+            self.assertEqual(len(w), 1)
+            msg = str(w[0].message)
+            self.assertIn("old_param5 is deprecated", msg)
+            self.assertIn("v99.5", msg)
+            self.assertNotIn("new_param", msg)
+            self.assertIs(w[0].category, FutureWarning)
+
+        # with no replacement (specified as None)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = _add(new_param1=1, old_param5=5)
+            self.assertEqual(result, 6)
+            self.assertEqual(len(w), 1)
+            msg = str(w[0].message)
+            self.assertIn("old_param5 is deprecated", msg)
+            self.assertIn("v99.5", msg)
+            self.assertNotIn("new_param", msg)
+            self.assertIs(w[0].category, FutureWarning)
+
+        # with no replacement -- specified as explicit (None, None) and implicit ()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = _add(old_param7=7, old_param8=8)
+            self.assertEqual(result, 15)
+            self.assertEqual(len(w), 2)
+            msgs = {str(w[0].message), str(w[1].message)}
+            expected_msgs = {"old_param7 is deprecated", "old_param8 is deprecated"}
+            self.assertEqual(expected_msgs, msgs)
+            self.assertIn("v99.5", msg)
+            self.assertNotIn("new_param", msg)
 
     def test_parameter_deprecation_warning_type(self):
         """Deprecation supports specifying type of warning"""

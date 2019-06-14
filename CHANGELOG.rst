@@ -2,6 +2,18 @@ Changelog
 =========
 
 
+v1.8.1 (2019-06-14)
+-------------------
+
+Changes
+~~~~~~~
+- Deprecation util cleaned up and expanded a bit. More forgiving of unexpected inputs. [Rick Riensche]
+
+Fix
+~~~
+- Bug in v1.8.0 deprecation util - deepcopy inadvertently replacing things like default_authenticator
+
+
 v1.8.0 (2019-06-12)
 -------------------
 
