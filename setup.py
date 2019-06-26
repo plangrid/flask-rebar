@@ -4,15 +4,15 @@ from setuptools import setup, find_packages
 
 # packages required for local development and testing
 development = [
-    'pytest==3.4.1',
-    'Flask-Testing==0.6.2',
-    'mock==2.0.0',
-    'jsonschema==2.6.0',
-    'Sphinx==1.7.0',
-    'sphinx_rtd_theme==0.2.4',
-    'bumpversion==0.5.3',
-    'gitchangelog>=3.0.4,<4.0.0',
-    'pre-commit>=1.14.4',
+    "pytest==3.4.1",
+    "Flask-Testing==0.6.2",
+    "mock==2.0.0",
+    "jsonschema==2.6.0",
+    "Sphinx==1.7.0",
+    "sphinx_rtd_theme==0.2.4",
+    "bumpversion==0.5.3",
+    "gitchangelog>=3.0.4,<4.0.0",
+    "pre-commit>=1.14.4",
 ]
 
 if __name__ == "__main__":
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         license="MIT",
         packages=find_packages(exclude=("test*", "examples")),
         include_package_data=True,
-        extras_require= {"dev": development},
+        extras_require={"dev": development},
         install_requires=["Flask>=0.10,<2", "marshmallow>=2.13,<4"],
         url="https://github.com/plangrid/flask-rebar",
         classifiers=[

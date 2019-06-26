@@ -19,7 +19,7 @@ install:
   - pip install marshmallow==$MARSHMALLOW_VERSION
   # Updating black?  Run pre-commit autoupdate to ref latest version in .pre-commit-config.yaml and keep in sync
   - if [[ $TRAVIS_PYTHON_VERSION == '3.7' ]]; then pip install black==19.3b0; fi
-  - pip install '[.dev]'
+  - pip install '.[dev]'
   - pip freeze
 script:
   - if [[ $TRAVIS_PYTHON_VERSION == '3.7' ]]; then black --check --diff .; fi && pytest
