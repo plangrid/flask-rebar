@@ -12,7 +12,7 @@ import re
 from collections import namedtuple, OrderedDict
 
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator
-from flask_rebar.authenticators import USE_DEFAULT
+from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
 

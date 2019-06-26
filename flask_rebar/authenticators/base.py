@@ -9,10 +9,6 @@
 """
 
 
-class USE_DEFAULT(object):
-    pass
-
-
 class Authenticator(object):
     """
     Abstract authenticator class. Custom authentication methods should
