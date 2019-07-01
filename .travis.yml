@@ -14,11 +14,12 @@ env:
   - MARSHMALLOW_VERSION='2.15.*' FLASK_VERSION='1.0.*'
   - MARSHMALLOW_VERSION='3.0.0rc5' FLASK_VERSION='1.0.*'
 install:
+  - pip install -U pip
   - pip install Flask==$FLASK_VERSION
   - pip install marshmallow==$MARSHMALLOW_VERSION
   # Updating black?  Run pre-commit autoupdate to ref latest version in .pre-commit-config.yaml and keep in sync
   - if [[ $TRAVIS_PYTHON_VERSION == '3.7' ]]; then pip install black==19.3b0; fi
-  - pip install -r requirements.txt
+  - pip install '.[dev]'
   - pip freeze
 script:
   - if [[ $TRAVIS_PYTHON_VERSION == '3.7' ]]; then black --check --diff .; fi && pytest
