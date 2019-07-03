@@ -17,6 +17,10 @@ Flask-Rebar
    :target: https://github.com/ambv/black
    :alt: Code style
 
+.. image:: https://img.shields.io/badge/Contributor%20Covenant-v1.4%20adopted-ff69b4.svg
+   :target: https://www.contributor-covenant.org/
+   :alt: Code of Conduct
+
 |
 
 Flask-Rebar combines `flask <http://flask.pocoo.org/>`_, `marshmallow <https://marshmallow.readthedocs.io/en/latest/>`_, and `swagger <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md>`_ for robust REST services.
