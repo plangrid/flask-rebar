@@ -14,13 +14,13 @@ import marshmallow as m
 from flask import Flask
 from werkzeug.routing import RequestRedirect
 
-from flask_rebar import HeaderApiKeyAuthenticator, SwaggerV3Generator
-from flask_rebar.authenticators import USE_DEFAULT
 from flask_rebar import messages
+from flask_rebar import HeaderApiKeyAuthenticator, SwaggerV3Generator
 from flask_rebar.compat import set_data_key
 from flask_rebar.rebar import Rebar
 from flask_rebar.rebar import prefix_url
 from flask_rebar.testing import validate_swagger
+from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.testing.swagger_jsonschema import SWAGGER_V3_JSONSCHEMA
 
 DEFAULT_AUTH_HEADER = "x-default-auth"

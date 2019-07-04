@@ -24,7 +24,7 @@ from werkzeug.datastructures import Headers
 from werkzeug.routing import RequestRedirect
 
 from flask_rebar import messages
-from flask_rebar.authenticators import USE_DEFAULT
+from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar import errors
 from flask_rebar.utils.request_utils import marshal
 from flask_rebar.utils.request_utils import response
