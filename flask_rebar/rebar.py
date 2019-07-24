@@ -692,13 +692,16 @@ class Rebar(object):
                 headers={"Location": error.new_url},
             )
 
-        @app.errorhandler(Exception)
-        def handle_generic_error(error):
+        def run_unhandled_exception_handlers(exception):
             exc_info = sys.exc_info()
             current_app.log_exception(exc_info=exc_info)
 
             for func in self.uncaught_exception_handlers:
-                func(error)
+                func(exception)
+
+        @app.errorhandler(Exception)
+        def handle_generic_error(error):
+            run_unhandled_exception_handlers(error)
 
             if current_app.debug:
                 raise error
@@ -706,6 +709,14 @@ class Rebar(object):
                 return self._create_json_error_response(
                     message=messages.internal_server_error, http_status_code=500
                 )
+
+        @app.teardown_request
+        def teardown(exception):
+            if isinstance(exception, SystemExit):
+                try:
+                    run_unhandled_exception_handlers(exception)
+                except Exception:  # make sure the exception handlers dont prevent teardown
+                    pass
 
     def _create_json_error_response(
         self, message, http_status_code, additional_data=None, headers=None
