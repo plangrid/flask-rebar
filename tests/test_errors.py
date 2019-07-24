@@ -15,6 +15,8 @@ from flask import Flask
 from flask_testing import TestCase
 from marshmallow import fields
 from werkzeug.exceptions import BadRequest
+from mock import ANY
+from mock import patch
 
 from flask_rebar import messages, validation, response, Rebar
 from flask_rebar.compat import MARSHMALLOW_V2
@@ -46,6 +48,10 @@ class TestErrors(TestCase):
         @app.route("/route_that_fails_validation", methods=["GET"])
         def validation_fails_handler():
             raise BadRequest()
+
+        @app.route("/slow", methods=["GET"])
+        def a_slow_handler():
+            raise SystemExit()
 
         Rebar().init_app(app=app)
 
@@ -92,6 +98,17 @@ class TestErrors(TestCase):
         self.assertEqual(resp.status_code, 500)
         self.assertEqual(resp.content_type, "application/json")
         self.assertEqual(resp.json, {"message": messages.internal_server_error})
+
+    def test_timeouts_log_exceptions(self):
+        # in the wild, gunicorn or nginx will cutoff the wsgi server and return a 502
+        # causing the wsgi server to raise SystemExit
+        with patch.object(self.app.logger, "error") as mock_logger, self.assertRaises(
+            SystemExit
+        ):
+            self.app.test_client().get("/slow")
+            mock_logger.error.assert_called_with(
+                "Exception on /slow [GET]", exc_info=ANY
+            )
 
 
 class TestJsonBodyValidation(TestCase):
