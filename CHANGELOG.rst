@@ -2,6 +2,38 @@ Changelog
 =========
 
 
+v1.9.0 (2019-07-24)
+-------------------
+
+New
+~~~
+- Graceful deprecation rename of marshal_schema to response_body_schema
+  (#101) [Rick Riensche]
+
+  * chg: Refactor utilities into a separate utils package
+
+Changes
+~~~~~~~
+- Move USE_DEFAULT to utils (#107) [retornam]
+- Use extras_require for dev requirements (#106) [retornam]
+- Allow /swagger/ui to resolve to swagger UI without redirect (#102)
+  [Michael Bryant]
+
+Fix
+~~~
+- Revert the red-herring sphinx conf change, add readthedocs yaml
+  config. [Rick Riensche]
+- Broke sphinx when we removed requirements.txt (#111) [Rick Riensche]
+
+Other
+~~~~~
+- Run exception handlers on sys exit. [Brock Haywood]
+- Doc: add code of conduct, based on https://www.contributor-
+  covenant.org/ (#108) [Fabian]
+- Fix(pypi): update pypi password (#105) [Sonny Van]
+- Updated changelog. [Brock Haywood]
+
+
 v1.8.1 (2019-06-14)
 -------------------
 
