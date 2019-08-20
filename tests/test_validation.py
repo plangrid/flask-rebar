@@ -57,7 +57,7 @@ class TestDisallowExtraFieldsMixin(TestCase):
             ["im not supposed to be a list :)"]
         )
         self.assertEqual(errors, {"_schema": ["Invalid input type."]})
-        self.assertEqual(data, {})
+        self.assertFalse(data)
 
 
 class ActuallyRequireOnDumpMixinSchema(Schema, ActuallyRequireOnDumpMixin):
