@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+v1.9.1 (2019-08-20)
+-------------------
+- Avoid breaking changes (expected with Marshmallow 3.0, unexpected with 2.20) [Rick
+  Riensche]
+
+
 v1.9.0 (2019-07-24)
 -------------------
 
