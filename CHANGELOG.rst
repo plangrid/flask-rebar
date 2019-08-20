@@ -2,6 +2,20 @@ Changelog
 =========
 
 
+v1.9.1 (2019-08-20)
+-------------------
+
+Fix
+~~~
+- 118 - pinned to an incompatible version of Marshmallow (3.0.0) [Rick Riensche]
+
+  * Changes between 3.0.0rc5 and the actual release of 3.0.0 made our presumptive compatibility changes no longer sufficient
+
+- Relax overly-sensitive test (#117) [Rick Riensche]
+
+  * Deals with a subtle change in returned data on "Invalid input type" schema validation error between marshmallow 2.19 and 2.20. In return from Schema.load, "data" changed from empty dictionary to None, and we had an overzealous test that was expecting empty dictionary; whereas the value of "data" in this scenario appears to be undefined.
+
+
 v1.9.0 (2019-07-24)
 -------------------
 
