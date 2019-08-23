@@ -108,10 +108,11 @@ class RequestedRangeNotSatisfiable(HttpJsonError):
 class ExpectationFailed(HttpJsonError):
     http_status_code, default_message = 417, "Expectation Failed"
 
-
 class UnprocessableEntity(HttpJsonError):
     http_status_code, default_message = 422, "Unprocessable Entity"
 
+class TooManyRequests(HttpJsonError):
+    http_status_code, default_message = 429, "Too Many Requests"
 
 class InternalError(HttpJsonError):
     http_status_code, default_message = 500, "Internal Server Error"
