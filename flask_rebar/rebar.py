@@ -24,8 +24,9 @@ from werkzeug.datastructures import Headers
 from werkzeug.routing import RequestRedirect
 
 from flask_rebar import messages
-from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar import errors
+from flask_rebar.authenticators import Authenticator
+from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.utils.request_utils import marshal
 from flask_rebar.utils.request_utils import response
 from flask_rebar.utils.request_utils import get_header_params_or_400
@@ -82,7 +83,7 @@ def _unpack_view_func_return_value(rv):
 @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
 def _wrap_handler(
     f,
-    authenticator=None,
+    authenticators=None,
     query_string_schema=None,
     request_body_schema=None,
     headers_schema=None,
@@ -95,11 +96,22 @@ def _wrap_handler(
     :param f:
     :returns: a new, wrapped handler function
     """
+    # Temp for during migration to multiple authenticators
+    if isinstance(authenticators, Authenticator):
+        authenticators = [authenticators]
 
     @wraps(f)
     def wrapped(*args, **kwargs):
-        if authenticator:
-            authenticator.authenticate()
+        if authenticators:
+            first_error = None
+            for authenticator in authenticators:
+                try:
+                    authenticator.authenticate()
+                    break  # Short-circuit on first successful authentication
+                except errors.Unauthorized as e:
+                    first_error = first_error or e
+            else:
+                raise first_error or errors.Unauthorized
 
         if query_string_schema:
             g.validated_args = get_query_string_params_or_400(
@@ -463,7 +475,7 @@ class HandlerRegistry(object):
                     rule=definition_.path,
                     view_func=_wrap_handler(
                         f=definition_.func,
-                        authenticator=(
+                        authenticators=(
                             self.default_authenticator
                             if definition_.authenticator is USE_DEFAULT
                             else definition_.authenticator
