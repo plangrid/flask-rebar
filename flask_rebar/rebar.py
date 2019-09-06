@@ -585,10 +585,17 @@ class Rebar(object):
         self.paths = defaultdict(dict)
         self.uncaught_exception_handlers = []
 
+    @deprecated_parameters(
+        default_authenticator=(
+            "default_authenticators",
+            "3.0",
+            lambda x: [x] if x is not None else [],
+        )
+    )
     def create_handler_registry(
         self,
         prefix=None,
-        default_authenticator=None,  # TODO deprecate
+        default_authenticators=None,  # TODO deprecate
         default_headers_schema=None,
         default_mimetype=None,
         swagger_generator=None,
@@ -606,8 +613,8 @@ class Rebar(object):
 
         :param str prefix:
             URL prefix for all handlers registered with this registry instance.
-        :param flask_rebar.authenticators.Authenticator default_authenticator:
-            Authenticator to use for all handlers as a default.
+        :param List(flask_rebar.authenticators.Authenticator) default_authenticators:
+            List of Authenticators to use for all handlers as a default.
         :param marshmallow.Schema default_headers_schema:
             Schema to validate the headers on all requests as a default.
         :param str default_mimetype:
@@ -627,9 +634,7 @@ class Rebar(object):
         """
         registry = HandlerRegistry(
             prefix=prefix,
-            default_authenticators=[default_authenticator]
-            if default_authenticator is not None
-            else [],
+            default_authenticators=default_authenticators,
             default_headers_schema=default_headers_schema,
             default_mimetype=default_mimetype,
             swagger_generator=swagger_generator,
