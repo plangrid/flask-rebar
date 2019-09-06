@@ -317,8 +317,9 @@ class AuthenticatorConverter(object):
             if authenticator is not None and authenticator is not USE_DEFAULT
         )
 
-        if registry.default_authenticator is not None:
-            authenticators.add(registry.default_authenticator)
+        for default_authenticator in registry.default_authenticators:
+            if default_authenticator is not None:
+                authenticators.add(default_authenticator)
 
         for authenticator in authenticators:
             klass = authenticator.__class__

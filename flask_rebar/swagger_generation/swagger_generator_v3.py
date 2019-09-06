@@ -100,12 +100,14 @@ class SwaggerV3Generator(SwaggerGenerator):
             sw.components: components,
         }
 
-        if registry.default_authenticator:
-            swagger[
-                sw.security
-            ] = self.authenticator_converter.get_security_requirement(
-                registry.default_authenticator
-            )
+        if registry.default_authenticators:
+            swagger[sw.security] = [
+                self.authenticator_converter.get_security_requirement(
+                    default_authenticator
+                )[0]
+                for default_authenticator in registry.default_authenticators
+                if default_authenticator is not None
+            ]
 
         if self.tags:
             swagger[sw.tags] = [tag.as_swagger() for tag in self.tags]

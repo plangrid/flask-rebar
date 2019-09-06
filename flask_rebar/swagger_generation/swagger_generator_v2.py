@@ -116,7 +116,7 @@ class SwaggerV2Generator(SwaggerGenerator):
         :param bool sort_keys: Use OrderedDicts sorted by keys instead of dicts
         :rtype: dict
         """
-        default_authenticator = registry.default_authenticator
+        default_authenticators = registry.default_authenticators
         security_definitions = self.authenticator_converter.get_security_schemes(
             registry
         )
@@ -146,12 +146,14 @@ class SwaggerV2Generator(SwaggerGenerator):
             sw.definitions: definitions,
         }
 
-        if default_authenticator:
-            swagger[
-                sw.security
-            ] = self.authenticator_converter.get_security_requirement(
-                default_authenticator
-            )
+        if default_authenticators:
+            swagger[sw.security] = [
+                self.authenticator_converter.get_security_requirement(
+                    default_authenticator
+                )[0]
+                for default_authenticator in default_authenticators
+                if default_authenticator is not None
+            ]
 
         if self.tags:
             swagger[sw.tags] = [tag.as_swagger() for tag in self.tags]
