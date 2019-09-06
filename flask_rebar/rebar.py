@@ -387,7 +387,10 @@ class HandlerRegistry(object):
 
         return paths
 
-    @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
+    @deprecated_parameters(
+        marshal_schema=("response_body_schema", "2.0"),
+        authenticator=("authenticators", "3.0", lambda x: [x] if x is not None else []),
+    )
     def add_handler(
         self,
         func,
@@ -398,7 +401,7 @@ class HandlerRegistry(object):
         query_string_schema=None,
         request_body_schema=None,
         headers_schema=USE_DEFAULT,
-        authenticator=USE_DEFAULT,
+        authenticators=USE_DEFAULT,
         tags=None,
         mimetype=USE_DEFAULT,
     ):
@@ -422,8 +425,8 @@ class HandlerRegistry(object):
             assumes everything is JSON.
         :param Type[USE_DEFAULT]|None|marshmallow.Schema headers_schema:
             Schema to use to grab and validate headers.
-        :param Type[USE_DEFAULT]|None|flask_rebar.framing.authenticators.Authenticator authenticator:
-            An authenticator object to authenticate incoming requests.
+        :param Type[USE_DEFAULT]|None|List(flask_rebar.framing.authenticators.Authenticator) authenticators:
+            A list of authenticator objects to authenticate incoming requests.
             If left as USE_DEFAULT, the Rebar's default will be used.
             Set to None to make this an unauthenticated handler.
         :param Sequence[str] tags:
@@ -443,12 +446,21 @@ class HandlerRegistry(object):
             query_string_schema=query_string_schema,
             request_body_schema=request_body_schema,
             headers_schema=headers_schema,
-            authenticators=[authenticator] if authenticator is not None else [],
+            authenticators=(
+                [USE_DEFAULT]
+                if authenticators is USE_DEFAULT
+                else []
+                if authenticators is None
+                else authenticators
+            ),
             tags=tags,
             mimetype=mimetype,
         )
 
-    @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
+    @deprecated_parameters(
+        marshal_schema=("response_body_schema", "2.0"),
+        authenticator=("authenticators", "3.0", lambda x: [x] if x is not None else []),
+    )
     def handles(
         self,
         rule,
@@ -458,7 +470,7 @@ class HandlerRegistry(object):
         query_string_schema=None,
         request_body_schema=None,
         headers_schema=USE_DEFAULT,
-        authenticator=USE_DEFAULT,
+        authenticators=USE_DEFAULT,
         tags=None,
         mimetype=USE_DEFAULT,
     ):
@@ -477,7 +489,7 @@ class HandlerRegistry(object):
                 query_string_schema=query_string_schema,
                 request_body_schema=request_body_schema,
                 headers_schema=headers_schema,
-                authenticator=authenticator,
+                authenticators=authenticators,
                 tags=tags,
                 mimetype=mimetype,
             )
