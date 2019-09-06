@@ -219,7 +219,7 @@ class PathDefinition(
             "query_string_schema",
             "request_body_schema",
             "headers_schema",
-            "authenticator",
+            "authenticators",
             "tags",
             "mimetype",
         ],
@@ -228,6 +228,9 @@ class PathDefinition(
     __slots__ = ()
 
     @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
+    @deprecated_parameters(
+        authenticator=("authenticators", "3.0", lambda x: [x] if x is not None else [])
+    )
     def __new__(cls, *args, **kwargs):
         return super(PathDefinition, cls).__new__(cls, *args, **kwargs)
 
@@ -235,6 +238,11 @@ class PathDefinition(
     @deprecated("response_body_schema", "2.0")
     def marshal_schema(self):
         return self.response_body_schema
+
+    @property
+    @deprecated("authenticator", "3.0")
+    def authenticator(self):
+        return self.authenticators[0] if self.authenticators else None
 
 
 class HandlerRegistry(object):
@@ -350,7 +358,7 @@ class HandlerRegistry(object):
                     query_string_schema=definition_.query_string_schema,
                     request_body_schema=definition_.request_body_schema,
                     headers_schema=definition_.headers_schema,
-                    authenticator=definition_.authenticator,
+                    authenticators=definition_.authenticators,
                     tags=definition_.tags,
                     mimetype=definition_.mimetype,
                 )
@@ -413,7 +421,7 @@ class HandlerRegistry(object):
             query_string_schema=query_string_schema,
             request_body_schema=request_body_schema,
             headers_schema=headers_schema,
-            authenticator=authenticator,
+            authenticators=[authenticator] if authenticator is not None else [],
             tags=tags,
             mimetype=mimetype,
         )
@@ -475,11 +483,17 @@ class HandlerRegistry(object):
                     rule=definition_.path,
                     view_func=_wrap_handler(
                         f=definition_.func,
-                        authenticators=(
+                        authenticators=[
                             self.default_authenticator
-                            if definition_.authenticator is USE_DEFAULT
-                            else definition_.authenticator
-                        ),
+                            if authenticator is USE_DEFAULT
+                            else authenticator
+                            for authenticator in definition_.authenticators
+                            if (
+                                self.default_authenticator
+                                or authenticator is not USE_DEFAULT
+                            )
+                            and authenticator is not None
+                        ],
                         query_string_schema=definition_.query_string_schema,
                         request_body_schema=definition_.request_body_schema,
                         headers_schema=(
