@@ -280,14 +280,18 @@ class SwaggerV2Generator(SwaggerGenerator):
                 if parameters_definition:
                     path_definition[method_lower][sw.parameters] = parameters_definition
 
-                if d.authenticator is None:
+                if not d.authenticators:
                     path_definition[method_lower][sw.security] = []
-                elif d.authenticator is not USE_DEFAULT:
-                    security = self.authenticator_converter.get_security_requirement(
-                        d.authenticator
-                    )
-                    path_definition[method_lower][sw.security] = security
-
+                else:
+                    security = [
+                        self.authenticator_converter.get_security_requirement(
+                            authenticator
+                        )[0]
+                        for authenticator in d.authenticators
+                        if authenticator is not USE_DEFAULT
+                    ]
+                    if security:
+                        path_definition[method_lower][sw.security] = security
                 if d.tags:
                     path_definition[method_lower][sw.tags] = d.tags
 

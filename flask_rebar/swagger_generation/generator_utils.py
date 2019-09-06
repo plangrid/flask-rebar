@@ -311,9 +311,10 @@ class AuthenticatorConverter(object):
         security_definitions = {}
 
         authenticators = set(
-            d.authenticator
+            authenticator
             for d in iterate_path_definitions(paths=registry.paths)
-            if d.authenticator is not None and d.authenticator is not USE_DEFAULT
+            for authenticator in d.authenticators
+            if authenticator is not None and authenticator is not USE_DEFAULT
         )
 
         if registry.default_authenticator is not None:
