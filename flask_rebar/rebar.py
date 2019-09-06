@@ -322,6 +322,14 @@ class HandlerRegistry(object):
             [authenticator] if authenticator is not None else []
         )
 
+    def set_default_authenticators(self, authenticators):
+        """
+       Sets the handler authenticators to be used by default.
+
+       :param List(flask_rebar.authenticators.Authenticator) authenticators:
+       """
+        self.default_authenticators = authenticators or []
+
     def set_default_headers_schema(self, headers_schema):
         """
         Sets the schema to be used by default to validate incoming headers.
