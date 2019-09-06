@@ -262,8 +262,8 @@ class HandlerRegistry(object):
 
     :param str prefix:
         URL prefix for all handlers registered with this registry instance.
-    :param flask_rebar.authenticators.Authenticator default_authenticator:
-        Authenticator to use for all handlers as a default.
+    :param List(flask_rebar.authenticators.Authenticator) default_authenticators:
+        List of Authenticators to use for all handlers as a default.
     :param marshmallow.Schema default_headers_schema:
         Schema to validate the headers on all requests as a default.
     :param str default_mimetype:
@@ -281,10 +281,17 @@ class HandlerRegistry(object):
         If set as None, no Swagger UI will be hosted.
     """
 
+    @deprecated_parameters(
+        default_authenticator=(
+            "default_authenticators",
+            "3.0",
+            lambda x: [x] if x is not None else [],
+        )
+    )
     def __init__(
         self,
         prefix=None,
-        default_authenticator=None,
+        default_authenticators=None,
         default_headers_schema=None,
         default_mimetype=None,
         swagger_generator=None,
@@ -293,12 +300,17 @@ class HandlerRegistry(object):
     ):
         self.prefix = normalize_prefix(prefix)
         self._paths = defaultdict(dict)
-        self.default_authenticator = default_authenticator
+        self.default_authenticators = default_authenticators or []
         self.default_headers_schema = default_headers_schema
         self.default_mimetype = default_mimetype
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.swagger_path = swagger_path
         self.swagger_ui_path = swagger_ui_path
+
+    @property
+    @deprecated("default_authenticators", "3.0")
+    def default_authenticator(self):
+        return self.default_authenticators[0] if self.default_authenticators else None
 
     def set_default_authenticator(self, authenticator):
         """
@@ -306,7 +318,9 @@ class HandlerRegistry(object):
 
         :param flask_rebar.authenticators.Authenticator authenticator:
         """
-        self.default_authenticator = authenticator
+        self.default_authenticators = (
+            [authenticator] if authenticator is not None else []
+        )
 
     def set_default_headers_schema(self, headers_schema):
         """
@@ -479,21 +493,18 @@ class HandlerRegistry(object):
                 if self.prefix:
                     endpoint = ".".join((self.prefix, endpoint))
 
+                authenticators = []
+                for authenticator in definition_.authenticators:
+                    if authenticator is USE_DEFAULT:
+                        authenticators.extend(self.default_authenticators)
+                    else:
+                        authenticators.append(authenticator)
+
                 app.add_url_rule(
                     rule=definition_.path,
                     view_func=_wrap_handler(
                         f=definition_.func,
-                        authenticators=[
-                            self.default_authenticator
-                            if authenticator is USE_DEFAULT
-                            else authenticator
-                            for authenticator in definition_.authenticators
-                            if (
-                                self.default_authenticator
-                                or authenticator is not USE_DEFAULT
-                            )
-                            and authenticator is not None
-                        ],
+                        authenticators=authenticators,
                         query_string_schema=definition_.query_string_schema,
                         request_body_schema=definition_.request_body_schema,
                         headers_schema=(
@@ -577,7 +588,7 @@ class Rebar(object):
     def create_handler_registry(
         self,
         prefix=None,
-        default_authenticator=None,
+        default_authenticator=None,  # TODO deprecate
         default_headers_schema=None,
         default_mimetype=None,
         swagger_generator=None,
@@ -616,7 +627,9 @@ class Rebar(object):
         """
         registry = HandlerRegistry(
             prefix=prefix,
-            default_authenticator=default_authenticator,
+            default_authenticators=[default_authenticator]
+            if default_authenticator is not None
+            else [],
             default_headers_schema=default_headers_schema,
             default_mimetype=default_mimetype,
             swagger_generator=swagger_generator,
