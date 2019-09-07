@@ -25,8 +25,11 @@ from flask_rebar.testing.swagger_jsonschema import (
     SWAGGER_V3_JSONSCHEMA,
 )
 
-from tests.swagger_generation.registries import legacy
-from tests.swagger_generation.registries import exploded_query_string
+from tests.swagger_generation.registries import (
+    legacy,
+    exploded_query_string,
+    multiple_authenticators,
+)
 
 
 def _assert_dicts_equal(a, b):
@@ -217,9 +220,19 @@ def test_path_parameter_types_must_be_the_same_for_same_path(generator):
         (legacy.registry, 3, legacy.EXPECTED_SWAGGER_V3),
         (exploded_query_string.registry, 2, exploded_query_string.EXPECTED_SWAGGER_V2),
         (exploded_query_string.registry, 3, exploded_query_string.EXPECTED_SWAGGER_V3),
+        (
+            multiple_authenticators.registry,
+            2,
+            multiple_authenticators.EXPECTED_SWAGGER_V2,
+        ),
+        (
+            multiple_authenticators.registry,
+            3,
+            multiple_authenticators.EXPECTED_SWAGGER_V3,
+        ),
     ],
 )
-def test_swagger_generator_v2(registry, swagger_version, expected_swagger):
+def test_swagger_generators(registry, swagger_version, expected_swagger):
     if swagger_version == 2:
         swagger_jsonschema = SWAGGER_V2_JSONSCHEMA
         generator = SwaggerV2Generator()
