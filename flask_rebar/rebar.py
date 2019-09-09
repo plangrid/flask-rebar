@@ -620,7 +620,7 @@ class Rebar(object):
     def create_handler_registry(
         self,
         prefix=None,
-        default_authenticators=None,  # TODO deprecate
+        default_authenticators=None,
         default_headers_schema=None,
         default_mimetype=None,
         swagger_generator=None,
