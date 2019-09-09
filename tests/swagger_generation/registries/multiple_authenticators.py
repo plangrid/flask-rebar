@@ -57,7 +57,7 @@ def get_foo(foo_uid):
     method="PATCH",
     marshal_schema={200: FooSchema()},
     request_body_schema=FooUpdateSchema(),
-    authenticators=[authenticator],
+    authenticators=authenticator,
 )
 def update_foo(foo_uid):
     pass

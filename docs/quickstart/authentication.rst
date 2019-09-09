@@ -21,7 +21,7 @@ Flask-Rebar ships with a ``HeaderApiKeyAuthenticator``.
    @registry.handles(
       rule='/todos/<id>',
       method='GET',
-      authenticators=[authenticator],
+      authenticators=authenticator,
    )
    def get_todo(id):
        ...
@@ -45,7 +45,7 @@ This also supports very lightweight way to identify clients based on the value o
    @registry.handles(
       rule='/todos/<id>',
       method='GET',
-      authenticator=authenticator,
+      authenticators=authenticator,
    )
    def get_todo(id):
        app_name = authenticator.authenticated_app_name
@@ -62,7 +62,7 @@ An authenticator can be added as the default headers schema for all handlers via
 
 .. code-block:: python
 
-   registry.set_default_authenticators([authenticator])
+   registry.set_default_authenticator(authenticator)
 
 This default can be extended for any particular handler by passing flask_rebar.authenticators.USE_DEFAULT as one of the authenticators.
 This default can be overriden in any particular handler by setting ``authenticators`` to something else, including ``None`` to bypass any authentication.

@@ -188,7 +188,7 @@ class RebarTest(unittest.TestCase):
         authenticator = HeaderApiKeyAuthenticator(header=auth_header)
         authenticator.register_key(app_name="internal", key=auth_secret)
 
-        register_endpoint(registry, authenticators=[authenticator])
+        register_endpoint(registry, authenticators=authenticator)
         app = create_rebar_app(rebar)
 
         resp = app.test_client().get(
