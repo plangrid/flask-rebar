@@ -48,6 +48,17 @@ else:
     PERMANENT_REDIRECT_ERROR = RequestRedirect
 
 
+def _convert_authenticator_to_authenticators(authenticator):
+    if isinstance(authenticator, Authenticator) or authenticator is USE_DEFAULT:
+        return [authenticator]
+    elif authenticator is None:
+        return []
+    else:
+        raise ValueError(
+            "authenticator must be an instance of Authenticator, USE_DEFAULT, or None."
+        )
+
+
 def _unpack_view_func_return_value(rv):
     """
     Normalize a return value from a view function into a tuple of (body, status, headers).
@@ -229,7 +240,11 @@ class PathDefinition(
 
     @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
     @deprecated_parameters(
-        authenticator=("authenticators", "3.0", lambda x: [x] if x is not None else [])
+        authenticator=(
+            "authenticators",
+            "3.0",
+            _convert_authenticator_to_authenticators,
+        )
     )
     def __new__(cls, *args, **kwargs):
         return super(PathDefinition, cls).__new__(cls, *args, **kwargs)
@@ -285,7 +300,7 @@ class HandlerRegistry(object):
         default_authenticator=(
             "default_authenticators",
             "3.0",
-            lambda x: [x] if x is not None else [],
+            _convert_authenticator_to_authenticators,
         )
     )
     def __init__(
@@ -395,7 +410,11 @@ class HandlerRegistry(object):
 
     @deprecated_parameters(
         marshal_schema=("response_body_schema", "2.0"),
-        authenticator=("authenticators", "3.0", lambda x: [x] if x is not None else []),
+        authenticator=(
+            "authenticators",
+            "3.0",
+            _convert_authenticator_to_authenticators,
+        ),
     )
     def add_handler(
         self,
@@ -443,6 +462,7 @@ class HandlerRegistry(object):
         if isinstance(response_body_schema, marshmallow.Schema):
             response_body_schema = {200: response_body_schema}
 
+        # authenticators can be a list of Authenticators, a single Authenticator, USE_DEFAULT, or None
         if isinstance(authenticators, Authenticator) or authenticators is USE_DEFAULT:
             authenticators = [authenticators]
         elif authenticators is None:
@@ -464,7 +484,11 @@ class HandlerRegistry(object):
 
     @deprecated_parameters(
         marshal_schema=("response_body_schema", "2.0"),
-        authenticator=("authenticators", "3.0", lambda x: [x] if x is not None else []),
+        authenticator=(
+            "authenticators",
+            "3.0",
+            _convert_authenticator_to_authenticators,
+        ),
     )
     def handles(
         self,
