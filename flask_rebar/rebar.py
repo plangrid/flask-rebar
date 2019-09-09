@@ -638,7 +638,7 @@ class Rebar(object):
         default_authenticator=(
             "default_authenticators",
             "3.0",
-            lambda x: [x] if x is not None else [],
+            _convert_authenticator_to_authenticators,
         )
     )
     def create_handler_registry(
