@@ -25,6 +25,8 @@ from flask_rebar.testing.swagger_jsonschema import SWAGGER_V3_JSONSCHEMA
 
 DEFAULT_AUTH_HEADER = "x-default-auth"
 DEFAULT_AUTH_SECRET = "SECRET!"
+DEFAULT_ALTERNATIVE_AUTH_HEADER = "x-api-default-auth"
+DEFAULT_ALTERNATIVE_AUTH_SECRET = "ALSO A SECRET!"
 DEFAULT_RESPONSE = {"uid": "0", "name": "I'm the default for testing!"}
 DEFAULT_ERROR = {"message": messages.internal_server_error}
 
@@ -71,6 +73,12 @@ def auth_headers(header=DEFAULT_AUTH_HEADER, secret=DEFAULT_AUTH_SECRET):
     return dict([(header, secret)])
 
 
+def alternative_auth_headers(
+    header=DEFAULT_ALTERNATIVE_AUTH_HEADER, secret=DEFAULT_ALTERNATIVE_AUTH_SECRET
+):
+    return dict([(header, secret)])
+
+
 def create_rebar_app(rebar):
     app = Flask("RebarTest")
     app.testing = True
@@ -86,6 +94,22 @@ def register_default_authenticator(registry):
     registry.set_default_authenticator(default_authenticator)
 
 
+def register_multiple_authenticators(registry):
+    default_authenticator = HeaderApiKeyAuthenticator(
+        header=DEFAULT_AUTH_HEADER, name="default"
+    )
+    default_authenticator.register_key(app_name="internal", key=DEFAULT_AUTH_SECRET)
+    alternative_default_authenticator = HeaderApiKeyAuthenticator(
+        header=DEFAULT_ALTERNATIVE_AUTH_HEADER, name="alternative"
+    )
+    alternative_default_authenticator.register_key(
+        app_name="internal", key=DEFAULT_ALTERNATIVE_AUTH_SECRET
+    )
+    registry.set_default_authenticators(
+        (default_authenticator, alternative_default_authenticator)
+    )
+
+
 def register_endpoint(
     registry,
     func=None,
@@ -96,7 +120,7 @@ def register_endpoint(
     query_string_schema=None,
     request_body_schema=None,
     headers_schema=None,
-    authenticator=USE_DEFAULT,
+    authenticators=USE_DEFAULT,
 ):
     def default_handler_func(*args, **kwargs):
         return DEFAULT_RESPONSE
@@ -110,7 +134,7 @@ def register_endpoint(
         query_string_schema=query_string_schema,
         request_body_schema=request_body_schema,
         headers_schema=headers_schema,
-        authenticator=authenticator,
+        authenticators=authenticators,
     )
 
 
@@ -131,6 +155,28 @@ class RebarTest(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 401)
 
+    def test_default_authentication_w_multiple(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+        register_multiple_authenticators(registry)
+        register_endpoint(registry)
+        app = create_rebar_app(rebar)
+
+        # Test main
+        resp = app.test_client().get(path="/foos/1", headers=auth_headers())
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+
+        # Test alternative
+        resp = app.test_client().get(path="/foos/1", headers=alternative_auth_headers())
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+
+        resp = app.test_client().get(
+            path="/foos/1", headers=auth_headers(secret="LIES!")
+        )
+        self.assertEqual(resp.status_code, 401)
+
     def test_override_authenticator(self):
         auth_header = "x-overridden-auth"
         auth_secret = "BLAM!"
@@ -142,7 +188,7 @@ class RebarTest(unittest.TestCase):
         authenticator = HeaderApiKeyAuthenticator(header=auth_header)
         authenticator.register_key(app_name="internal", key=auth_secret)
 
-        register_endpoint(registry, authenticator=authenticator)
+        register_endpoint(registry, authenticators=authenticator)
         app = create_rebar_app(rebar)
 
         resp = app.test_client().get(
@@ -159,7 +205,7 @@ class RebarTest(unittest.TestCase):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
         register_default_authenticator(registry)
-        register_endpoint(registry, authenticator=None)
+        register_endpoint(registry, authenticators=None)
         app = create_rebar_app(rebar)
 
         resp = app.test_client().get(path="/foos/1")

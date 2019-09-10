@@ -24,8 +24,9 @@ from werkzeug.datastructures import Headers
 from werkzeug.routing import RequestRedirect
 
 from flask_rebar import messages
-from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar import errors
+from flask_rebar.authenticators import Authenticator
+from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.utils.request_utils import marshal
 from flask_rebar.utils.request_utils import response
 from flask_rebar.utils.request_utils import get_header_params_or_400
@@ -45,6 +46,17 @@ if LooseVersion(flask_version) < LooseVersion("0.11.0"):
 else:
     MOVED_PERMANENTLY_ERROR = RequestRedirect
     PERMANENT_REDIRECT_ERROR = RequestRedirect
+
+
+def _convert_authenticator_to_authenticators(authenticator):
+    if isinstance(authenticator, Authenticator) or authenticator is USE_DEFAULT:
+        return [authenticator]
+    elif authenticator is None:
+        return []
+    else:
+        raise ValueError(
+            "authenticator must be an instance of Authenticator, USE_DEFAULT, or None."
+        )
 
 
 def _unpack_view_func_return_value(rv):
@@ -82,7 +94,7 @@ def _unpack_view_func_return_value(rv):
 @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
 def _wrap_handler(
     f,
-    authenticator=None,
+    authenticators=None,
     query_string_schema=None,
     request_body_schema=None,
     headers_schema=None,
@@ -95,11 +107,22 @@ def _wrap_handler(
     :param f:
     :returns: a new, wrapped handler function
     """
+    # authenticators can be a single Authenticator, a list of Authenticators, or None.
+    if isinstance(authenticators, Authenticator):
+        authenticators = [authenticators]
 
     @wraps(f)
     def wrapped(*args, **kwargs):
-        if authenticator:
-            authenticator.authenticate()
+        if authenticators:
+            first_error = None
+            for authenticator in authenticators:
+                try:
+                    authenticator.authenticate()
+                    break  # Short-circuit on first successful authentication
+                except errors.Unauthorized as e:
+                    first_error = first_error or e
+            else:
+                raise first_error or errors.Unauthorized
 
         if query_string_schema:
             g.validated_args = get_query_string_params_or_400(
@@ -207,7 +230,7 @@ class PathDefinition(
             "query_string_schema",
             "request_body_schema",
             "headers_schema",
-            "authenticator",
+            "authenticators",
             "tags",
             "mimetype",
         ],
@@ -216,6 +239,13 @@ class PathDefinition(
     __slots__ = ()
 
     @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
+    @deprecated_parameters(
+        authenticator=(
+            "authenticators",
+            "3.0",
+            _convert_authenticator_to_authenticators,
+        )
+    )
     def __new__(cls, *args, **kwargs):
         return super(PathDefinition, cls).__new__(cls, *args, **kwargs)
 
@@ -223,6 +253,11 @@ class PathDefinition(
     @deprecated("response_body_schema", "2.0")
     def marshal_schema(self):
         return self.response_body_schema
+
+    @property
+    @deprecated("authenticator", "3.0")
+    def authenticator(self):
+        return self.authenticators[0] if self.authenticators else None
 
 
 class HandlerRegistry(object):
@@ -242,8 +277,8 @@ class HandlerRegistry(object):
 
     :param str prefix:
         URL prefix for all handlers registered with this registry instance.
-    :param flask_rebar.authenticators.Authenticator default_authenticator:
-        Authenticator to use for all handlers as a default.
+    :param Union(flask_rebar.authenticators.Authenticator, List(flask_rebar.authenticators.Authenticator), None)
+        default_authenticators: List of Authenticators to use for all handlers as a default.
     :param marshmallow.Schema default_headers_schema:
         Schema to validate the headers on all requests as a default.
     :param str default_mimetype:
@@ -261,32 +296,60 @@ class HandlerRegistry(object):
         If set as None, no Swagger UI will be hosted.
     """
 
+    @deprecated_parameters(
+        default_authenticator=(
+            "default_authenticators",
+            "3.0",
+            _convert_authenticator_to_authenticators,
+        )
+    )
     def __init__(
         self,
         prefix=None,
-        default_authenticator=None,
+        default_authenticators=None,
         default_headers_schema=None,
         default_mimetype=None,
         swagger_generator=None,
         swagger_path="/swagger",
         swagger_ui_path="/swagger/ui",
     ):
+        # default_authenticators can be a single Authenticator, a list of Authenticators, or None.
+        if isinstance(default_authenticators, Authenticator):
+            default_authenticators = [default_authenticators]
+        elif default_authenticators is None:
+            default_authenticators = []
+
         self.prefix = normalize_prefix(prefix)
         self._paths = defaultdict(dict)
-        self.default_authenticator = default_authenticator
+        self.default_authenticators = default_authenticators
         self.default_headers_schema = default_headers_schema
         self.default_mimetype = default_mimetype
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.swagger_path = swagger_path
         self.swagger_ui_path = swagger_ui_path
 
+    @property
+    @deprecated("default_authenticators", "3.0")
+    def default_authenticator(self):
+        return self.default_authenticators[0] if self.default_authenticators else None
+
     def set_default_authenticator(self, authenticator):
         """
         Sets a handler authenticator to be used by default.
 
-        :param flask_rebar.authenticators.Authenticator authenticator:
+        :param Union(None, flask_rebar.authenticators.Authenticator) authenticator:
         """
-        self.default_authenticator = authenticator
+        self.default_authenticators = (
+            [authenticator] if authenticator is not None else []
+        )
+
+    def set_default_authenticators(self, authenticators):
+        """
+       Sets the handler authenticators to be used by default.
+
+       :param Union(List(flask_rebar.authenticators.Authenticator)) authenticators:
+       """
+        self.default_authenticators = authenticators or []
 
     def set_default_headers_schema(self, headers_schema):
         """
@@ -338,14 +401,21 @@ class HandlerRegistry(object):
                     query_string_schema=definition_.query_string_schema,
                     request_body_schema=definition_.request_body_schema,
                     headers_schema=definition_.headers_schema,
-                    authenticator=definition_.authenticator,
+                    authenticators=definition_.authenticators,
                     tags=definition_.tags,
                     mimetype=definition_.mimetype,
                 )
 
         return paths
 
-    @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
+    @deprecated_parameters(
+        marshal_schema=("response_body_schema", "2.0"),
+        authenticator=(
+            "authenticators",
+            "3.0",
+            _convert_authenticator_to_authenticators,
+        ),
+    )
     def add_handler(
         self,
         func,
@@ -356,7 +426,7 @@ class HandlerRegistry(object):
         query_string_schema=None,
         request_body_schema=None,
         headers_schema=USE_DEFAULT,
-        authenticator=USE_DEFAULT,
+        authenticators=USE_DEFAULT,
         tags=None,
         mimetype=USE_DEFAULT,
     ):
@@ -380,8 +450,8 @@ class HandlerRegistry(object):
             assumes everything is JSON.
         :param Type[USE_DEFAULT]|None|marshmallow.Schema headers_schema:
             Schema to use to grab and validate headers.
-        :param Type[USE_DEFAULT]|None|flask_rebar.framing.authenticators.Authenticator authenticator:
-            An authenticator object to authenticate incoming requests.
+        :param Type[USE_DEFAULT]|None|List(Authenticator)|Authenticator authenticators:
+            A list of authenticator objects to authenticate incoming requests.
             If left as USE_DEFAULT, the Rebar's default will be used.
             Set to None to make this an unauthenticated handler.
         :param Sequence[str] tags:
@@ -392,6 +462,12 @@ class HandlerRegistry(object):
         if isinstance(response_body_schema, marshmallow.Schema):
             response_body_schema = {200: response_body_schema}
 
+        # authenticators can be a list of Authenticators, a single Authenticator, USE_DEFAULT, or None
+        if isinstance(authenticators, Authenticator) or authenticators is USE_DEFAULT:
+            authenticators = [authenticators]
+        elif authenticators is None:
+            authenticators = []
+
         self._paths[rule][method] = PathDefinition(
             func=func,
             path=rule,
@@ -401,12 +477,19 @@ class HandlerRegistry(object):
             query_string_schema=query_string_schema,
             request_body_schema=request_body_schema,
             headers_schema=headers_schema,
-            authenticator=authenticator,
+            authenticators=authenticators,
             tags=tags,
             mimetype=mimetype,
         )
 
-    @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
+    @deprecated_parameters(
+        marshal_schema=("response_body_schema", "2.0"),
+        authenticator=(
+            "authenticators",
+            "3.0",
+            _convert_authenticator_to_authenticators,
+        ),
+    )
     def handles(
         self,
         rule,
@@ -416,7 +499,7 @@ class HandlerRegistry(object):
         query_string_schema=None,
         request_body_schema=None,
         headers_schema=USE_DEFAULT,
-        authenticator=USE_DEFAULT,
+        authenticators=USE_DEFAULT,
         tags=None,
         mimetype=USE_DEFAULT,
     ):
@@ -435,7 +518,7 @@ class HandlerRegistry(object):
                 query_string_schema=query_string_schema,
                 request_body_schema=request_body_schema,
                 headers_schema=headers_schema,
-                authenticator=authenticator,
+                authenticators=authenticators,
                 tags=tags,
                 mimetype=mimetype,
             )
@@ -459,15 +542,18 @@ class HandlerRegistry(object):
                 if self.prefix:
                     endpoint = ".".join((self.prefix, endpoint))
 
+                authenticators = []
+                for authenticator in definition_.authenticators:
+                    if authenticator is USE_DEFAULT:
+                        authenticators.extend(self.default_authenticators)
+                    else:
+                        authenticators.append(authenticator)
+
                 app.add_url_rule(
                     rule=definition_.path,
                     view_func=_wrap_handler(
                         f=definition_.func,
-                        authenticator=(
-                            self.default_authenticator
-                            if definition_.authenticator is USE_DEFAULT
-                            else definition_.authenticator
-                        ),
+                        authenticators=authenticators,
                         query_string_schema=definition_.query_string_schema,
                         request_body_schema=definition_.request_body_schema,
                         headers_schema=(
@@ -548,10 +634,17 @@ class Rebar(object):
         self.paths = defaultdict(dict)
         self.uncaught_exception_handlers = []
 
+    @deprecated_parameters(
+        default_authenticator=(
+            "default_authenticators",
+            "3.0",
+            _convert_authenticator_to_authenticators,
+        )
+    )
     def create_handler_registry(
         self,
         prefix=None,
-        default_authenticator=None,
+        default_authenticators=None,
         default_headers_schema=None,
         default_mimetype=None,
         swagger_generator=None,
@@ -569,8 +662,8 @@ class Rebar(object):
 
         :param str prefix:
             URL prefix for all handlers registered with this registry instance.
-        :param flask_rebar.authenticators.Authenticator default_authenticator:
-            Authenticator to use for all handlers as a default.
+        :param Union(List(Authenticator), Authenticator, None) default_authenticators:
+            List of Authenticators to use for all handlers as a default.
         :param marshmallow.Schema default_headers_schema:
             Schema to validate the headers on all requests as a default.
         :param str default_mimetype:
@@ -590,7 +683,7 @@ class Rebar(object):
         """
         registry = HandlerRegistry(
             prefix=prefix,
-            default_authenticator=default_authenticator,
+            default_authenticators=default_authenticators,
             default_headers_schema=default_headers_schema,
             default_mimetype=default_mimetype,
             swagger_generator=swagger_generator,

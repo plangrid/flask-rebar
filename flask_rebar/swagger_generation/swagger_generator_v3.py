@@ -89,8 +89,22 @@ class SwaggerV3Generator(SwaggerGenerator):
         """
 
         components = self._get_components(registry=registry)
+
+        if registry.default_authenticators:
+            default_security = [
+                self.authenticator_converter.get_security_requirement(
+                    default_authenticator
+                )[0]
+                for default_authenticator in registry.default_authenticators
+                if default_authenticator is not None
+            ]
+        else:
+            default_security = None
+
         paths = self._get_paths(
-            paths=registry.paths, default_headers_schema=registry.default_headers_schema
+            paths=registry.paths,
+            default_headers_schema=registry.default_headers_schema,
+            default_security=default_security,
         )
 
         swagger = {
@@ -99,13 +113,8 @@ class SwaggerV3Generator(SwaggerGenerator):
             sw.paths: paths,
             sw.components: components,
         }
-
-        if registry.default_authenticator:
-            swagger[
-                sw.security
-            ] = self.authenticator_converter.get_security_requirement(
-                registry.default_authenticator
-            )
+        if default_security:
+            swagger[sw.security] = default_security
 
         if self.tags:
             swagger[sw.tags] = [tag.as_swagger() for tag in self.tags]
@@ -124,7 +133,7 @@ class SwaggerV3Generator(SwaggerGenerator):
 
         return swagger
 
-    def _get_paths(self, paths, default_headers_schema):
+    def _get_paths(self, paths, default_headers_schema, default_security=None):
         path_definitions = {}
 
         for path, methods in paths.items():
@@ -235,13 +244,23 @@ class SwaggerV3Generator(SwaggerGenerator):
                 if request_body:
                     path_definition[method_lower][sw.request_body] = request_body
 
-                if d.authenticator is None:
+                if not d.authenticators:
                     path_definition[method_lower][sw.security] = []
-                elif d.authenticator is not USE_DEFAULT:
-                    security = self.authenticator_converter.get_security_requirement(
-                        d.authenticator
-                    )
-                    path_definition[method_lower][sw.security] = security
+                else:
+                    non_default = False
+                    security = []
+                    for authenticator in d.authenticators:
+                        if authenticator is not USE_DEFAULT:
+                            security.extend(
+                                self.authenticator_converter.get_security_requirement(
+                                    authenticator
+                                )
+                            )
+                            non_default = True
+                        elif default_security is not None:
+                            security.extend(default_security)
+                    if non_default:
+                        path_definition[method_lower][sw.security] = security
 
                 if d.tags:
                     path_definition[method_lower][sw.tags] = d.tags
