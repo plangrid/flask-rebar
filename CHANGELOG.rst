@@ -2,6 +2,19 @@ Changelog
 =========
 
 
+v1.10.0 (2019-09-11)
+--------------------
+- BP-763: Add support for multiple authenticators (#122) [Andrew
+  Standley]
+
+  * Added the ability to specify a conversion function for deprecated params.
+
+  * Added support for defining authentication with a list of Authenticators; None, a single Authenticator, and USE_DEFAULT(where applicable) are still valid values. The authenticator parameter becomes authenticators; authenticator is still usable until 3.0 via the deprecation wrappers. The default_authenticator parameter becomes default_authenticators; default_authenticator is still usable until 3.0 via the deprecation wrappers. This change affects PathDefinition, HandlerRegistry, Rebar, SwaggerGeneratorI, SwaggerV2Generator, and SwaggerV3Generator. Note: It's an open question how best to handle returning the errors when all authenticators fail. For now we are returning the first error with the assumption that the first authenticator is the 'preferred' one; this also preserves the previous behaviour.
+
+  * Updated docs.
+- [FEATURE] adding too many requests error (#120) [Fabian]
+
+
 v1.9.1 (2019-08-20)
 -------------------
 
