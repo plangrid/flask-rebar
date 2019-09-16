@@ -705,7 +705,7 @@ class RebarTest(unittest.TestCase):
             method="POST",
             path="/my_post_endpoint",
             request_body_schema=FooListSchema,
-            response_body_schema=None,
+            response_body_schema=FooSchema,
             func=post_foo,
         )
 

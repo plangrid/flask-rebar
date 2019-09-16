@@ -461,8 +461,9 @@ class HandlerRegistry(object):
         :param Type[USE_DEFAULT]|None|str mimetype:
             Content-Type header to add to the response schema
         """
-        if isinstance(response_body_schema, marshmallow.Schema) or isclass(
-            response_body_schema
+        if isinstance(response_body_schema, marshmallow.Schema) or (
+            isclass(response_body_schema)
+            and issubclass(response_body_schema, marshmallow.Schema)
         ):
             response_body_schema = {200: response_body_schema}
 
