@@ -17,7 +17,6 @@ from copy import copy
 from distutils.version import LooseVersion
 from functools import wraps
 from inspect import isclass
-from types import MethodType
 
 import marshmallow
 from flask import __version__ as flask_version
@@ -471,9 +470,12 @@ class HandlerRegistry(object):
         headers_schema = normalize_schema(headers_schema)
         request_body_schema = normalize_schema(request_body_schema)
         query_string_schema = normalize_schema(query_string_schema)
+
         if response_body_schema:
-            for code, schema in response_body_schema.items():
-                response_body_schema[code] = normalize_schema(schema)
+            response_body_schema = {
+                code: normalize_schema(schema)
+                for (code, schema) in response_body_schema.items()
+            }
 
         # authenticators can be a list of Authenticators, a single Authenticator, USE_DEFAULT, or None
         if isinstance(authenticators, Authenticator) or authenticators is USE_DEFAULT:
