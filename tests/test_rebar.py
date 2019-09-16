@@ -21,7 +21,6 @@ from flask_rebar.rebar import prefix_url
 from flask_rebar.testing import validate_swagger
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.testing.swagger_jsonschema import SWAGGER_V3_JSONSCHEMA
-import flask_rebar.messages
 
 DEFAULT_AUTH_HEADER = "x-default-auth"
 DEFAULT_AUTH_SECRET = "SECRET!"
@@ -714,17 +713,21 @@ class RebarTest(unittest.TestCase):
         # violate headers schema:
         resp = app.test_client().get(path="/my_get_endpoint?name=QuerystringName")
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json["message"], messages.header_validation_failed)
+        self.assertEqual(
+            get_json_from_resp(resp)["message"], messages.header_validation_failed
+        )
         # violate querystring schema:
         resp = app.test_client().get(path="/my_get_endpoint", headers=expected_headers)
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json["message"], messages.query_string_validation_failed)
+        self.assertEqual(
+            get_json_from_resp(resp)["message"], messages.query_string_validation_failed
+        )
         # valid request:
         resp = app.test_client().get(
             path="/my_get_endpoint?name=QuerystringName", headers=expected_headers
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, expected_foo.data)
+        self.assertEqual(get_json_from_resp(resp), expected_foo.data)
 
         resp = app.test_client().post(
             path="/my_post_endpoint",
@@ -732,7 +735,9 @@ class RebarTest(unittest.TestCase):
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json["message"], messages.body_validation_failed)
+        self.assertEqual(
+            get_json_from_resp(resp)["message"], messages.body_validation_failed
+        )
 
         resp = app.test_client().post(
             path="/my_post_endpoint",

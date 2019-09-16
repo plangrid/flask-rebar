@@ -21,6 +21,7 @@ from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
 from flask_rebar import compat
 from flask_rebar import errors
 from flask_rebar import messages
+from flask_rebar.utils.defaults import USE_DEFAULT
 
 
 class HeadersProxy(compat.Mapping):
@@ -92,7 +93,7 @@ def normalize_schema(schema):
     This allows for either an instance of a marshmallow.Schema or the class
     itself to be passed to functions.
     """
-    if schema is not None and not isinstance(schema, marshmallow.Schema):
+    if schema not in (None, USE_DEFAULT) and not isinstance(schema, marshmallow.Schema):
         schema = schema()
     return schema
 
