@@ -468,6 +468,7 @@ class HandlerRegistry(object):
             response_body_schema = {200: response_body_schema}
 
         # Fix #115: if we were passed bare classes we'll go ahead and try to instantiate
+        headers_schema = normalize_schema(headers_schema)
         request_body_schema = normalize_schema(request_body_schema)
         query_string_schema = normalize_schema(query_string_schema)
         if response_body_schema:

@@ -12,7 +12,6 @@ import unittest
 
 import marshmallow as m
 from flask import Flask
-from werkzeug.routing import RequestRedirect
 
 from flask_rebar import messages
 from flask_rebar import HeaderApiKeyAuthenticator, SwaggerV3Generator
@@ -22,6 +21,7 @@ from flask_rebar.rebar import prefix_url
 from flask_rebar.testing import validate_swagger
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.testing.swagger_jsonschema import SWAGGER_V3_JSONSCHEMA
+import flask_rebar.messages
 
 DEFAULT_AUTH_HEADER = "x-default-auth"
 DEFAULT_AUTH_SECRET = "SECRET!"
@@ -677,3 +677,74 @@ class RebarTest(unittest.TestCase):
         resp = app.test_client().get(path="/with_trailing_slash")
         self.assertIn(resp.status_code, (301, 308))
         self.assertTrue(resp.headers["Location"].endswith("/with_trailing_slash/"))
+
+    def test_bare_class_schemas_handled(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        expected_foo = FooSchema().load({"uid": "some_uid", "name": "Namey McNamerton"})
+        expected_headers = {"x-name": "Header Name"}
+
+        def get_foo(*args, **kwargs):
+            return expected_foo
+
+        def post_foo(*args, **kwargs):
+            return expected_foo
+
+        register_endpoint(
+            registry=registry,
+            method="GET",
+            path="/my_get_endpoint",
+            headers_schema=HeadersSchema,
+            response_body_schema={200: FooSchema},
+            query_string_schema=FooListSchema,
+            func=get_foo,
+        )
+
+        register_endpoint(
+            registry=registry,
+            method="POST",
+            path="/my_post_endpoint",
+            request_body_schema=FooListSchema,
+            response_body_schema=None,
+            func=post_foo,
+        )
+
+        app = create_rebar_app(rebar)
+        # violate headers schema:
+        resp = app.test_client().get(path="/my_get_endpoint?name=QuerystringName")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json["message"], messages.header_validation_failed)
+        # violate querystring schema:
+        resp = app.test_client().get(path="/my_get_endpoint", headers=expected_headers)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json["message"], messages.query_string_validation_failed)
+        # valid request:
+        resp = app.test_client().get(
+            path="/my_get_endpoint?name=QuerystringName", headers=expected_headers
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json, expected_foo.data)
+
+        resp = app.test_client().post(
+            path="/my_post_endpoint",
+            data='{"wrong": "Posted Name"}',
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json["message"], messages.body_validation_failed)
+
+        resp = app.test_client().post(
+            path="/my_post_endpoint",
+            data='{"name": "Posted Name"}',
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        # ensure Swagger generation doesn't break (Issue #115)
+        from flask_rebar import SwaggerV2Generator, SwaggerV3Generator
+
+        swagger = SwaggerV2Generator().generate(registry)
+        self.assertIsNotNone(swagger)  # really only care that it didn't barf
+        swagger = SwaggerV3Generator().generate(registry)
+        self.assertIsNotNone(swagger)
