@@ -7,7 +7,7 @@ development = [
     "pytest==3.4.1",
     "Flask-Testing==0.6.2",
     "mock==2.0.0",
-    "jsonschema==2.6.0",
+    "jsonschema==3.0.2",
     "Sphinx==1.7.0",
     "sphinx_rtd_theme==0.2.4",
     "bumpversion==0.5.3",
