@@ -16,6 +16,8 @@ from collections import namedtuple
 from copy import copy
 from distutils.version import LooseVersion
 from functools import wraps
+from inspect import isclass
+from types import MethodType
 
 import marshmallow
 from flask import __version__ as flask_version
@@ -32,6 +34,7 @@ from flask_rebar.utils.request_utils import response
 from flask_rebar.utils.request_utils import get_header_params_or_400
 from flask_rebar.utils.request_utils import get_json_body_params_or_400
 from flask_rebar.utils.request_utils import get_query_string_params_or_400
+from flask_rebar.utils.request_utils import normalize_schema
 from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
 from flask_rebar.swagger_generation import SwaggerV2Generator
 from flask_rebar.swagger_ui import create_swagger_ui_blueprint
@@ -46,6 +49,22 @@ if LooseVersion(flask_version) < LooseVersion("0.11.0"):
 else:
     MOVED_PERMANENTLY_ERROR = RequestRedirect
     PERMANENT_REDIRECT_ERROR = RequestRedirect
+
+
+def _apply_schema_helpers(schemas, helpers):
+    for schema in schemas:
+        if not isinstance(schema, marshmallow.Schema):
+            raise ValueError("Expected Schema object but received {}".format(schema))
+        helpers_to_apply = None
+        schema_type = type(schema)
+        if schema_type in helpers:
+            helpers_to_apply = helpers[schema_type]
+        elif USE_DEFAULT in helpers:
+            helpers_to_apply = helpers[USE_DEFAULT]
+
+        if helpers_to_apply:
+            for attr_name, helper in helpers_to_apply.items():
+                setattr(schema, attr_name, MethodType(helper, schema))
 
 
 def _convert_authenticator_to_authenticators(authenticator):
@@ -294,6 +313,10 @@ class HandlerRegistry(object):
     :param str swagger_ui_path:
         The HTML Swagger UI will be hosted at this URL.
         If set as None, no Swagger UI will be hosted.
+    :param dict[class, dict] schema_helpers:
+        Optional dictionary that maps a schema class (or USE_DEFAULT) to a dictionary of "helpers."
+        A "helper" in this context is a named attribute of the schema class, mapped to a function
+        that overrides that attribute.  For example, "on_bind_field" as described in Recipes.
     """
 
     @deprecated_parameters(
@@ -312,6 +335,7 @@ class HandlerRegistry(object):
         swagger_generator=None,
         swagger_path="/swagger",
         swagger_ui_path="/swagger/ui",
+        schema_helpers=None,
     ):
         # default_authenticators can be a single Authenticator, a list of Authenticators, or None.
         if isinstance(default_authenticators, Authenticator):
@@ -327,6 +351,7 @@ class HandlerRegistry(object):
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.swagger_path = swagger_path
         self.swagger_ui_path = swagger_ui_path
+        self.schema_helpers = schema_helpers or {}
 
     @property
     @deprecated("default_authenticators", "3.0")
@@ -459,14 +484,31 @@ class HandlerRegistry(object):
         :param Type[USE_DEFAULT]|None|str mimetype:
             Content-Type header to add to the response schema
         """
-        if isinstance(response_body_schema, marshmallow.Schema):
+        if isinstance(response_body_schema, marshmallow.Schema) or isclass(
+            response_body_schema
+        ):
             response_body_schema = {200: response_body_schema}
+
+        # Fix #115: if we were passed bare classes we'll go ahead and try to instantiate
+        request_body_schema = normalize_schema(request_body_schema)
+        query_string_schema = normalize_schema(query_string_schema)
+        for code, schema in response_body_schema.items():
+            response_body_schema[code] = normalize_schema(schema)
 
         # authenticators can be a list of Authenticators, a single Authenticator, USE_DEFAULT, or None
         if isinstance(authenticators, Authenticator) or authenticators is USE_DEFAULT:
             authenticators = [authenticators]
         elif authenticators is None:
             authenticators = []
+
+        # Fix #109 - adding support for a "schema_helpers" construct that could be used for e.g., on_bind_field
+        if self.schema_helpers:
+            all_schemas = set(response_body_schema.values())
+            if query_string_schema:
+                all_schemas.add(query_string_schema)
+            if request_body_schema:
+                all_schemas.add(request_body_schema)
+            _apply_schema_helpers(all_schemas, self.schema_helpers)
 
         self._paths[rule][method] = PathDefinition(
             func=func,
@@ -650,6 +692,7 @@ class Rebar(object):
         swagger_generator=None,
         swagger_path="/swagger",
         swagger_ui_path="/swagger/ui",
+        schema_helpers=None,
     ):
         """
         Create a new handler registry and add to this extension's set of
@@ -689,6 +732,7 @@ class Rebar(object):
             swagger_generator=swagger_generator,
             swagger_path=swagger_path,
             swagger_ui_path=swagger_ui_path,
+            schema_helpers=schema_helpers,
         )
         self.add_handler_registry(registry=registry)
         return registry

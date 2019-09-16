@@ -92,7 +92,7 @@ def normalize_schema(schema):
     This allows for either an instance of a marshmallow.Schema or the class
     itself to be passed to functions.
     """
-    if not isinstance(schema, marshmallow.Schema):
+    if schema is not None and not isinstance(schema, marshmallow.Schema):
         schema = schema()
     return schema
 
