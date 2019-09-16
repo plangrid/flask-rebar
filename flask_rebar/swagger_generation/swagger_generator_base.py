@@ -35,8 +35,20 @@ from flask_rebar.validation import Error
 
 class SwaggerGeneratorI(ABC):
     @abc.abstractmethod
+    def get_open_api_version(self):
+        """
+        Rebar supports multiple OpenAPI specifications.
+        :return: The OpenAPI specification the generator supports.
+        """
+
+    @abc.abstractmethod
     def generate_swagger(self, registry, host=None):
-        """"""
+        """
+        Generate a swagger definition json object.
+        :param registry:
+        :param host:
+        :return:
+        """
 
     @abc.abstractmethod
     def register_flask_converter_to_swagger_type(self, flask_converter, swagger_type):
@@ -90,6 +102,8 @@ class SwaggerGenerator(SwaggerGeneratorI):
 
     :param marshmallow.Schema default_response_schema: Schema to use as the default of all responses
     """
+
+    _open_api_version = None
 
     def __init__(
         self,
@@ -156,6 +170,9 @@ class SwaggerGenerator(SwaggerGeneratorI):
             (converter_registry or default_registry).convert,
             openapi_version=openapi_major_version,
         )
+
+    def get_open_api_version(self):
+        return self._open_api_version
 
     def register_flask_converter_to_swagger_type(self, flask_converter, swagger_type):
         self.flask_converters_to_swagger_types[flask_converter] = swagger_type

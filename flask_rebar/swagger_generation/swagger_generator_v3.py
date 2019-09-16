@@ -48,6 +48,8 @@ class SwaggerV3Generator(SwaggerGenerator):
         A list of Server Objects to set as the server metadata for the specification.
     """
 
+    _open_api_version = "3.0.2"
+
     def __init__(
         self,
         version="1.0.0",
@@ -108,7 +110,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         )
 
         swagger = {
-            sw.openapi: "3.0.2",
+            sw.openapi: self.get_open_api_version(),
             sw.info: self._get_info(),
             sw.paths: paths,
             sw.components: components,

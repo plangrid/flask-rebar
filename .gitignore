@@ -55,6 +55,9 @@ src
 
 .coverage
 
+#pyenv
+.python-version
+
 # virtualenv
 .venv
 venv

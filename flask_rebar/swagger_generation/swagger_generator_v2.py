@@ -57,6 +57,8 @@ class SwaggerV2Generator(SwaggerGenerator):
         A list of tags used by the specification with additional metadata. \
     """
 
+    _open_api_version = "2.0"
+
     def __init__(
         self,
         host="swag.com",
@@ -147,7 +149,7 @@ class SwaggerV2Generator(SwaggerGenerator):
             _, _, host = host.partition("://")
 
         swagger = {
-            sw.swagger: self._get_version(),
+            sw.swagger: self.get_open_api_version(),
             sw.info: self._get_info(),
             sw.host: host or self.host,
             sw.schemes: list(schemes or self.schemes),
@@ -169,9 +171,6 @@ class SwaggerV2Generator(SwaggerGenerator):
             swagger = recursively_convert_dict_to_ordered_dict(swagger)
 
         return swagger
-
-    def _get_version(self):
-        return "2.0"
 
     def _get_paths(self, paths, default_headers_schema, default_security=None):
         path_definitions = {}
