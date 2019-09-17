@@ -16,7 +16,6 @@ from collections import namedtuple
 from copy import copy
 from distutils.version import LooseVersion
 from functools import wraps
-from inspect import isclass
 
 import marshmallow
 from flask import __version__ as flask_version
@@ -38,6 +37,11 @@ from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
 from flask_rebar.swagger_generation import SwaggerV2Generator
 from flask_rebar.swagger_ui import create_swagger_ui_blueprint
 
+# Deal with maintaining (for now at least) support for 2.7+:
+try:
+    from collections.abc import Mapping  # 3.3+
+except ImportError:
+    from collections import Mapping  # 2.7+
 
 # To catch redirection exceptions, app.errorhandler expects 301 in versions
 # below 0.11.0 but the exception itself in versions greater than 0.11.0.
@@ -461,18 +465,15 @@ class HandlerRegistry(object):
         :param Type[USE_DEFAULT]|None|str mimetype:
             Content-Type header to add to the response schema
         """
-        if isinstance(response_body_schema, marshmallow.Schema) or (
-            isclass(response_body_schema)
-            and issubclass(response_body_schema, marshmallow.Schema)
-        ):
-            response_body_schema = {200: response_body_schema}
-
-        # Fix #115: if we were passed bare classes we'll go ahead and try to instantiate
+        # Fix #115: if we were passed bare classes we'll go ahead and instantiate
         headers_schema = normalize_schema(headers_schema)
         request_body_schema = normalize_schema(request_body_schema)
         query_string_schema = normalize_schema(query_string_schema)
-
         if response_body_schema:
+            # Ensure we wrap in appropriate default (200) dict if we were passed a single Schema or class:
+            if not isinstance(response_body_schema, Mapping):
+                response_body_schema = {200: response_body_schema}
+            # use normalize_schema to convert any class reference(s) to instantiated schema(s):
             response_body_schema = {
                 code: normalize_schema(schema)
                 for (code, schema) in response_body_schema.items()
