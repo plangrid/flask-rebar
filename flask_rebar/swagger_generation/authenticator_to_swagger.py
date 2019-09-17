@@ -1,11 +1,7 @@
 from collections import namedtuple
 
 from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
-from flask_rebar.authenticators import (
-    HeaderApiKeyAuthenticator,
-    USE_DEFAULT,
-    Authenticator,
-)
+from flask_rebar.authenticators import HeaderApiKeyAuthenticator, Authenticator
 from .marshmallow_to_swagger import ConverterRegistry
 from . import swagger_words as sw
 
@@ -66,7 +62,7 @@ class HeaderApiKeyConverter(AuthenticatorConverter):
 
     def get_security_requirements(self, obj, context):
         """
-        :param HeaderApiLeyAuthenticator obj:
+        :param HeaderApiKeyAuthenticator obj:
         :param _Context context:
         :return: list
         """
