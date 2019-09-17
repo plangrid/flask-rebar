@@ -1,15 +1,25 @@
 import marshmallow as m
-import functools
 
 from flask_rebar import Rebar, HeaderApiKeyAuthenticator, compat
 from flask_rebar.authenticators import Authenticator, USE_DEFAULT
 from flask_rebar.swagger_generation import SwaggerV2Generator, SwaggerV3Generator
+from flask_rebar.swagger_generation.authenticator_to_swagger import (
+    AuthenticatorConverterRegistry,
+    AuthenticatorConverter,
+    HeaderApiKeyConverter,
+)
 
 rebar = Rebar()
 registry = rebar.create_handler_registry()
 
-swagger_v2_generator = SwaggerV2Generator()
-swagger_v3_generator = SwaggerV3Generator()
+authenticator_converter_registry = AuthenticatorConverterRegistry()
+
+swagger_v2_generator = SwaggerV2Generator(
+    authenticator_converter_registry=authenticator_converter_registry
+)
+swagger_v3_generator = SwaggerV3Generator(
+    authenticator_converter_registry=authenticator_converter_registry
+)
 
 
 # If we ever add a HTTP 'Authorization' authenticator then use that.
@@ -21,32 +31,20 @@ class FakeHTTPAuthorizationAuthenticator(Authenticator):
         return
 
 
-class HTTPAuthorizationAuthenticatorConverter(object):
-    def __call__(self, *args, **kwargs):
-        return list(self.get_swagger_security_schemas(*args, **kwargs).items()).pop()
+class HTTPAuthorizationAuthenticatorConverter(AuthenticatorConverter):
 
-    @staticmethod
-    def get_swagger_security_schemas(instance, open_api_version=2):
-        if open_api_version == 2:
+    AUTHENTICATOR_TYPE = FakeHTTPAuthorizationAuthenticator
+
+    def get_security_schemes(self, instance, context):
+        if context.openapi_version == 2:
             return {instance.name: {"type": "basic"}}
-        elif open_api_version == 3:
+        elif context.openapi_version == 3:
             return {instance.name: {"type": "http", "scheme": "basic"}}
         else:
             raise ValueError("Unsupported OpenAPI Version")
 
-    @staticmethod
-    def get_swagger_security_requirements(instance, open_api_version=2):
+    def get_security_requirements(self, instance, context):
         return [{instance.name: []}]
-
-
-for generator in [swagger_v2_generator, swagger_v3_generator]:
-    major_version = int(generator.get_open_api_version().split(".")[0])
-    generator.register_authenticator_converter(
-        FakeHTTPAuthorizationAuthenticator,
-        functools.partial(
-            HTTPAuthorizationAuthenticatorConverter(), open_api_version=major_version
-        ),
-    )
 
 
 # If we ever add an OAuth2 authenticator then use that.
@@ -69,13 +67,12 @@ class FakeOAuth2Authenticator(Authenticator):
         return
 
 
-class OAuth2AuthenticatorConverter(object):
-    def __call__(self, *args, **kwargs):
-        return list(self.get_swagger_security_schemas(*args, **kwargs).items()).pop()
+class OAuth2AuthenticatorConverter(AuthenticatorConverter):
 
-    @staticmethod
-    def get_swagger_security_schemas(instance, open_api_version=2):
-        if open_api_version == 2:
+    AUTHENTICATOR_TYPE = FakeOAuth2Authenticator
+
+    def get_security_schemes(self, instance, context):
+        if context.openapi_version == 2:
             return {
                 instance.name
                 + "_"
@@ -93,26 +90,25 @@ class OAuth2AuthenticatorConverter(object):
                 }
                 for flow, config in instance.supported_flows.items()
             }
-        elif open_api_version == 3:
+        elif context.openapi_version == 3:
             return {
                 instance.name: {"type": "oauth2", "flows": instance.supported_flows}
             }
         else:
             raise ValueError("Unsupported OpenAPI Version")
 
-    @staticmethod
-    def get_swagger_security_requirements(instance, open_api_version=2):
-        return [{instance.name: instance.required_scopes}]
-
-
-for generator in [swagger_v2_generator, swagger_v3_generator]:
-    major_version = int(generator.get_open_api_version().split(".")[0])
-    generator.register_authenticator_converter(
-        FakeOAuth2Authenticator,
-        functools.partial(
-            OAuth2AuthenticatorConverter(), open_api_version=major_version
-        ),
-    )
+    def get_security_requirements(self, instance, context):
+        if context.openapi_version == 2:
+            return [
+                {
+                    instance.name + "_" + flow: instance.required_scopes
+                    for flow in instance.supported_flows
+                }
+            ]
+        elif context.openapi_version == 3:
+            return [{instance.name: instance.required_scopes}]
+        else:
+            raise ValueError("Unsupported OpenAPI Version")
 
 
 class FakeComplexAuthenticator(Authenticator):
@@ -127,13 +123,12 @@ class FakeComplexAuthenticator(Authenticator):
         return
 
 
-class ComplexAuthenticatorConverter(object):
-    def __call__(self, *args, **kwargs):
-        return list(self.get_swagger_security_schemas(*args, **kwargs).items()).pop()
+class ComplexAuthenticatorConverter(AuthenticatorConverter):
 
-    @staticmethod
-    def get_swagger_security_schemas(instance, open_api_version=2):
-        if open_api_version == 2:
+    AUTHENTICATOR_TYPE = FakeComplexAuthenticator
+
+    def get_security_schemes(self, instance, context):
+        if context.openapi_version == 2:
             return {
                 "openIDConnect": {
                     "type": "oauth2",  # Not supported so use this for tests.
@@ -146,10 +141,10 @@ class ComplexAuthenticatorConverter(object):
                     "name": instance.api_key,
                 },
             }
-        elif open_api_version == 3:
+        elif context.openapi_version == 3:
             return {
                 "openIDConnect": {
-                    "type": "openIDConnect",
+                    "type": "openIdConnect",
                     "openIdConnectUrl": instance.url,
                 },
                 "application_key": {
@@ -161,19 +156,18 @@ class ComplexAuthenticatorConverter(object):
         else:
             raise ValueError("Unsupported OpenAPI Version")
 
-    @staticmethod
-    def get_swagger_security_requirements(instance, open_api_version=2):
+    def get_security_requirements(self, instance, context):
         return [{"openIDConnect": instance.required_scopes, "application_key": []}]
 
 
-for generator in [swagger_v2_generator, swagger_v3_generator]:
-    major_version = int(generator.get_open_api_version().split(".")[0])
-    generator.register_authenticator_converter(
-        FakeComplexAuthenticator,
-        functools.partial(
-            ComplexAuthenticatorConverter(), open_api_version=major_version
-        ),
-    )
+authenticator_converter_registry.register_types(
+    [
+        HeaderApiKeyConverter(),
+        HTTPAuthorizationAuthenticatorConverter(),
+        OAuth2AuthenticatorConverter(),
+        ComplexAuthenticatorConverter(),
+    ]
+)
 
 
 default_authenticator = FakeOAuth2Authenticator(required_scopes=["read:stuff"])
