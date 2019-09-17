@@ -11,10 +11,16 @@ import copy
 import re
 from collections import namedtuple, OrderedDict
 
-from flask_rebar.authenticators import HeaderApiKeyAuthenticator
-from flask_rebar.utils.defaults import USE_DEFAULT
+from flask_rebar.utils.deprecation import deprecated
+from flask_rebar.authenticators import HeaderApiKeyAuthenticator, USE_DEFAULT
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
+from flask_rebar.swagger_generation.authenticator_to_swagger import (
+    AuthenticatorConverterRegistry,
+)
+
+
+AuthenticatorConverter = AuthenticatorConverterRegistry  # deprecated alias
 
 
 def get_key(obj):
@@ -180,6 +186,7 @@ def format_path_for_swagger(path):
     return subbed_path, args
 
 
+@deprecated(eol_version="2,0")
 def convert_header_api_key_authenticator(authenticator):
     """
     Converts a HeaderApiKeyAuthenticator object to a Swagger definition.
@@ -261,6 +268,21 @@ def get_unique_schema_definitions(
     return flattened
 
 
+def get_unique_authenticators(registry):
+    authenticators = set(
+        authenticator
+        for d in iterate_path_definitions(paths=registry.paths)
+        for authenticator in d.authenticators
+        if authenticator is not None and authenticator is not USE_DEFAULT
+    )
+
+    for authenticator in registry.default_authenticators:
+        if authenticator is not None:
+            authenticators.add(authenticator)
+
+    return authenticators
+
+
 def iterate_path_definitions(paths):
     """Iterate over all `PathDefinition` instances in `paths`
 
@@ -283,59 +305,3 @@ def recursively_convert_dict_to_ordered_dict(obj):
         return [recursively_convert_dict_to_ordered_dict(item) for item in obj]
     else:
         return obj
-
-
-class AuthenticatorConverter(object):
-    """Converts authenticators into Swagger Docs.
-
-    :param Dict[Type[flask_rebar.authenticators.Authenticator], Callable[[flask_rebar.authenticators.Authenticator], dict]] converters:
-    """
-
-    def __init__(self, converters=None):
-        self._converters = converters or {}
-
-    def register(self, authenticator_class, converter):
-        """Register an authenticator converter
-
-        :param Type[flask_rebar.authenticators.Authenticator] authenticator_class:
-        :param Callable[[flask_rebar.authenticators.Authenticator], dict] converter:
-        """
-        self._converters[authenticator_class] = converter
-
-    def get_security_schemes(self, registry):
-        """Get the security schemes for the provided `registry`
-
-        :param flask_rebar.rebar.HandlerRegistry registry:
-        :rtype: dict
-        """
-        security_definitions = {}
-
-        authenticators = set(
-            authenticator
-            for d in iterate_path_definitions(paths=registry.paths)
-            for authenticator in d.authenticators
-            if authenticator is not None and authenticator is not USE_DEFAULT
-        )
-
-        for default_authenticator in registry.default_authenticators:
-            if default_authenticator is not None:
-                authenticators.add(default_authenticator)
-
-        for authenticator in authenticators:
-            klass = authenticator.__class__
-            converter = self._converters[klass]
-            key, definition = converter(authenticator)
-            security_definitions[key] = definition
-
-        return security_definitions
-
-    def get_security_requirement(self, authenticator):
-        """Get the security requirement for the provided `authenticator`
-
-        :param flask_rebar.authenticators.Authenticator authenticator:
-        :rtype: list
-        """
-        klass = authenticator.__class__
-        converter = self._converters[klass]
-        name, _ = converter(authenticator)
-        return [{name: []}]
