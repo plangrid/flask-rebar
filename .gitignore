@@ -76,3 +76,4 @@ man/
 
 #vscode
 .vscode/
+pip-wheel-metadata
