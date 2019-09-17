@@ -186,7 +186,7 @@ def format_path_for_swagger(path):
     return subbed_path, args
 
 
-@deprecated(eol_version="2,0")
+@deprecated(eol_version="2.0")
 def convert_header_api_key_authenticator(authenticator):
     """
     Converts a HeaderApiKeyAuthenticator object to a Swagger definition.
