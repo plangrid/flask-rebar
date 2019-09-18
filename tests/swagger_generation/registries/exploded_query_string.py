@@ -9,7 +9,9 @@ registry = rebar.create_handler_registry()
 
 
 class ExplodedQueryStringSchema(RequestSchema):
-    foos = QueryParamList(marshmallow.fields.String(), required=True)
+    foos = QueryParamList(
+        marshmallow.fields.String(), required=True, description="foo string"
+    )
 
 
 @registry.handles(
@@ -53,6 +55,7 @@ EXPECTED_SWAGGER_V2 = {
                         "collectionFormat": "multi",
                         "type": "array",
                         "items": {"type": "string"},
+                        "description": "foo string",
                     }
                 ],
             }
@@ -95,6 +98,7 @@ EXPECTED_SWAGGER_V3 = {
                         "name": "foos",
                         "in": "query",
                         "required": True,
+                        "description": "foo string",
                         "schema": {"type": "array", "items": {"type": "string"}},
                         "explode": True,
                     }
