@@ -89,7 +89,7 @@ Then push the new commits and tags:
 
 .. code-block:: bash
 
-   git push --tags
+   git push && git push --tags
 
 Finally, while you're waiting for Travis CI to pick up the tagged version, build it, and deploy it to PyPi, don't forget to reset branch protection settings (for normal operation, administrators should be subject to these restrictions to enforce PR code review requirements).
 
