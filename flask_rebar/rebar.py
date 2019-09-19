@@ -125,7 +125,7 @@ def _wrap_handler(
                 try:
                     authenticator.authenticate()
                     break  # Short-circuit on first successful authentication
-                except errors.Unauthorized as e:
+                except (errors.Unauthorized, errors.Forbidden) as e:
                     first_error = first_error or e
             else:
                 raise first_error or errors.Unauthorized
