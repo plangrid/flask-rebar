@@ -18,7 +18,7 @@ development = [
 if __name__ == "__main__":
     setup(
         name="flask-rebar",
-        version="1.10.1",
+        version="1.10.0",
         author="Barak Alon",
         author_email="barak.s.alon@gmail.com",
         description="Flask-Rebar combines flask, marshmallow, and swagger for robust REST services.",
@@ -43,6 +43,7 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.4",
             "Programming Language :: Python :: 3.5",
             "Programming Language :: Python :: 3.6",
+            "Programming Language :: Python :: 3.7",
             "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
             "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
             "Topic :: Software Development :: Libraries :: Application Frameworks",
