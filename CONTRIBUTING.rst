@@ -67,22 +67,30 @@ Pull Requests
 Releasing to PyPI
 -----------------
 
-Travis CI handles releasing package versions to PyPI.
+We use Travis CI to automate releasing package versions to PyPI.
+
+.. warning:: These steps must be completed by an administrator.  We generally do at least patch releases fairly frequently, but if you have a feature that urgently requires release, feel free to reach out and request one and we'll do our best to accommodate.
+
 
 Flask-Rebar uses `semantic versions <https://semver.org/>`_. Once you know the appropriate version part to bump, use the ``bumpversion`` tool which will bump the package version, add a commit, and tag the commit appropriately.  Note, it's not a bad idea to do a manual inspection and any cleanup you deem necessary after running ``gitchangelog`` to ensure it looks good before then committing a "@cosmetic" update.
 
+.. note:: Before completing the following steps, you will need to temporarily change settings on GitHub under branch protection rules to NOT include administrators. This is required to allow you to push the changelog update.
+
 .. code-block:: bash
 
-   git checkout -b your-release-branch
-   bumpversion minor
+   git checkout master
+   git pull # just to play it safe and make sure you're up to date
+   bumpversion patch # or major or minor if applicable
    gitchangelog
+   # STOP HERE:  inspect CHANGELOG.rst and clean up as needed before continuing
    git commit -a -m "@cosmetic - changelog"
 
-
-Then push the new commit and tags:
+Then push the new commits and tags:
 
 .. code-block:: bash
 
-   git push -u origin your-release-branch --tags
+   git push && git push --tags
 
-Create a Pull Request and merge back into master.  Voila.
+Finally, while you're waiting for Travis CI to pick up the tagged version, build it, and deploy it to PyPi, don't forget to reset branch protection settings (for normal operation, administrators should be subject to these restrictions to enforce PR code review requirements).
+
+
