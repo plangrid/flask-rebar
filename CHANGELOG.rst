@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+v1.10.2 (2019-09-19)
+--------------------
+
+Fix
+~~~
+- Update authenticators to catch Forbidden exception (#133) [Marc-Éric]
+
+
 v1.10.1 (2019-09-19)
 --------------------
 
