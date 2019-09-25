@@ -49,4 +49,5 @@ jobs:
         password:
           secure: GoFaAo3a08PoPklGQ68q7EMYE59hb1Z1+PEMuSSXKelL2amyG6/kq5t7r8p6trjFabco1u94IwZFFlmUdfr4PqDQ/eaM9MVF1VvI8dxp/fg3WgSxjtxy4io/ELUWTGXTGs3V8Lp61haRdHjrqk5DwG6SHDVVzjuJBZ4Kydr6fuo0RWu9C4qAkU1MWmoIPeyeB4ZydXimD15uOvMp13UA7SqLUdXlAhwyL7c2h6pihu2gnbLXEnfkh8rlvRT8fSp7PUkFsg3FOvgMZg8dn8/J0I/pTmG7c71v0hacOVTKLsfAtSSHAjgcc8KffvMBOcE/YXgUr+lgR4R181lMqXv2LBNMuE5Gyc8GBjTb8Liiowpvg8XXH86vC/k+0/3toKWPobjsXJCAgR21+B7FFzE8hmZdP43HcSfCqbzS8ELUWF9AvUBlFtdakr0a0wLjcKsJyBNiKwwmw50kKsb7agpIXgS/I0Y6EyGwyXi8/q7IPmR7wffg3bAGnvvg5yz7vOZTGYJnFM+Ky1LdQ7fJ44D+Ze/SraB1syK2pmednX6YVMgIlPU5QpaprmQ9AkeoWmPZBShWl07Js73BnbQKWklkV8yAXq9qy51cjRA9SWQIFzeiHScOwhUalb1CpggOyG1sx4/GMFLg5nNE0ldKDfqUGJ4kbcNh25jiiBEJ7mEQkB0=
         on:
+          branch: master
           tags: true

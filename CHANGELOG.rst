@@ -2,6 +2,35 @@ Changelog
 =========
 
 
+v1.10.2 (2019-09-19)
+--------------------
+
+Fix
+~~~
+- Update authenticators to catch Forbidden exception (#133) [Marc-Éric]
+
+
+v1.10.1 (2019-09-19)
+--------------------
+
+Changes
+~~~~~~~
+- Tweaking build rules, updating docs, and prepping for bumpversion do-
+  over. [Rick Riensche]
+
+Fix
+~~~
+- Treat "description" key the same way as "explode" key for query and h…
+  (#129) [Artem Revenko]
+
+Other
+~~~~~
+- Accept bare class for schema arguments (#126) [Rick Riensche]
+- Fix marshmallow test helpers so that they work will all unittest
+  compatible frameworks and not just pytest. 'python setup.py test'
+  works again. (#127) [Andrew Standley]
+
+
 v1.10.0 (2019-09-11)
 --------------------
 - BP-763: Add support for multiple authenticators (#122) [Andrew
