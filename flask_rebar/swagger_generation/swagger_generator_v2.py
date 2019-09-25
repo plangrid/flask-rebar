@@ -125,6 +125,8 @@ class SwaggerV2Generator(SwaggerGenerator):
         security_definitions = {}
         authenticators = get_unique_authenticators(registry)
         for authenticator in authenticators:
+            # We should probably eventually check that scheme with the same name are identical
+            # rather than just overwriting the existing scheme definition.
             security_definitions.update(
                 self.authenticator_converter.get_security_schemes(authenticator)
             )

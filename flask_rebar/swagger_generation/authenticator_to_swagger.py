@@ -19,22 +19,76 @@ class AuthenticatorConverter(object):
     """
     Abstract class for objects that convert Authenticator objects to
     security JSONSchema.
+
+    When implementing your own AuthenticatorConverter you will need to:
+
+    1) Set AUTHENTICATOR_TYPE to be your custom Authenticator class.
+
+    2) Configure get_security_scheme to return a map of Security Scheme Objects.
+        You should check for the openapi_version in context.openapi_version;
+        If generation is requested for a version of the OpenAPI specification
+        you do not intend to support,  we recommend raising a NotImplementedError.
+
+    3) Configure get_security_requirements to return a list of Security Requirement Objects.
+        You should check for the openapi_version in context.openapi_version;
+        If generation is requested for a version of the OpenAPI specification
+        you do not intend to support, we recommend raising a NotImplementedError.
+
     """
 
     AUTHENTICATOR_TYPE = None
 
     def get_security_schemes(self, obj, context):
         """
-        Get the security schemes for the provided Authenticator object
-        :param flask.authenticators.Authenticator obj:
-        :param _Context context:
-        :rtype: dict
+        Get the security schemes for the provided Authenticator object.
+
+        OpenAPI Specification for defining security schemes
+        2.0: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-definitions-object
+        3.0.2: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#fixed-fields-6
+                (see securitySchemes field)
+
+        OpenAPI Specification for Security Scheme Object
+        2.0: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-scheme-object
+        3.0.2: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#security-scheme-object
+
+
+        Example: An authenticator that makes use of an api_key and an application_key scheme
+        {
+            "api_key": {
+                "type: "apiKey",
+                "in": "header",
+                "name": "X-API-Key"
+            },
+            "application_key" : {
+                "type": "apiKey",
+                "in": "query",
+                "name": "application-key"
+            }
+        }
+
+        Note: It is fine for multiple Authenticators to share Security Scheme definitions. Each Authenticator should
+                return all scheme definitions that it makes use of.
+
+        :param flask.authenticators.Authenticator obj: Authenticator instance to generate swagger for.
+                    You can assume this is of type AUTHENTICATOR_TYPE
+        :param _Context context: The context swagger is being generated for.
+        :rtype: dict: Key should be the name for the scheme, the value should be a Security Scheme Object
         """
         raise NotImplementedError()
 
     def get_security_requirements(self, obj, context):
         """
         Get the security requirements for the provided Authenticator object
+
+        OpenAPI Specification for Security Requirement Object
+        2.0: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-requirement-object
+        3.0.2: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#security-requirement-object
+
+        Example: Require oauth with scope "read:stuff" OR api_key AND application_key
+        [
+            {"oauth": ["read:stuff"] },
+            {"api_key": [], "application_key": []}
+        ]
 
         :param flask_rebar.authenticators.Authenticator obj:
         :param _Context context:
@@ -105,6 +159,7 @@ class AuthenticatorConverterRegistry(ConverterRegistry):
     def get_security_schemes(self, authenticator, openapi_version=2):
         """
         Get the security schemes for the provided Authenticator object
+
         :param flask.authenticators.Authenticator obj:
         :param int openapi_version: major version of OpenAPI to convert obj for
         :rtype: dict
@@ -146,7 +201,9 @@ class AuthenticatorConverterRegistry(ConverterRegistry):
 
     @deprecated(eol_version="2.0")
     def get_security_schemes_legacy(self, registry):
-        """Get the security schemes for the provided `registry`
+        """
+        Get the security schemes for the provided `registry`
+
         :param flask_rebar.rebar.HandlerRegistry registry:
         :rtype: dict
         """
