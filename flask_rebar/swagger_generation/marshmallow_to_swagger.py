@@ -576,6 +576,25 @@ class ConverterRegistry(object):
         for converter in converters:
             self.register_type(converter)
 
+    def _get_converter_for_type(self, obj):
+        """
+        Locates the registered converter for a given type.
+        :param obj: instance to convert
+        :return: converter for type of instance
+        """
+        method_resolution_order = obj.__class__.__mro__
+
+        for cls in method_resolution_order:
+            if cls in self._type_map:
+                return self._type_map[cls]
+        else:
+            raise UnregisteredType(
+                "No registered type found in method resolution order: {mro}\n"
+                "Registered types: {types}".format(
+                    mro=method_resolution_order, types=list(self._type_map.keys())
+                )
+            )
+
     def _convert(self, obj, context):
         """
         Converts a Marshmallow object to a JSONSchema dictionary.
@@ -589,18 +608,7 @@ class ConverterRegistry(object):
             This helps with all the recursive nonsense.
         :rtype: dict
         """
-        method_resolution_order = obj.__class__.__mro__
-
-        for cls in method_resolution_order:
-            if cls in self._type_map:
-                return self._type_map[cls].convert(obj=obj, context=context)
-        else:
-            raise UnregisteredType(
-                "No registered type found in method resolution order: {mro}\n"
-                "Registered types: {types}".format(
-                    mro=method_resolution_order, types=list(self._type_map.keys())
-                )
-            )
+        return self._get_converter_for_type(obj).convert(obj=obj, context=context)
 
     def convert(self, obj, openapi_version=2):
         """

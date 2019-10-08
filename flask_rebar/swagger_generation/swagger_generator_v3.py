@@ -20,6 +20,7 @@ from flask_rebar.swagger_generation.generator_utils import (
     get_unique_schema_definitions,
     recursively_convert_dict_to_ordered_dict,
     get_ref_schema,
+    get_unique_authenticators,
 )
 from flask_rebar.swagger_generation.marshmallow_to_swagger import (
     get_swagger_title,
@@ -48,6 +49,8 @@ class SwaggerV3Generator(SwaggerGenerator):
         A list of Server Objects to set as the server metadata for the specification.
     """
 
+    _open_api_version = "3.0.2"
+
     def __init__(
         self,
         version="1.0.0",
@@ -60,6 +63,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         tags=None,
         servers=None,
         default_response_schema=Error(),
+        authenticator_converter_registry=None,
     ):
         super(SwaggerV3Generator, self).__init__(
             openapi_major_version=3,
@@ -71,6 +75,7 @@ class SwaggerV3Generator(SwaggerGenerator):
             request_body_converter_registry=request_body_converter_registry,
             headers_converter_registry=headers_converter_registry,
             response_converter_registry=response_converter_registry,
+            authenticator_converter_registry=authenticator_converter_registry,
         )
         self.tags = tags
         self.servers = servers
@@ -90,16 +95,11 @@ class SwaggerV3Generator(SwaggerGenerator):
 
         components = self._get_components(registry=registry)
 
-        if registry.default_authenticators:
-            default_security = [
-                self.authenticator_converter.get_security_requirement(
-                    default_authenticator
-                )[0]
-                for default_authenticator in registry.default_authenticators
-                if default_authenticator is not None
-            ]
-        else:
-            default_security = None
+        default_security = []
+        for authenticator in registry.default_authenticators:
+            default_security.extend(
+                self.authenticator_converter.get_security_requirements(authenticator)
+            )
 
         paths = self._get_paths(
             paths=registry.paths,
@@ -108,7 +108,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         )
 
         swagger = {
-            sw.openapi: "3.0.2",
+            sw.openapi: self.get_open_api_version(),
             sw.info: self._get_info(),
             sw.paths: paths,
             sw.components: components,
@@ -252,7 +252,7 @@ class SwaggerV3Generator(SwaggerGenerator):
                     for authenticator in d.authenticators:
                         if authenticator is not USE_DEFAULT:
                             security.extend(
-                                self.authenticator_converter.get_security_requirement(
+                                self.authenticator_converter.get_security_requirements(
                                     authenticator
                                 )
                             )
@@ -293,7 +293,14 @@ class SwaggerV3Generator(SwaggerGenerator):
         if schemas:
             components[sw.schemas] = schemas
 
-        security_schemes = self.authenticator_converter.get_security_schemes(registry)
+        security_schemes = {}
+        authenticators = get_unique_authenticators(registry)
+        for authenticator in authenticators:
+            # We should probably eventually check that scheme with the same name are identical
+            # rather than just overwriting the existing scheme definition.
+            security_schemes.update(
+                self.authenticator_converter.get_security_schemes(authenticator)
+            )
         if security_schemes:
             components[sw.security_schemes] = security_schemes
 

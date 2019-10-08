@@ -1,18 +1,190 @@
 import marshmallow as m
 
-from flask_rebar import Rebar
-from flask_rebar import HeaderApiKeyAuthenticator
-from flask_rebar import compat
-from flask_rebar.authenticators import USE_DEFAULT
+from flask_rebar import Rebar, HeaderApiKeyAuthenticator, compat
+from flask_rebar.authenticators import Authenticator, USE_DEFAULT
+from flask_rebar.swagger_generation import SwaggerV2Generator, SwaggerV3Generator
+from flask_rebar.swagger_generation.authenticator_to_swagger import (
+    AuthenticatorConverterRegistry,
+    AuthenticatorConverter,
+    HeaderApiKeyConverter,
+)
 
 rebar = Rebar()
 registry = rebar.create_handler_registry()
 
-authenticator = HeaderApiKeyAuthenticator(header="x-auth")
-default_authenticator = HeaderApiKeyAuthenticator(header="x-another", name="default")
-alternative_default_authenticator = HeaderApiKeyAuthenticator(
-    header="x-api", name="alternative"
+authenticator_converter_registry = AuthenticatorConverterRegistry()
+
+swagger_v2_generator = SwaggerV2Generator(
+    authenticator_converter_registry=authenticator_converter_registry
 )
+swagger_v3_generator = SwaggerV3Generator(
+    authenticator_converter_registry=authenticator_converter_registry
+)
+
+
+# If we ever add a HTTP 'Authorization' authenticator then use that.
+class FakeHTTPAuthorizationAuthenticator(Authenticator):
+    name = "basicAuth"
+    schema = "basic"
+
+    def authenticate(self):
+        return
+
+
+class HTTPAuthorizationAuthenticatorConverter(AuthenticatorConverter):
+
+    AUTHENTICATOR_TYPE = FakeHTTPAuthorizationAuthenticator
+
+    def get_security_schemes(self, instance, context):
+        if context.openapi_version == 2:
+            return {instance.name: {"type": "basic"}}
+        elif context.openapi_version == 3:
+            return {instance.name: {"type": "http", "scheme": "basic"}}
+        else:
+            raise ValueError("Unsupported OpenAPI Version")
+
+    def get_security_requirements(self, instance, context):
+        return [{instance.name: []}]
+
+
+# If we ever add an OAuth2 authenticator then use that.
+class FakeOAuth2Authenticator(Authenticator):
+    name = "oauth2"
+
+    def __init__(self, required_scopes=None):
+        self.required_scopes = required_scopes or []
+        self.supported_flows = {
+            "implicit": {
+                "authorizationUrl": "https://example.com/authorize",
+                "scopes": {
+                    "write:stuff": "Modify your stuff",
+                    "read:stuff": "Read your stuff",
+                },
+            }
+        }
+
+    def authenticate(self):
+        return
+
+
+class OAuth2AuthenticatorConverter(AuthenticatorConverter):
+
+    AUTHENTICATOR_TYPE = FakeOAuth2Authenticator
+
+    def get_security_schemes(self, instance, context):
+        if context.openapi_version == 2:
+            return {
+                instance.name
+                + "_"
+                + flow: {
+                    key: value
+                    for key, value in {
+                        "type": "oauth2",
+                        "flow": flow,
+                        "authorizationUrl": config.get("authorizationUrl", None),
+                        "tokenUrl": config.get("tokenUrl", None),
+                        "refreshUrl": config.get("refreshUrl", None),
+                        "scopes": config.get("scopes", []),
+                    }.items()
+                    if value is not None
+                }
+                for flow, config in instance.supported_flows.items()
+            }
+        elif context.openapi_version == 3:
+            return {
+                instance.name: {"type": "oauth2", "flows": instance.supported_flows}
+            }
+        else:
+            raise ValueError("Unsupported OpenAPI Version")
+
+    def get_security_requirements(self, instance, context):
+        if context.openapi_version == 2:
+            return [
+                {
+                    instance.name + "_" + flow: instance.required_scopes
+                    for flow in instance.supported_flows
+                }
+            ]
+        elif context.openapi_version == 3:
+            return [{instance.name: instance.required_scopes}]
+        else:
+            raise ValueError("Unsupported OpenAPI Version")
+
+
+class FakeComplexAuthenticator(Authenticator):
+    name = "complexAuth"
+
+    def __init__(self, header, url, required_scopes=None):
+        self.required_scopes = required_scopes or []
+        self.url = url
+        self.api_key = header
+
+    def authenticate(self):
+        return
+
+
+class ComplexAuthenticatorConverter(AuthenticatorConverter):
+
+    AUTHENTICATOR_TYPE = FakeComplexAuthenticator
+
+    def get_security_schemes(self, instance, context):
+        if context.openapi_version == 2:
+            return {
+                "openIDConnect": {
+                    "type": "oauth2",  # Not supported so use this for tests.
+                    "flow": "implicit",
+                    "authorizationUrl": instance.url,
+                },
+                "application_key": {
+                    "type": "apiKey",
+                    "in": "header",
+                    "name": instance.api_key,
+                },
+            }
+        elif context.openapi_version == 3:
+            return {
+                "openIDConnect": {
+                    "type": "openIdConnect",
+                    "openIdConnectUrl": instance.url,
+                },
+                "application_key": {
+                    "type": "apiKey",
+                    "in": "header",
+                    "name": instance.api_key,
+                },
+            }
+        else:
+            raise ValueError("Unsupported OpenAPI Version")
+
+    def get_security_requirements(self, instance, context):
+        return [{"openIDConnect": instance.required_scopes, "application_key": []}]
+
+
+authenticator_converter_registry.register_types(
+    [
+        HeaderApiKeyConverter(),
+        HTTPAuthorizationAuthenticatorConverter(),
+        OAuth2AuthenticatorConverter(),
+        ComplexAuthenticatorConverter(),
+    ]
+)
+
+
+default_authenticator = FakeOAuth2Authenticator(required_scopes=["read:stuff"])
+alternative_default_authenticator = HeaderApiKeyAuthenticator(header="x-api-key")
+
+authenticator = FakeHTTPAuthorizationAuthenticator()
+alternative_authenticator = FakeComplexAuthenticator(
+    header="x-app-id",
+    url="https://exmaple.com/openconnect",
+    required_scopes=["write:junk", "write:stuff"],
+)
+
+customer_authenticator_converter_registry = [
+    HTTPAuthorizationAuthenticatorConverter(),
+    OAuth2AuthenticatorConverter(),
+    ComplexAuthenticatorConverter(),
+]
 
 
 class HeaderSchema(m.Schema):
@@ -69,7 +241,7 @@ def update_foo(foo_uid):
     rule="/foo_list",
     method="GET",
     marshal_schema={200: FooSchema(many=True)},
-    authenticators=[USE_DEFAULT, authenticator],  # Extend the default!
+    authenticators=[USE_DEFAULT, alternative_authenticator],  # Extend the default!
 )
 def list_foos():
     pass
@@ -103,11 +275,25 @@ EXPECTED_SWAGGER_V2 = {
     "produces": ["application/json"],
     "schemes": [],
     "securityDefinitions": {
-        "sharedSecret": {"type": "apiKey", "in": "header", "name": "x-auth"},
-        "default": {"type": "apiKey", "in": "header", "name": "x-another"},
-        "alternative": {"type": "apiKey", "in": "header", "name": "x-api"},
+        "oauth2_implicit": {
+            "type": "oauth2",
+            "flow": "implicit",
+            "authorizationUrl": "https://example.com/authorize",
+            "scopes": {
+                "write:stuff": "Modify your stuff",
+                "read:stuff": "Read your stuff",
+            },
+        },
+        "sharedSecret": {"type": "apiKey", "in": "header", "name": "x-api-key"},
+        "basicAuth": {"type": "basic"},
+        "openIDConnect": {
+            "type": "oauth2",
+            "flow": "implicit",
+            "authorizationUrl": "https://exmaple.com/openconnect",
+        },
+        "application_key": {"type": "apiKey", "in": "header", "name": "x-app-id"},
     },
-    "security": [{"default": []}, {"alternative": []}],
+    "security": [{"oauth2_implicit": ["read:stuff"]}, {"sharedSecret": []}],
     "info": {"title": "My API", "version": "1.0.0", "description": ""},
     "paths": {
         "/foos/{foo_uid}": {
@@ -156,7 +342,7 @@ EXPECTED_SWAGGER_V2 = {
                         "schema": {"$ref": "#/definitions/FooUpdateSchema"},
                     }
                 ],
-                "security": [{"sharedSecret": []}],
+                "security": [{"basicAuth": []}],
             },
         },
         "/foo_list": {
@@ -176,9 +362,12 @@ EXPECTED_SWAGGER_V2 = {
                     },
                 },
                 "security": [
-                    {"default": []},
-                    {"alternative": []},
+                    {"oauth2_implicit": ["read:stuff"]},
                     {"sharedSecret": []},
+                    {
+                        "openIDConnect": ["write:junk", "write:stuff"],
+                        "application_key": [],
+                    },
                 ],
             }
         },
@@ -256,7 +445,7 @@ EXPECTED_SWAGGER_V2 = {
 EXPECTED_SWAGGER_V3 = expected_swagger = {
     "openapi": "3.0.2",
     "info": {"title": "My API", "version": "1.0.0", "description": ""},
-    "security": [{"default": []}, {"alternative": []}],
+    "security": [{"oauth2": ["read:stuff"]}, {"sharedSecret": []}],
     "components": {
         "schemas": {
             "Foo": {
@@ -290,9 +479,25 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
             },
         },
         "securitySchemes": {
-            "sharedSecret": {"type": "apiKey", "in": "header", "name": "x-auth"},
-            "default": {"type": "apiKey", "in": "header", "name": "x-another"},
-            "alternative": {"type": "apiKey", "in": "header", "name": "x-api"},
+            "oauth2": {
+                "type": "oauth2",
+                "flows": {
+                    "implicit": {
+                        "authorizationUrl": "https://example.com/authorize",
+                        "scopes": {
+                            "write:stuff": "Modify your stuff",
+                            "read:stuff": "Read your stuff",
+                        },
+                    }
+                },
+            },
+            "sharedSecret": {"type": "apiKey", "in": "header", "name": "x-api-key"},
+            "basicAuth": {"type": "http", "scheme": "basic"},
+            "openIDConnect": {
+                "type": "openIdConnect",
+                "openIdConnectUrl": "https://exmaple.com/openconnect",
+            },
+            "application_key": {"type": "apiKey", "in": "header", "name": "x-app-id"},
         },
     },
     "paths": {
@@ -364,7 +569,7 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
                     },
                     "required": True,
                 },
-                "security": [{"sharedSecret": []}],
+                "security": [{"basicAuth": []}],
             },
         },
         "/foo_list": {
@@ -392,9 +597,12 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
                     },
                 },
                 "security": [
-                    {"default": []},
-                    {"alternative": []},
+                    {"oauth2": ["read:stuff"]},
                     {"sharedSecret": []},
+                    {
+                        "openIDConnect": ["write:junk", "write:stuff"],
+                        "application_key": [],
+                    },
                 ],
             }
         },

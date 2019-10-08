@@ -21,6 +21,7 @@ from flask_rebar.swagger_generation.generator_utils import (
     recursively_convert_dict_to_ordered_dict,
     get_unique_schema_definitions,
     get_ref_schema,
+    get_unique_authenticators,
 )
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
 from flask_rebar.validation import Error
@@ -57,6 +58,8 @@ class SwaggerV2Generator(SwaggerGenerator):
         A list of tags used by the specification with additional metadata. \
     """
 
+    _open_api_version = "2.0"
+
     def __init__(
         self,
         host="swag.com",
@@ -72,6 +75,7 @@ class SwaggerV2Generator(SwaggerGenerator):
         response_converter_registry=None,
         tags=None,
         default_response_schema=Error(),
+        authenticator_converter_registry=None,
     ):
         super(SwaggerV2Generator, self).__init__(
             openapi_major_version=2,
@@ -83,6 +87,7 @@ class SwaggerV2Generator(SwaggerGenerator):
             request_body_converter_registry=request_body_converter_registry,
             headers_converter_registry=headers_converter_registry,
             response_converter_registry=response_converter_registry,
+            authenticator_converter_registry=authenticator_converter_registry,
         )
         self.host = host
         self.schemes = schemes
@@ -116,20 +121,22 @@ class SwaggerV2Generator(SwaggerGenerator):
         :param bool sort_keys: Use OrderedDicts sorted by keys instead of dicts
         :rtype: dict
         """
-        if registry.default_authenticators:
-            default_security = [
-                self.authenticator_converter.get_security_requirement(
-                    default_authenticator
-                )[0]
-                for default_authenticator in registry.default_authenticators
-                if default_authenticator is not None
-            ]
-        else:
-            default_security = []
 
-        security_definitions = self.authenticator_converter.get_security_schemes(
-            registry
-        )
+        security_definitions = {}
+        authenticators = get_unique_authenticators(registry)
+        for authenticator in authenticators:
+            # We should probably eventually check that scheme with the same name are identical
+            # rather than just overwriting the existing scheme definition.
+            security_definitions.update(
+                self.authenticator_converter.get_security_schemes(authenticator)
+            )
+
+        default_security = []
+        for authenticator in registry.default_authenticators:
+            default_security.extend(
+                self.authenticator_converter.get_security_requirements(authenticator)
+            )
+
         definitions = get_unique_schema_definitions(
             registry=registry,
             base=self._ref_base,
@@ -147,7 +154,7 @@ class SwaggerV2Generator(SwaggerGenerator):
             _, _, host = host.partition("://")
 
         swagger = {
-            sw.swagger: self._get_version(),
+            sw.swagger: self.get_open_api_version(),
             sw.info: self._get_info(),
             sw.host: host or self.host,
             sw.schemes: list(schemes or self.schemes),
@@ -169,9 +176,6 @@ class SwaggerV2Generator(SwaggerGenerator):
             swagger = recursively_convert_dict_to_ordered_dict(swagger)
 
         return swagger
-
-    def _get_version(self):
-        return "2.0"
 
     def _get_paths(self, paths, default_headers_schema, default_security=None):
         path_definitions = {}
@@ -296,7 +300,7 @@ class SwaggerV2Generator(SwaggerGenerator):
                     for authenticator in d.authenticators:
                         if authenticator is not USE_DEFAULT:
                             security.extend(
-                                self.authenticator_converter.get_security_requirement(
+                                self.authenticator_converter.get_security_requirements(
                                     authenticator
                                 )
                             )

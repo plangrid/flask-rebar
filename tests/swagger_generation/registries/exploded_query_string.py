@@ -3,9 +3,13 @@ import marshmallow
 from flask_rebar import Rebar
 from flask_rebar import RequestSchema
 from flask_rebar.validation import QueryParamList
+from flask_rebar.swagger_generation import SwaggerV2Generator, SwaggerV3Generator
 
 rebar = Rebar()
 registry = rebar.create_handler_registry()
+
+swagger_v2_generator = SwaggerV2Generator()
+swagger_v3_generator = SwaggerV3Generator()
 
 
 class ExplodedQueryStringSchema(RequestSchema):

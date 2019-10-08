@@ -8,10 +8,17 @@
     :license: MIT, see LICENSE for details.
 """
 import unittest
+import warnings
 
 from flask_rebar.swagger_generation.generator_utils import PathArgument
 from flask_rebar.swagger_generation.generator_utils import flatten
 from flask_rebar.swagger_generation.generator_utils import format_path_for_swagger
+from flask_rebar.swagger_generation.generator_utils import (
+    AuthenticatorConverter,
+    convert_header_api_key_authenticator,
+)
+from flask_rebar.authenticators import HeaderApiKeyAuthenticator, Authenticator
+from flask_rebar import HandlerRegistry
 
 
 class TestFlatten(unittest.TestCase):
@@ -175,3 +182,49 @@ class TestFormatPathForSwagger(unittest.TestCase):
 
         self.assertEqual(res, "/health")
         self.assertEqual(args, tuple())
+
+
+class MyCustomAuthenticator(Authenticator):
+    def authenticate(self):
+        pass
+
+
+def convert_my_customer_authenticator(authenticator):
+    definition = {"type": "basic"}
+    return "myAuth", definition
+
+
+class TestAuthenticatorConverter(unittest.TestCase):
+    def test_legacy_behaviour(self):
+        """Check that the AuthenticatorConverter maintains backward compatibility with functions as the converters
+        """
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            converter = AuthenticatorConverter(
+                {HeaderApiKeyAuthenticator: convert_header_api_key_authenticator}
+            )
+            converter.register(MyCustomAuthenticator, convert_my_customer_authenticator)
+
+            auth_1 = HeaderApiKeyAuthenticator("X-Test-Header")
+            auth_2 = MyCustomAuthenticator()
+
+            registry = HandlerRegistry(default_authenticators=[auth_1, auth_2])
+
+            self.assertEqual(
+                converter.get_security_requirement(auth_1), [{"sharedSecret": []}]
+            )
+            self.assertEqual(
+                converter.get_security_requirement(auth_2), [{"myAuth": []}]
+            )
+
+            self.assertEqual(
+                converter.get_security_schemes(registry),
+                {
+                    "sharedSecret": {
+                        "type": "apiKey",
+                        "in": "header",
+                        "name": "X-Test-Header",
+                    },
+                    "myAuth": {"type": "basic"},
+                },
+            )
+        self.assertTrue(caught_warnings)

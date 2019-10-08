@@ -860,6 +860,7 @@ SWAGGER_V2_JSONSCHEMA = {
 }
 
 SWAGGER_V3_JSONSCHEMA = {
+    "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
     "required": ["openapi", "info", "paths"],
     "properties": {

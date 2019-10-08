@@ -3,9 +3,13 @@ import marshmallow as m
 from flask_rebar import Rebar
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar import compat
+from flask_rebar.swagger_generation import SwaggerV2Generator, SwaggerV3Generator
 
 rebar = Rebar()
 registry = rebar.create_handler_registry()
+
+swagger_v2_generator = SwaggerV2Generator()
+swagger_v3_generator = SwaggerV3Generator()
 
 authenticator = HeaderApiKeyAuthenticator(header="x-auth")
 default_authenticator = HeaderApiKeyAuthenticator(header="x-another", name="default")

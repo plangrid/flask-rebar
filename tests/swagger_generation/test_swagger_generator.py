@@ -214,37 +214,44 @@ def test_path_parameter_types_must_be_the_same_for_same_path(generator):
 
 
 @pytest.mark.parametrize(
-    "registry, swagger_version, expected_swagger",
+    "registry, swagger_generator, expected_swagger",
     [
-        (legacy.registry, 2, legacy.EXPECTED_SWAGGER_V2),
-        (legacy.registry, 3, legacy.EXPECTED_SWAGGER_V3),
-        (exploded_query_string.registry, 2, exploded_query_string.EXPECTED_SWAGGER_V2),
-        (exploded_query_string.registry, 3, exploded_query_string.EXPECTED_SWAGGER_V3),
+        (legacy.registry, legacy.swagger_v2_generator, legacy.EXPECTED_SWAGGER_V2),
+        (legacy.registry, legacy.swagger_v3_generator, legacy.EXPECTED_SWAGGER_V3),
+        (
+            exploded_query_string.registry,
+            exploded_query_string.swagger_v2_generator,
+            exploded_query_string.EXPECTED_SWAGGER_V2,
+        ),
+        (
+            exploded_query_string.registry,
+            exploded_query_string.swagger_v3_generator,
+            exploded_query_string.EXPECTED_SWAGGER_V3,
+        ),
         (
             multiple_authenticators.registry,
-            2,
+            multiple_authenticators.swagger_v2_generator,
             multiple_authenticators.EXPECTED_SWAGGER_V2,
         ),
         (
             multiple_authenticators.registry,
-            3,
+            multiple_authenticators.swagger_v3_generator,
             multiple_authenticators.EXPECTED_SWAGGER_V3,
         ),
     ],
 )
-def test_swagger_generators(registry, swagger_version, expected_swagger):
-    if swagger_version == 2:
+def test_swagger_generators(registry, swagger_generator, expected_swagger):
+    open_api_version = swagger_generator.get_open_api_version()
+    if open_api_version == "2.0":
         swagger_jsonschema = SWAGGER_V2_JSONSCHEMA
-        generator = SwaggerV2Generator()
-    elif swagger_version == 3:
+    elif open_api_version == "3.0.2":
         swagger_jsonschema = SWAGGER_V3_JSONSCHEMA
-        generator = SwaggerV3Generator()
     else:
-        raise ValueError("Unknown swagger_version: {}".format(swagger_version))
+        raise ValueError("Unknown swagger_version: {}".format(open_api_version))
 
     validate_swagger(expected_swagger, schema=swagger_jsonschema)
 
-    swagger = generator.generate(registry)
+    swagger = swagger_generator.generate(registry)
 
     result = json.dumps(swagger, indent=2, sort_keys=True)
     expected = json.dumps(expected_swagger, indent=2, sort_keys=True)
