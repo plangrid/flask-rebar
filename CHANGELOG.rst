@@ -2,6 +2,32 @@ Changelog
 =========
 
 
+v1.11.0 (2019-10-28)
+--------------------
+- Improve swagger support for authenticators (#130) (BP-778. [Andrew
+  Standley]
+
+  * Added a get_open_api_version method to the swagger generator interface to help with refactoring the swagger tests so that we can use generators that have customer converters registered.
+
+  * Updated jsonschema library for tests.
+
+  * Added failing tests for swagger generation from Authenticators.
+
+  * Added tests for the interface of AuthenticatorConverter to make sure I don't accidentally change it.
+
+  * Added authenticator to swagger conversion framework.
+
+  * Updated the multiple_authenticators test to use the new auth converter framework.
+
+  * Fixed eol_version for a deprecation message, and caught warnings on the legacy AuthenticatorConverter test.
+
+  * Fix typos and imports.
+
+  * Added documentation to AuthenticatorConverter. Also noted potential issue with conflicting scheme names in generators, going to push addressing that to later.
+
+  * Added combined authentication examples to the recipes doc.
+
+
 v1.10.2 (2019-09-19)
 --------------------
 
