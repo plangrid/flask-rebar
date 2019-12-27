@@ -263,6 +263,51 @@ class TestConverterRegistry(unittest.TestCase):
             },
         )
 
+    def test_partial(self):
+        class Foo(m.Schema):
+            b = m.fields.Integer(required=True)
+            a = m.fields.Integer(required=True)
+            c = m.fields.Integer()
+
+        schema = Foo(partial=["b"])
+        json_schema = self.registry.convert(schema)
+
+        self.assertEqual(
+            json_schema,
+            {
+                "type": "object",
+                "title": "Foo",
+                "properties": {
+                    "b": {"type": "integer"},
+                    "a": {"type": "integer"},
+                    "c": {"type": "integer"},
+                },
+                "required": ["a"],
+            },
+        )
+
+    def test_partial_all(self):
+        class Foo(m.Schema):
+            b = m.fields.Integer(required=True)
+            a = m.fields.Integer(required=True)
+            c = m.fields.Integer()
+
+        schema = Foo(partial=True)
+        json_schema = self.registry.convert(schema)
+
+        self.assertEqual(
+            json_schema,
+            {
+                "type": "object",
+                "title": "Foo",
+                "properties": {
+                    "b": {"type": "integer"},
+                    "a": {"type": "integer"},
+                    "c": {"type": "integer"},
+                },
+            },
+        )
+
     def test_object_description(self):
         class Foo(m.Schema):
             """I'm the description!"""
