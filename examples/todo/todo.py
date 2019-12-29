@@ -39,9 +39,15 @@ class CreateTodoSchema(RequestSchema):
     description = fields.String(required=True)
 
 
-class UpdateTodoSchema(RequestSchema):
-    complete = fields.Boolean()
-    description = fields.String()
+class UpdateTodoSchema(CreateTodoSchema):
+    # This schema provides an example of one way to re-use another schema while making some fields optional
+    # a "partial" schema in Marshmallow parlance:
+    def __init__(self, **kwargs):
+        super_kwargs = dict(kwargs)
+        partial_arg = super_kwargs.pop("partial", True)
+        # Note: if you only want to mark some fields as partial, pass partial= a collection of field names, e.g.,:
+        # partial_arg = super_kwargs.pop('partial', ('description', ))
+        super(UpdateTodoSchema, self).__init__(partial=partial_arg, **super_kwargs)
 
 
 class GetTodoListSchema(RequestSchema):
