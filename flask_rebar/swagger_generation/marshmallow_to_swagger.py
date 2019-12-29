@@ -204,14 +204,17 @@ class SchemaConverter(MarshmallowConverter):
 
     @sets_swagger_attr(sw.required)
     def get_required(self, obj, context):
-        if obj.many:
+        if obj.many or obj.partial is True:
             return UNSET
 
         required = []
+        obj_partial_is_collection = m.utils.is_collection(obj.partial)
 
         for name, field in obj.fields.items():
             if field.required:
                 prop = compat.get_data_key(field)
+                if obj_partial_is_collection and prop in obj.partial:
+                    continue
                 required.append(prop)
 
         if required and not obj.ordered:
