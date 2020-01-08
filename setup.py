@@ -13,6 +13,7 @@ development = [
     "bumpversion==0.5.3",
     "gitchangelog>=3.0.4,<4.0.0",
     "pre-commit>=1.14.4",
+    "pyyaml<=5.2",
 ]
 
 if __name__ == "__main__":
