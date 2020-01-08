@@ -10,6 +10,8 @@ Changes
 - Added support for marshmallow partial schema (#146) [Tuan Anh Hoang-
   Vu]
 
+- Pin to PyYAML to avoid breaking change (Python 3.4) until we release our 2.0 and cut those old cords [Rick Riensche]
+
 Other
 ~~~~~
 - Doc: Added tutorial section for linking blogs and other external
