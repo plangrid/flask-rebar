@@ -2,6 +2,20 @@ Changelog
 =========
 
 
+v1.12.0 (2020-01-08)
+--------------------
+
+Changes
+~~~~~~~
+- Added support for marshmallow partial schema (#146) [Tuan Anh Hoang-
+  Vu]
+
+Other
+~~~~~
+- Doc: Added tutorial section for linking blogs and other external
+  resources. (#143) [Andrew Standley]
+
+
 v1.11.0 (2019-10-28)
 --------------------
 - Improve swagger support for authenticators (#130) (BP-778. [Andrew
