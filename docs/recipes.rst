@@ -184,5 +184,38 @@ Allow a request with Auth0 AND an API-Key
 		return 200
 
 
+Marshmallow Partial Schemas
+===========================
+
+Beginning with version 1.12, Flask-Rebar includes support for `Marshmallow "partial" loading <https://marshmallow.readthedocs.io/en/stable/quickstart.html#partial-loading>`_ of schemas.  This is particularly useful if you have a complicated schema with lots of required fields for creating an item (e.g., via a POST endpoint) and want to reuse the schema with some or all fields as optional for an update operation (e.g., via PATCH).
+
+While you can accomplish this by simply adding a ``partial`` keyword argument when instantiating an existing schema, to avoid confusion in the generated OpenAPI model, we strongly recommend creating a derived schema class as illustrated in the following example:
+
+.. code-block:: python
+
+	class CreateTodoSchema(RequestSchema):
+		complete = fields.Boolean(required=True)
+		description = fields.String(required=True)
+		created_by = fields.String(required=True)
+
+
+	class UpdateTodoSchema(CreateTodoSchema):
+		def __init__(self, **kwargs):
+			super_kwargs = dict(kwargs)
+			partial_arg = super_kwargs.pop('partial', True)
+			super(UpdateTodoSchema, self).__init__(partial=partial_arg, **super_kwargs)
+
+The preceeding example makes `all` fields from ``CreateTodoSchema`` optional in the derived ``UpdateTodoSchema`` class by injecting ``partial=True`` as a keyword argument.  Marshmallow also supports specifying only some fields as "partial" so if, for example, you wanted to use this approach but make only the ``description`` and ``created_by`` fields optional, you could use something like:
+
+.. code-block:: python
+
+	class UpdateTodoSchema(CreateTodoSchema):
+		def __init__(self, **kwargs):
+			super_kwargs = dict(kwargs)
+			partial_arg = super_kwargs.pop('partial', ['description', 'created_by'])
+			super(UpdateTodoSchema, self).__init__(partial=partial_arg, **super_kwargs)
+
+
+
 
 
