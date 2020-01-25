@@ -277,7 +277,7 @@ class FieldConverter(MarshmallowConverter):
                     )
 
         if context.openapi_version == 3 and obj.allow_none:
-            jsonschema_obj = {sw.any_of: [{sw.type_: sw.null}, jsonschema_obj]}
+            jsonschema_obj['nullable'] = True
 
         return jsonschema_obj
 

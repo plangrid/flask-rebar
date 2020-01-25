@@ -131,7 +131,7 @@ class TestConverterRegistry(unittest.TestCase):
         for field, result in [
             (
                 m.fields.Integer(allow_none=True),
-                {"anyOf": [{"type": "null"}, {"type": "integer"}]},
+                {"type": "integer", "nullable": True},
             ),
             (
                 QueryParamList(m.fields.Integer()),
