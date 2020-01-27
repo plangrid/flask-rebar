@@ -31,7 +31,7 @@ class CommaSeparatedList(fields.List):
 
     def _serialize(self, value, attr, obj):
         items = super(CommaSeparatedList, self)._serialize(value, attr, obj)
-        return ",".join([str(i) for i in items])
+        return ",".join(str(i) for i in items)
 
 
 class QueryParamList(fields.List):
