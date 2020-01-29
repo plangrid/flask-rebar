@@ -96,7 +96,7 @@ registry.set_default_authenticator(default_authenticator)
 
 EXPECTED_SWAGGER_V2 = {
     "swagger": "2.0",
-    "host": "swag.com",
+    "host": "localhost",
     "consumes": ["application/json"],
     "produces": ["application/json"],
     "schemes": [],
