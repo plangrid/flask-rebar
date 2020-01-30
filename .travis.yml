@@ -41,6 +41,7 @@ jobs:
       install: skip
 
       deploy:
+        distributions: "sdist bdist_wheel"
         provider: pypi
         user: plangrid
         password:
