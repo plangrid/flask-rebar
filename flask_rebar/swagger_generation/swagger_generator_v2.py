@@ -62,7 +62,7 @@ class SwaggerV2Generator(SwaggerGenerator):
 
     def __init__(
         self,
-        host="swag.com",
+        host="localhost",
         schemes=(),
         consumes=("application/json",),
         produces=("application/json",),
