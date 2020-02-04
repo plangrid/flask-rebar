@@ -63,6 +63,11 @@ Pull Requests
 3. If you've changed APIs, update the documentation.
 4. Make sure you commit message matches something like `(chg|fix|new): COMMIT_MSG` so `gitchangelog` can correctly generate the entry for your commit.
 
+Meeting Notes
+-------------
+Links to notes from team meetings:
+
+:doc:`meeting_notes/roadmap_2019Jan29`
 
 Releasing to PyPI
 -----------------
