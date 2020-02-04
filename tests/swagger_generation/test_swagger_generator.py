@@ -40,7 +40,7 @@ def _assert_dicts_equal(a, b):
 
 
 def test_swagger_v2_generator_non_registry_parameters():
-    host = "swag.com"
+    host = "localhost"
     schemes = ["http"]
     consumes = ["application/json"]
     produces = ["application/json"]

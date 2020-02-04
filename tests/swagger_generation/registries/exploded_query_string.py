@@ -27,7 +27,7 @@ def get_foos():
 
 EXPECTED_SWAGGER_V2 = {
     "swagger": "2.0",
-    "host": "swag.com",
+    "host": "localhost",
     "consumes": ["application/json"],
     "produces": ["application/json"],
     "schemes": [],
