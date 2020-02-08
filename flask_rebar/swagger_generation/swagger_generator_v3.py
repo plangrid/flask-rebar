@@ -173,18 +173,23 @@ class SwaggerV3Generator(SwaggerGenerator):
                     )
 
                 path_definition[sw.parameters] = path_params
-
             for method, d in methods.items():
                 responses_definition = {
                     sw.default: self._get_response_definition(
                         self.default_response_schema
                     )
                 }
-
                 if d.response_body_schema:
                     for status_code, schema in d.response_body_schema.items():
                         if schema is not None:
-                            response_definition = self._get_response_definition(schema)
+                            if not getattr(schema, "__content_type__", None):
+                                response_definition = self._get_response_definition(
+                                    schema
+                                )
+                            else:
+                                response_definition = self._get_response_definition(
+                                    schema, schema.__content_type__
+                                )
                         else:
                             response_definition = {sw.description: "No response body."}
 
@@ -267,12 +272,10 @@ class SwaggerV3Generator(SwaggerGenerator):
 
         return path_definitions
 
-    def _get_response_definition(self, schema):
+    def _get_response_definition(self, schema, mimetype="application/json"):
         return {
             sw.description: get_response_description(schema),
-            sw.content: {
-                "application/json": {sw.schema: get_ref_schema(self._ref_base, schema)}
-            },
+            sw.content: {mimetype: {sw.schema: get_ref_schema(self._ref_base, schema)}},
         }
 
     def _get_components(self, registry):

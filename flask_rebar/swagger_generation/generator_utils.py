@@ -53,7 +53,11 @@ def get_ref_schema(base, schema):
     :return:
     """
     ref = {sw.ref: create_ref(base, get_swagger_title(schema))}
-    return ref if not schema.many else {sw.type_: sw.array, sw.items: ref}
+    return (
+        ref
+        if not getattr(schema, "many", None)
+        else {sw.type_: sw.array, sw.items: ref}
+    )
 
 
 def get_response_description(schema):
