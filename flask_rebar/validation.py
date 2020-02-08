@@ -121,6 +121,10 @@ class ResponseSchema(ActuallyRequireOnDumpMixin, Schema):
         super().__init__(**kwargs)
 
 
+class StrictSchema(RequestSchema, ResponseSchema):
+    pass
+
+
 class Error(Schema):
     message = fields.String(required=True)
     errors = fields.Dict(required=False)

@@ -20,7 +20,7 @@ from flask_rebar import compat
 from flask_rebar import messages
 from flask_rebar.utils.request_utils import normalize_schema
 from tests.helpers import skip_if_marshmallow_not_v2
-from flask_rebar.validation import ActuallyRequireOnDumpMixin
+from flask_rebar.validation import ActuallyRequireOnDumpMixin, StrictSchema
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import DisallowExtraFieldsMixin
 from flask_rebar.validation import QueryParamList
@@ -115,6 +115,30 @@ class RequireOutputMixinTest(TestCase):
         with self.assertRaises(ValidationError) as ctx:
             compat.dump(self.schema, self.data)
         self.assertIn("one_of_validation", ctx.exception.messages)
+
+
+class ActuallyStrictSchema(StrictSchema):
+    optional = fields.Str()
+    required = fields.Str(required=True, allow_none=False)
+
+
+class TestStrictSchema(TestCase):
+    def test_load_nominal(self):
+        ActuallyStrictSchema().load({"optional": "foo", "required": "bar"})
+
+    def test_load_unexpected_field(self):
+        data, errs = ActuallyStrictSchema().load(
+            {"optional": "foo", "required": "bar", "foo": "bar"}
+        )
+        self.assertEqual(errs, {"_schema": [messages.unsupported_fields(["foo"])]})
+
+    def test_dump_nominal(self):
+        ActuallyStrictSchema().dump({"optional": "foo", "required": "bar"})
+
+    def test_dump_missing_required(self):
+        with self.assertRaises(ValidationError) as ctx:
+            compat.dump(ActuallyStrictSchema(), {"optional": "foo"})
+        self.assertIn("required", ctx.exception.messages)
 
 
 class StringList(Schema):
