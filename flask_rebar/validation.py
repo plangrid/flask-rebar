@@ -115,8 +115,10 @@ else:
     RequestSchema = Schema
 
 
+# Define a constructor to please some IDE type checking
 class ResponseSchema(ActuallyRequireOnDumpMixin, Schema):
-    pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class Error(Schema):
