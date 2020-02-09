@@ -191,7 +191,63 @@ def test_swagger_v3_generator_non_registry_parameters():
             }
         },
     }
+    validate_swagger(expected_swagger, SWAGGER_V3_JSONSCHEMA)
+    _assert_dicts_equal(swagger, expected_swagger)
 
+
+@pytest.mark.parametrize("generator", [SwaggerV3Generator()])
+def test_swagger_v3_generator_response_content_type(generator):
+    rebar = Rebar()
+    registry = rebar.create_handler_registry()
+
+    class PDF(m.fields.String):
+        __content_type__ = "application/pdf"
+
+    @registry.handles(rule="/foos/pdf", method="GET", response_body_schema={201: PDF})
+    def get_foo(foo_uid):
+        pass
+
+    expected_swagger = {
+        "components": {
+            "schemas": {
+                "Error": {
+                    "properties": {
+                        "errors": {"type": "object"},
+                        "message": {"type": "string"},
+                    },
+                    "required": ["message"],
+                    "title": "Error",
+                    "type": "object",
+                }
+            }
+        },
+        "info": {"description": "", "title": "My API", "version": "1.0.0"},
+        "openapi": "3.0.2",
+        "paths": {
+            "/foos/pdf": {
+                "get": {
+                    "operationId": "get_foo",
+                    "responses": {
+                        "201": {
+                            "content": {
+                                "application/pdf": {"schema": {"type": "string"}}
+                            },
+                            "description": "PDF",
+                        },
+                        "default": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/Error"}
+                                }
+                            },
+                            "description": "Error",
+                        },
+                    },
+                }
+            }
+        },
+    }
+    swagger = generator.generate(registry)
     validate_swagger(expected_swagger, SWAGGER_V3_JSONSCHEMA)
     _assert_dicts_equal(swagger, expected_swagger)
 
