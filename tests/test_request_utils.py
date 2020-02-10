@@ -7,69 +7,62 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-import unittest
-
-from flask import Flask
-from flask_testing import TestCase
 from marshmallow import fields, ValidationError
+import pytest
 
 from flask_rebar import validation, response, marshal
 
 
-class TestResponseFormatting(TestCase):
-    def create_app(self):
-        app = Flask(__name__)
+def test_single_resource_response(app):
+    @app.route("/single_resource")
+    def handler():
+        return response(data={"foo": "bar"})
 
-        return app
+    resp = app.test_client().get("/single_resource")
+    assert resp.status_code == 200
+    assert resp.json == {"foo": "bar"}
+    assert resp.content_type == "application/json"
 
-    def test_single_resource_response(self):
-        @self.app.route("/single_resource")
-        def handler():
-            return response(data={"foo": "bar"})
 
-        resp = self.app.test_client().get("/single_resource")
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, {"foo": "bar"})
-        self.assertEqual(resp.content_type, "application/json")
+def test_single_resource_response_with_status_code(app):
+    @app.route("/single_resource")
+    def handler():
+        return response(data={"foo": "bar"}, status_code=201)
 
-    def test_single_resource_response_with_status_code(self):
-        @self.app.route("/single_resource")
-        def handler():
-            return response(data={"foo": "bar"}, status_code=201)
+    resp = app.test_client().get("/single_resource")
+    assert resp.status_code == 201
+    assert resp.json == {"foo": "bar"}
+    assert resp.content_type == "application/json"
 
-        resp = self.app.test_client().get("/single_resource")
-        self.assertEqual(resp.status_code, 201)
-        self.assertEqual(resp.json, {"foo": "bar"})
-        self.assertEqual(resp.content_type, "application/json")
 
-    def test_single_resource_response_with_headers(self):
-        header_key = "X-Foo"
-        header_value = "bar"
+def test_single_resource_response_with_headers(app):
+    header_key = "X-Foo"
+    header_value = "bar"
 
-        @self.app.route("/single_resource")
-        def handler():
-            return response(data={"foo": "bar"}, headers={header_key: header_value})
+    @app.route("/single_resource")
+    def handler():
+        return response(data={"foo": "bar"}, headers={header_key: header_value})
 
-        resp = self.app.test_client().get("/single_resource")
-        self.assertEqual(resp.headers[header_key], header_value)
-        self.assertEqual(resp.json, {"foo": "bar"})
-        self.assertEqual(resp.content_type, "application/json")
+    resp = app.test_client().get("/single_resource")
+    assert resp.headers[header_key] == header_value
+    assert resp.json == {"foo": "bar"}
+    assert resp.content_type == "application/json"
 
 
 class SchemaForMarshaling(validation.ResponseSchema):
     foo = fields.Integer()
 
 
-class TestMarshal(unittest.TestCase):
-    def test_marshal(self):
-        marshaled = marshal(data={"foo": 1}, schema=SchemaForMarshaling)
-        self.assertEqual(marshaled, {"foo": 1})
+def test_marshal():
+    marshaled = marshal(data={"foo": 1}, schema=SchemaForMarshaling)
+    assert marshaled == {"foo": 1}
 
-        # Also works with an instance of the schema
-        marshaled = marshal(data={"foo": 1}, schema=SchemaForMarshaling())
+    # Also works with an instance of the schema
+    marshaled = marshal(data={"foo": 1}, schema=SchemaForMarshaling())
 
-        self.assertEqual(marshaled, {"foo": 1})
+    assert marshaled == {"foo": 1}
 
-    def test_marshal_errors(self):
-        with self.assertRaises(ValidationError):
-            marshal(data={"foo": "bar"}, schema=SchemaForMarshaling)
+
+def test_marshal_errors():
+    with pytest.raises(ValidationError):
+        marshal(data={"foo": "bar"}, schema=SchemaForMarshaling)
