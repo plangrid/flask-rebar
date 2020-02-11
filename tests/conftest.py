@@ -6,6 +6,7 @@ import flask
 from marshmallow import fields
 import pytest
 from werkzeug.exceptions import BadRequest
+from werkzeug.utils import cached_property
 
 from flask_rebar import errors
 from flask_rebar import Rebar
@@ -15,9 +16,48 @@ from flask_rebar.utils.request_utils import get_json_body_params_or_400
 from flask_rebar.utils.request_utils import get_query_string_params_or_400
 
 
+class JSONResponse(object):
+    """Mixin with testing helper methods for JSON responses.
+    required for older versions of flask.
+    """
+
+    @cached_property
+    def json(self):
+        """Try to deserialize response data (a string containing a valid JSON
+        document) to a Python object by passing it to the underlying
+        :mod:`flask.json` module.
+        """
+        return json.loads(self.data)
+
+    def __eq__(self, other):
+        if isinstance(other, int):
+            return self.status_code == other
+        # even though the Python 2-specific code works on Python 3, keep the two versions
+        # separate so we can simplify the code once Python 2 support is dropped
+        if sys.version_info[0] == 2:
+            try:
+                super_eq = super(JSONResponse, self).__eq__
+            except AttributeError:
+                return NotImplemented
+            else:
+                return super_eq(other)
+        else:
+            return super(JSONResponse, self).__eq__(other)
+
+    def __ne__(self, other):
+        return not self == other
+
+
 @pytest.fixture
 def app():
-    return flask.Flask(__name__)
+    obj = flask.Flask(__name__)
+    if not hasattr(obj.response_class, 'json'):
+        obj.response_class = type(
+            str(JSONResponse),
+            (obj.response_class, JSONResponse),
+            {},
+        )  # create new json object type
+    return obj
 
 
 @pytest.fixture
