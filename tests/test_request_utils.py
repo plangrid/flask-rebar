@@ -10,13 +10,15 @@
 import unittest
 
 from flask import Flask
-from flask_testing import TestCase
 from marshmallow import fields, ValidationError
 
 from flask_rebar import validation, response, marshal
 
 
-class TestResponseFormatting(TestCase):
+class TestResponseFormatting(unittest.TestCase):
+    def setUp(self):
+        self.app = self.create_app()
+
     def create_app(self):
         app = Flask(__name__)
 

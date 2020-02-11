@@ -10,9 +10,9 @@
 from __future__ import unicode_literals
 
 import json
+import unittest
 
 from flask import Flask
-from flask_testing import TestCase
 from marshmallow import fields
 from werkzeug.exceptions import BadRequest
 from mock import ANY
@@ -25,8 +25,11 @@ from flask_rebar.utils.request_utils import get_json_body_params_or_400
 from flask_rebar.utils.request_utils import get_query_string_params_or_400
 
 
-class TestErrors(TestCase):
+class TestErrors(unittest.TestCase):
     ERROR_MSG = "Bamboozled!"
+
+    def setUp(self):
+        self.app = self.create_app()
 
     def create_app(self):
         app = Flask(__name__)
@@ -111,7 +114,10 @@ class TestErrors(TestCase):
             )
 
 
-class TestJsonBodyValidation(TestCase):
+class TestJsonBodyValidation(unittest.TestCase):
+    def setUp(self):
+        self.app = self.create_app()
+
     def post_json(self, path, data):
         return self.app.test_client().post(
             path=path,
@@ -290,7 +296,10 @@ class TestJsonBodyValidation(TestCase):
         self.assertEqual(resp.json, {"message": messages.invalid_json})
 
 
-class TestQueryStringValidation(TestCase):
+class TestQueryStringValidation(unittest.TestCase):
+    def setUp(self):
+        self.app = self.create_app()
+
     def create_app(self):
         app = Flask(__name__)
         Rebar().init_app(app=app)
