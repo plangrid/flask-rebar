@@ -5,7 +5,6 @@ from setuptools import setup, find_packages
 # packages required for local development and testing
 development = [
     "pytest==4.6.8",
-    "Flask-Testing==0.6.2",
     "mock==2.0.0",
     "jsonschema==3.0.2",
     "Sphinx==1.7.0",

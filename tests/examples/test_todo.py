@@ -9,16 +9,19 @@
 """
 import json
 
-from flask_testing import TestCase
+import unittest
 
 from examples.todo.todo import create_app
 
 
-class TestTodoApp(TestCase):
+class TestTodoApp(unittest.TestCase):
     """
     Just some super basic tests to make sure our example app appears to still
     be working.
     """
+
+    def setUp(self):
+        self.app = self.create_app()
 
     def create_app(self):
         return create_app(__name__)
