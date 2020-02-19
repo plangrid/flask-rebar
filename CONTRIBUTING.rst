@@ -67,7 +67,7 @@ Meeting Notes
 -------------
 Links to notes from team meetings:
 
-:doc:`meeting_notes/roadmap_2019Jan29`
+:doc:`meeting_notes/roadmap_2020Jan29`
 
 Releasing to PyPI
 -----------------
