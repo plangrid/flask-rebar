@@ -8,15 +8,19 @@
     :license: MIT, see LICENSE for details.
 """
 import unittest
+from tests.helpers import make_test_response
 
 from flask import Flask
-from flask_testing import TestCase
 from marshmallow import fields, ValidationError
 
 from flask_rebar import validation, response, marshal
 
 
-class TestResponseFormatting(TestCase):
+class TestResponseFormatting(unittest.TestCase):
+    def setUp(self):
+        self.app = self.create_app()
+        self.app.response_class = make_test_response(self.app.response_class)
+
     def create_app(self):
         app = Flask(__name__)
 

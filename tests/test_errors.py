@@ -10,13 +10,14 @@
 from __future__ import unicode_literals
 
 import json
+import unittest
 
 from flask import Flask
-from flask_testing import TestCase
 from marshmallow import fields
 from werkzeug.exceptions import BadRequest
 from mock import ANY
 from mock import patch
+from tests.helpers import make_test_response
 
 from flask_rebar import messages, validation, response, Rebar
 from flask_rebar.compat import MARSHMALLOW_V2
@@ -25,8 +26,12 @@ from flask_rebar.utils.request_utils import get_json_body_params_or_400
 from flask_rebar.utils.request_utils import get_query_string_params_or_400
 
 
-class TestErrors(TestCase):
+class TestErrors(unittest.TestCase):
     ERROR_MSG = "Bamboozled!"
+
+    def setUp(self):
+        self.app = self.create_app()
+        self.app.response_class = make_test_response(self.app.response_class)
 
     def create_app(self):
         app = Flask(__name__)
@@ -111,7 +116,11 @@ class TestErrors(TestCase):
             )
 
 
-class TestJsonBodyValidation(TestCase):
+class TestJsonBodyValidation(unittest.TestCase):
+    def setUp(self):
+        self.app = self.create_app()
+        self.app.response_class = make_test_response(self.app.response_class)
+
     def post_json(self, path, data):
         return self.app.test_client().post(
             path=path,
@@ -290,7 +299,11 @@ class TestJsonBodyValidation(TestCase):
         self.assertEqual(resp.json, {"message": messages.invalid_json})
 
 
-class TestQueryStringValidation(TestCase):
+class TestQueryStringValidation(unittest.TestCase):
+    def setUp(self):
+        self.app = self.create_app()
+        self.app.response_class = make_test_response(self.app.response_class)
+
     def create_app(self):
         app = Flask(__name__)
         Rebar().init_app(app=app)
