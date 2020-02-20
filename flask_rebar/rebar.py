@@ -10,18 +10,20 @@
 """
 from __future__ import unicode_literals
 
-import sys
 from collections import defaultdict
 from collections import namedtuple
 from copy import copy
 from distutils.version import LooseVersion
 from functools import wraps
+import importlib
+import sys
 
 import marshmallow
 from flask import __version__ as flask_version
 from flask import current_app, g, jsonify, request
 from werkzeug.datastructures import Headers
 from werkzeug.routing import RequestRedirect
+from werkzeug.utils import find_modules
 
 from flask_rebar import messages
 from flask_rebar import errors
@@ -300,6 +302,8 @@ class HandlerRegistry(object):
     :param str swagger_ui_path:
         The HTML Swagger UI will be hosted at this URL.
         If set as None, no Swagger UI will be hosted.
+    :param Union(List(str), str) handlers:
+        Package or list of packages where handlers are located so their modules can be imported.
     """
 
     @deprecated_parameters(
@@ -318,6 +322,7 @@ class HandlerRegistry(object):
         swagger_generator=None,
         swagger_path="/swagger",
         swagger_ui_path="/swagger/ui",
+        handlers=None,
     ):
         # default_authenticators can be a single Authenticator, a list of Authenticators, or None.
         if isinstance(default_authenticators, Authenticator):
@@ -333,6 +338,7 @@ class HandlerRegistry(object):
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.swagger_path = swagger_path
         self.swagger_ui_path = swagger_ui_path
+        self.handlers = handlers if isinstance(handlers, list) else [handlers]
 
     @property
     @deprecated("default_authenticators", "3.0")
@@ -356,6 +362,17 @@ class HandlerRegistry(object):
        :param Union(List(flask_rebar.authenticators.Authenticator)) authenticators:
        """
         self.default_authenticators = authenticators or []
+
+    def load_handlers(self, recursive=False):
+        """
+        Load modules in ``self.handlers`` package
+        :param boolean recursive:
+            recursively look through packages.
+            Default: False
+        """
+        for package in self.handlers:
+            for handler in find_modules(package, recursive=recursive):
+                importlib.import_module(handler)
 
     def set_default_headers_schema(self, headers_schema):
         """
@@ -667,6 +684,7 @@ class Rebar(object):
         swagger_generator=None,
         swagger_path="/swagger",
         swagger_ui_path="/swagger/ui",
+        handlers=None,
     ):
         """
         Create a new handler registry and add to this extension's set of
@@ -696,6 +714,8 @@ class Rebar(object):
         :param str swagger_ui_path:
             The HTML Swagger UI will be hosted at this URL.
             If set as None, no Swagger UI will be hosted.
+        :param Union(List(str), str) handlers:
+            Package or list of packages where handlers are located so their modules can be imported.
         :rtype: HandlerRegistry
         """
         registry = HandlerRegistry(
@@ -706,6 +726,7 @@ class Rebar(object):
             swagger_generator=swagger_generator,
             swagger_path=swagger_path,
             swagger_ui_path=swagger_ui_path,
+            handlers=handlers,
         )
         self.add_handler_registry(registry=registry)
         return registry

@@ -216,6 +216,38 @@ The preceeding example makes `all` fields from ``CreateTodoSchema`` optional in 
 			super(UpdateTodoSchema, self).__init__(partial=partial_arg, **super_kwargs)
 
 
+Structuring Larger Projects
+===========================
 
+When structuring larger projects, there may be more than one directory which has modules which will be loaded into the ``Registry``.  They still need to be imported, but if there is nothing else to do with them, they aren't used. Instead Flask-Rebar can import those modules.
 
+Let's take a look at this setup:
 
+.. code-block::
+
+	application/
+	├── app.py
+	├── config.py
+	├── database.py
+	├── rebar.py
+	├── handlers
+	│   └── create.py
+	├── models
+	│   └── data.py
+	└── schemas
+		├── create.py
+		└── sync.py
+
+Inside of rebar.py we can find this:
+
+.. code-block:: python
+
+	from flask_rebar import Rebar
+
+	rebar = Rebar()
+	registry = rebar.create_handler_registry(handlers='application.handlers')
+	registry.load_handlers(recursive=False)
+
+The ``handlers`` argument to the :class:`flask_rebar.rebar.HandlerRegistry` will be used to look in the ``application.handlers`` package and load all modules that it finds in there, but not recursively.  This will result in all of the handlers getting imported, so that they can be added to the registry, without a having to add a new import to ``application.app`` each time a new file is added to ``application/handlers/``
+
+And because ``registry.load_handlers()`` is run after ``registry`` is defined, importing the ``registry`` object to in all the files imported by ``load_handlers()`` will not cause circular imports.
