@@ -1,0 +1,59 @@
+name: flask-rebar Pull Request Tests
+
+on:
+- pull_request
+
+jobs:
+  tests:
+    name: Testing on Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 20
+      fail-fast: false
+      matrix:
+        python:
+        - 2.7
+        - 3.5
+        - 3.6
+        - 3.7
+        - 3.8
+        libraries:
+        - marshmallow=='2.13.*' flask=='0.10.*' werkzeug=='0.16.1'
+        - marshmallow=='2.14.*' flask=='0.11.*' werkzeug=='0.16.1'
+        - marshmallow=='2.15.*' flask=='0.12.*' werkzeug=='0.16.1'
+        - marshmallow=='2.16.*' flask=='1.0.*' werkzeug=='1.*'
+        - marshmallow=='2.17.*' flask=='1.1.*' werkzeug=='1.*'
+        - marshmallow=='2.18.*' flask=='1.1.*' werkzeug=='1.*'
+        - marshmallow=='2.19.*' flask=='1.1.*' werkzeug=='1.*'
+        - marshmallow=='2.20.*' flask=='1.1.*' werkzeug=='1.*'
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python:${{ matrix.python }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python }}
+    - name: "Test with ${{matrix.libraries}}"
+      run: |
+        pip install -U pip
+        pip install '.[dev]' ${{matrix.libraries}}
+        pip freeze
+    - name: Run Tests
+      run: |
+        python -m pytest
+  formatter:
+    name: Format using Black
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: "Install black"
+      run: |
+        python -m pip install -U pip
+        python -m pip install black
+        python -m pip freeze
+    - name: Run black
+      run: |
+        python -m black --check --diff .
