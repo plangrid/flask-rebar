@@ -27,6 +27,6 @@ This is really nice if you prefer the rich validation/transformation functionali
 
 It also alleviates the need to manually keep an API's documentation in sync with the actual application code - the schemas used by the application are the same schemas used to generate Swagger.
 
-It's also not always practical - Flask-Rebar sometimes has to expose some Swagger specific things in its interface. C'est la vie.
+It's also not always practical - Flask-Rebar sometimes has to expose some Swagger specific things in its interface. C'est la vie. 
 
 And since Marshmallow can be more powerful than Swagger, it also means its possible to have validation logic that can't be represented in Swagger. Flask-Rebar assumes this is inevitable, and assumes that it's OK for an API to raise a 400 error that Swagger wasn't expecting.
