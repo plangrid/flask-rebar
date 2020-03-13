@@ -77,26 +77,16 @@ class TestFlatten(unittest.TestCase):
             },
         }
 
-        expected_schema = {
-            "$ref": "#/definitions/x"
-        }
+        expected_schema = {"$ref": "#/definitions/x"}
 
         expected_definitions = {
-            "x": {
-                "type": "array",
-                "title": "x",
-                "items": {"$ref": "#/definitions/y"}
-            },
-            "y": {
-                "type": "array",
-                "title": "y",
-                "items": {"$ref": "#/definitions/z"}
-            },
+            "x": {"type": "array", "title": "x", "items": {"$ref": "#/definitions/y"}},
+            "y": {"type": "array", "title": "y", "items": {"$ref": "#/definitions/z"}},
             "z": {
                 "type": "object",
                 "title": "z",
                 "properties": {"a": {"type": "integer"}},
-            }
+            },
         }
 
         schema, definitions = flatten(input_, base="#/definitions")
@@ -115,14 +105,12 @@ class TestFlatten(unittest.TestCase):
                     "type": "object",
                     "title": "b",
                     "properties": {"b": {"type": "string"}},
-                }
+                },
             ],
-            "title": "union"
+            "title": "union",
         }
 
-        expected_schema = {
-            "$ref": "#/definitions/union"
-        }
+        expected_schema = {"$ref": "#/definitions/union"}
 
         expected_definitions = {
             "a": {
@@ -136,11 +124,8 @@ class TestFlatten(unittest.TestCase):
                 "properties": {"b": {"type": "string"}},
             },
             "union": {
-                "anyOf": [
-                    {"$ref": "#/definitions/a"},
-                    {"$ref": "#/definitions/b"}
-                ],
-                "title": "union"
+                "anyOf": [{"$ref": "#/definitions/a"}, {"$ref": "#/definitions/b"}],
+                "title": "union",
             },
         }
 
@@ -193,11 +178,7 @@ class TestFlatten(unittest.TestCase):
                 "title": "a",
                 "properties": {"a": {"type": "string"}},
             },
-            "b": {
-                "type": "array",
-                "title": "b",
-                "items": {"$ref": "#/definitions/c"}
-            },
+            "b": {"type": "array", "title": "b", "items": {"$ref": "#/definitions/c"}},
             "c": {
                 "type": "object",
                 "title": "c",
