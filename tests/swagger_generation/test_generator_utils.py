@@ -77,22 +77,56 @@ class TestFlatten(unittest.TestCase):
             },
         }
 
-        expected_schema = {
-            "type": "array",
-            "title": "x",
-            "items": {
-                "type": "array",
-                "title": "y",
-                "items": {"$ref": "#/definitions/z"},
-            },
-        }
+        expected_schema = {"$ref": "#/definitions/x"}
 
         expected_definitions = {
+            "x": {"type": "array", "title": "x", "items": {"$ref": "#/definitions/y"}},
+            "y": {"type": "array", "title": "y", "items": {"$ref": "#/definitions/z"}},
             "z": {
                 "type": "object",
                 "title": "z",
                 "properties": {"a": {"type": "integer"}},
-            }
+            },
+        }
+
+        schema, definitions = flatten(input_, base="#/definitions")
+        self.assertEqual(schema, expected_schema)
+        self.assertEqual(definitions, expected_definitions)
+
+    def test_flatten_anyof_with_title(self):
+        input_ = {
+            "anyOf": [
+                {
+                    "type": "object",
+                    "title": "a",
+                    "properties": {"a": {"type": "string"}},
+                },
+                {
+                    "type": "object",
+                    "title": "b",
+                    "properties": {"b": {"type": "string"}},
+                },
+            ],
+            "title": "union",
+        }
+
+        expected_schema = {"$ref": "#/definitions/union"}
+
+        expected_definitions = {
+            "a": {
+                "type": "object",
+                "title": "a",
+                "properties": {"a": {"type": "string"}},
+            },
+            "b": {
+                "type": "object",
+                "title": "b",
+                "properties": {"b": {"type": "string"}},
+            },
+            "union": {
+                "anyOf": [{"$ref": "#/definitions/a"}, {"$ref": "#/definitions/b"}],
+                "title": "union",
+            },
         }
 
         schema, definitions = flatten(input_, base="#/definitions")
@@ -133,7 +167,7 @@ class TestFlatten(unittest.TestCase):
             "anyOf": [
                 {"type": "null"},
                 {"$ref": "#/definitions/a"},
-                {"type": "array", "title": "b", "items": {"$ref": "#/definitions/c"}},
+                {"$ref": "#/definitions/b"},
                 {"anyOf": [{"$ref": "#/definitions/d"}]},
             ]
         }
@@ -144,6 +178,7 @@ class TestFlatten(unittest.TestCase):
                 "title": "a",
                 "properties": {"a": {"type": "string"}},
             },
+            "b": {"type": "array", "title": "b", "items": {"$ref": "#/definitions/c"}},
             "c": {
                 "type": "object",
                 "title": "c",

@@ -131,11 +131,6 @@ def _flatten(schema, definitions, base):
         for key, prop in properties.items():
             properties[key] = _flatten(schema=prop, definitions=definitions, base=base)
 
-        if sw.title in schema:
-            definitions_key = get_key(schema)
-            definitions[definitions_key] = schema
-            schema = {sw.ref: create_ref(base, definitions_key)}
-
     elif schema_type == sw.array:
         schema[sw.items] = _flatten(
             schema=schema[sw.items], definitions=definitions, base=base
@@ -147,6 +142,11 @@ def _flatten(schema, definitions, base):
             subschemas[i] = _flatten(
                 schema=subschema, definitions=definitions, base=base
             )
+
+    if sw.title in schema:
+        definitions_key = get_key(schema)
+        definitions[definitions_key] = schema
+        schema = {sw.ref: create_ref(base, definitions_key)}
 
     return schema
 
