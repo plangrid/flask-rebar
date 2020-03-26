@@ -2,6 +2,31 @@ Changelog
 =========
 
 
+v1.12.1 (2020-03-26)
+--------------------
+- Fixes for oneof on _flatten (#182) [Francisco Castro]
+- Add github actions to workflow (#177) [Daniel Wallace]
+
+  * add workflows for github actions
+  + removed python3.4 because it is end of lifed and doesn't exist on
+  github.
+  + removed marshmallow 3.0.0rc5 since newer 3 versions have changed
+  the api.  Also, marshmallow 3.0 seems to have dropped support for
+  python2.
+  + remove .travis.yml
+- !chg: Remove Flask-Testing dependency and drop Python 3.4 support.
+  (#173) [Andrew Standley]
+
+  * Remove Flask-Testing dependency.
+  * Added JsonResponseMixin from Flask-Testing which we need as long as we continue to test flask<1.0
+  * Pinned Werkzueg in travis. Should be able to drop if we drop flask<0.12 support.
+  * Dropped support for python 3.4 in order to test support for Werkzeug 1.0.0
+- FIX: Fix OpenApi v3 generation for nullable fields (#154) [mbierma]
+
+  * Use 'nullable' to specify that the value may be null when generating v3 schema.
+- Change host default to localhost (#157) [Daniel Wallace]
+
+
 v1.12.0 (2020-01-08)
 --------------------
 
