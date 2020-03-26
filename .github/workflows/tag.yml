@@ -1,9 +1,8 @@
-name: flask-rebar Pull Request Tests
+name: flask-rebar Release Publish
 
 on:
   release:
-    types:
-    - created
+    types: [created]
 
 jobs:
   build-n-publish:
