@@ -102,12 +102,12 @@ class SwaggerV3Generator(SwaggerGenerator):
             default_security.extend(
                 self.authenticator_converter.get_security_requirements(authenticator)
             )
-
         paths = self._get_paths(
             paths=registry.paths,
             default_headers_schema=registry.default_headers_schema,
             default_security=default_security,
         )
+
 
         swagger = {
             sw.openapi: self.get_open_api_version(),
@@ -177,6 +177,10 @@ class SwaggerV3Generator(SwaggerGenerator):
                 path_definition[sw.parameters] = path_params
 
             for method, d in methods.items():
+
+                if d.hidden:
+                    continue
+
                 responses_definition = {
                     sw.default: self._get_response_definition(
                         self.default_response_schema
@@ -266,6 +270,7 @@ class SwaggerV3Generator(SwaggerGenerator):
 
                 if d.tags:
                     path_definition[method_lower][sw.tags] = d.tags
+
 
         return path_definitions
 

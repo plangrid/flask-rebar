@@ -239,6 +239,7 @@ class PathDefinition(
             "authenticators",
             "tags",
             "mimetype",
+            "hidden",
         ],
     )
 ):
@@ -327,6 +328,7 @@ class HandlerRegistry(object):
 
         self.prefix = normalize_prefix(prefix)
         self._paths = defaultdict(dict)
+        self._paths = defaultdict(dict)
         self.default_authenticators = default_authenticators
         self.default_headers_schema = default_headers_schema
         self.default_mimetype = default_mimetype
@@ -410,6 +412,7 @@ class HandlerRegistry(object):
                     authenticators=definition_.authenticators,
                     tags=definition_.tags,
                     mimetype=definition_.mimetype,
+                    hidden=definition_.hidden,
                 )
 
         return paths
@@ -435,6 +438,8 @@ class HandlerRegistry(object):
         authenticators=USE_DEFAULT,
         tags=None,
         mimetype=USE_DEFAULT,
+        hidden=False,
+
     ):
         """
         Registers a function as a request handler.
@@ -497,6 +502,7 @@ class HandlerRegistry(object):
             authenticators=authenticators,
             tags=tags,
             mimetype=mimetype,
+            hidden=hidden,
         )
 
     @deprecated_parameters(
@@ -519,6 +525,7 @@ class HandlerRegistry(object):
         authenticators=USE_DEFAULT,
         tags=None,
         mimetype=USE_DEFAULT,
+        hidden=False,
     ):
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
@@ -538,6 +545,7 @@ class HandlerRegistry(object):
                 authenticators=authenticators,
                 tags=tags,
                 mimetype=mimetype,
+                hidden=hidden,
             )
             return f
 
