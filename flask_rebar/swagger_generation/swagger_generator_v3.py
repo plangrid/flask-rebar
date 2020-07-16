@@ -6,8 +6,6 @@
 
     :copyright: Copyright 2019 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
-
-
 """
 from __future__ import unicode_literals
 
@@ -107,7 +105,6 @@ class SwaggerV3Generator(SwaggerGenerator):
             default_headers_schema=registry.default_headers_schema,
             default_security=default_security,
         )
-
 
         swagger = {
             sw.openapi: self.get_open_api_version(),
@@ -270,7 +267,6 @@ class SwaggerV3Generator(SwaggerGenerator):
 
                 if d.tags:
                     path_definition[method_lower][sw.tags] = d.tags
-
 
         return path_definitions
 

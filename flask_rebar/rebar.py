@@ -328,7 +328,6 @@ class HandlerRegistry(object):
 
         self.prefix = normalize_prefix(prefix)
         self._paths = defaultdict(dict)
-        self._paths = defaultdict(dict)
         self.default_authenticators = default_authenticators
         self.default_headers_schema = default_headers_schema
         self.default_mimetype = default_mimetype
@@ -439,7 +438,6 @@ class HandlerRegistry(object):
         tags=None,
         mimetype=USE_DEFAULT,
         hidden=False,
-
     ):
         """
         Registers a function as a request handler.
@@ -469,6 +467,8 @@ class HandlerRegistry(object):
             Arbitrary strings to tag the handler with. These will translate to Swagger operation tags.
         :param Type[USE_DEFAULT]|None|str mimetype:
             Content-Type header to add to the response schema
+        :param bool hidden:
+            Used to control the generation of swagger documentation of APIs
         """
         # Fix #115: if we were passed bare classes we'll go ahead and instantiate
         headers_schema = normalize_schema(headers_schema)
