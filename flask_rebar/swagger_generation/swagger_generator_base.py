@@ -117,7 +117,9 @@ class SwaggerGenerator(SwaggerGeneratorI):
         response_converter_registry=None,
         default_response_schema=Error(),
         authenticator_converter_registry=None,
+        include_hidden=False,
     ):
+        self.include_hidden = include_hidden
         self.title = title
         self.version = version
         self.description = description

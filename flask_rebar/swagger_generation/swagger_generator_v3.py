@@ -64,6 +64,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         servers=None,
         default_response_schema=Error(),
         authenticator_converter_registry=None,
+        include_hidden=False,
     ):
         super(SwaggerV3Generator, self).__init__(
             openapi_major_version=3,
@@ -76,6 +77,7 @@ class SwaggerV3Generator(SwaggerGenerator):
             headers_converter_registry=headers_converter_registry,
             response_converter_registry=response_converter_registry,
             authenticator_converter_registry=authenticator_converter_registry,
+            include_hidden=include_hidden,
         )
         self.tags = tags
         self.servers = servers
@@ -175,7 +177,7 @@ class SwaggerV3Generator(SwaggerGenerator):
 
             for method, d in methods.items():
 
-                if d.hidden:
+                if d.hidden and not self.include_hidden:
                     continue
 
                 responses_definition = {
