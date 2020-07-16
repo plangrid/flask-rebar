@@ -129,30 +129,32 @@ Allow a request with Auth0 AND an API-Key
 .. code-block:: python
 
 	from flask_rebar.authenticators import HeaderApiKeyAuthenticator
-	from flask_rebar_auth0 import get_authenticated_user, Auth0Authenticator
-	from my_app import authenticator
+	from flask_rebar_auth0 import Auth0Authenticator
 	from flask_rebar.swagger_generation.authenticator_to_swagger import (
 		AuthenticatorConverter, authenticator_converter_registry
 	)
+	from my_app import app
 
 
-	class CombindedAuthenticator(Auth0Authenticator, HeaderApiKeyAuthenticator):
+	class CombinedAuthenticator(Auth0Authenticator, HeaderApiKeyAuthenticator):
 
-		def __init__(app, header):
+		def __init__(self, app, header):
 			Auth0Authenticator.__init__(self, app)
 			HeaderApiKeyAuthenticator.__init__(self, header)
 
 		def authenticate(self):
-			authenticator.authenticate(self)
-			HeaderAPIKeyAuthenticator.authenticate(self)
+			Auth0Authenticator.authenticate(self)
+			HeaderApiKeyAuthenticator.authenticate(self)
 
 
-	auth0_converter = authenticator_converter_registry._get_converter_for_type(authenticator)
+	# You need to make sure that the converters already exist before trying to access them
+	# Create mock/stub authenticators that are used only for lookup
+	auth0_converter = authenticator_converter_registry._get_converter_for_type(Auth0Authenticator(app))
 	header_api_converter = authenticator_converter_registry._get_converter_for_type(HeaderApiKeyAuthenticator("header"))
 
 	class CombinedAuthenticatorConverter(AuthenticatorConverter):
 
-		AUTHENTICATOR_TYPE = CombindedAuthenticator
+		AUTHENTICATOR_TYPE = CombinedAuthenticator
 
 		def get_security_schemes(self, obj, context):
 			definition = dict()
@@ -172,13 +174,13 @@ Allow a request with Auth0 AND an API-Key
 			]
 
 
-	authenticator_converter_registry.register_type(CombinedAuthenticatorConverter)
+	authenticator_converter_registry.register_type(CombinedAuthenticatorConverter())
 
 
 	@registry.handles(
 	    rule="/user/me/api_token",
 	    method="GET",
-	    authenticators=CombinedAuthenticatorConverter(app, "X-API-Key")
+	    authenticators=CombinedAuthenticator(app, "X-API-Key")
 	)
 	def check_token():
 		return 200
@@ -187,7 +189,7 @@ Allow a request with Auth0 AND an API-Key
 Marshmallow Partial Schemas
 ===========================
 
-Beginning with version 1.12, Flask-Rebar includes support for `Marshmallow "partial" loading <https://marshmallow.readthedocs.io/en/stable/quickstart.html#partial-loading>`_ of schemas.  This is particularly useful if you have a complicated schema with lots of required fields for creating an item (e.g., via a POST endpoint) and want to reuse the schema with some or all fields as optional for an update operation (e.g., via PATCH).
+Beginning with version 1.12, Flask-Rebar includes support for `Marshmallow "partial" loading <https://marshmallow.readthedocs.io/en/stable/quickstart.html#partial-loading>`_ of schemas. This is particularly useful if you have a complicated schema with lots of required fields for creating an item (e.g., via a POST endpoint) and want to reuse the schema with some or all fields as optional for an update operation (e.g., via PATCH).
 
 While you can accomplish this by simply adding a ``partial`` keyword argument when instantiating an existing schema, to avoid confusion in the generated OpenAPI model, we strongly recommend creating a derived schema class as illustrated in the following example:
 
@@ -205,7 +207,7 @@ While you can accomplish this by simply adding a ``partial`` keyword argument wh
 			partial_arg = super_kwargs.pop('partial', True)
 			super(UpdateTodoSchema, self).__init__(partial=partial_arg, **super_kwargs)
 
-The preceeding example makes `all` fields from ``CreateTodoSchema`` optional in the derived ``UpdateTodoSchema`` class by injecting ``partial=True`` as a keyword argument.  Marshmallow also supports specifying only some fields as "partial" so if, for example, you wanted to use this approach but make only the ``description`` and ``created_by`` fields optional, you could use something like:
+The preceeding example makes `all` fields from ``CreateTodoSchema`` optional in the derived ``UpdateTodoSchema`` class by injecting ``partial=True`` as a keyword argument. Marshmallow also supports specifying only some fields as "partial" so if, for example, you wanted to use this approach but make only the ``description`` and ``created_by`` fields optional, you could use something like:
 
 .. code-block:: python
 
@@ -214,8 +216,3 @@ The preceeding example makes `all` fields from ``CreateTodoSchema`` optional in 
 			super_kwargs = dict(kwargs)
 			partial_arg = super_kwargs.pop('partial', ['description', 'created_by'])
 			super(UpdateTodoSchema, self).__init__(partial=partial_arg, **super_kwargs)
-
-
-
-
-
