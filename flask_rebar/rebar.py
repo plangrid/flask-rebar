@@ -463,7 +463,7 @@ class HandlerRegistry(object):
             A list of authenticator objects to authenticate incoming requests.
             If left as USE_DEFAULT, the Rebar's default will be used.
             Set to None to make this an unauthenticated handler.
-        :param Sequence[str] tags:
+        :param Sequce[str] tags:
             Arbitrary strings to tag the handler with. These will translate to Swagger operation tags.
         :param Type[USE_DEFAULT]|None|str mimetype:
             Content-Type header to add to the response schema
