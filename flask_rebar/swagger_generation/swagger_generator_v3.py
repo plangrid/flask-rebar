@@ -102,6 +102,7 @@ class SwaggerV3Generator(SwaggerGenerator):
             default_security.extend(
                 self.authenticator_converter.get_security_requirements(authenticator)
             )
+
         paths = self._get_paths(
             paths=registry.paths,
             default_headers_schema=registry.default_headers_schema,
