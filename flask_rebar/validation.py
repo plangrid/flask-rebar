@@ -15,7 +15,6 @@ from marshmallow import validates_schema
 from werkzeug.datastructures import MultiDict
 
 from flask_rebar import messages
-from flask_rebar.compat import MARSHMALLOW_V2
 
 
 class CommaSeparatedList(fields.List):
@@ -100,7 +99,7 @@ class DisallowExtraFieldsMixin(object):
         ]
         excluded_fields = self.exclude
         unsupported_fields = (
-            set(input_fields) - set(expected_fields) - set(excluded_fields)
+                set(input_fields) - set(expected_fields) - set(excluded_fields)
         )
         if len(unsupported_fields) > 0:
             raise ValidationError(
@@ -108,11 +107,7 @@ class DisallowExtraFieldsMixin(object):
             )
 
 
-# Marshmallow version 3 starts "disallowing" extra fields by default
-if MARSHMALLOW_V2:
-    RequestSchema = type("RequestSchema", (DisallowExtraFieldsMixin, Schema), {})
-else:
-    RequestSchema = Schema
+RequestSchema = Schema
 
 
 class ResponseSchema(ActuallyRequireOnDumpMixin, Schema):
