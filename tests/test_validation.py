@@ -30,36 +30,6 @@ class DisallowExtraFieldsSchema(Schema, DisallowExtraFieldsMixin):
     a = fields.String()
     b = fields.String(load_from="c")
 
-
-@skip_if_marshmallow_not_v2
-class TestDisallowExtraFieldsMixin(TestCase):
-    def test_nominal(self):
-        _, errors = DisallowExtraFieldsSchema(strict=True).dump({})
-        self.assertEqual(errors, {})
-
-    def test_unexpected_field(self):
-        data, errs = DisallowExtraFieldsSchema().load({"foo": "bar"})
-        self.assertEqual(errs, {"_schema": [messages.unsupported_fields(["foo"])]})
-
-    def test_respects_load_from_and_attribute(self):
-        data, errors = DisallowExtraFieldsSchema().load({"c": "bar"})
-        self.assertEqual({}, errors)
-        self.assertEqual(data, {"b": "bar"})
-
-    def test_respects_exclude(self):
-        schema = DisallowExtraFieldsSchema(exclude=("a",))
-        data, errors = schema.load({"a": "yz"})
-        self.assertEqual(errors, {})
-        self.assertEqual(data, {})
-
-    def test_doesnt_break_for_non_object_schema(self):
-        data, errors = DisallowExtraFieldsSchema().load(
-            ["im not supposed to be a list :)"]
-        )
-        self.assertEqual(errors, {"_schema": ["Invalid input type."]})
-        self.assertFalse(data)
-
-
 class ActuallyRequireOnDumpMixinSchema(Schema, ActuallyRequireOnDumpMixin):
     optional = fields.Str()
     value_optional = fields.Str(required=True, allow_none=True)
@@ -85,7 +55,7 @@ class RequireOutputMixinTest(TestCase):
     def test_required_missing(self):
         del self.data["value_required"]
         with self.assertRaises(ValidationError) as ctx:
-            compat.dump(self.schema, self.data)
+            Schema.dump(self.schema, self.data)
         self.assertIn("value_required", ctx.exception.messages)
 
     def test_required_none(self):
