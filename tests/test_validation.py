@@ -24,12 +24,9 @@ from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import DisallowExtraFieldsMixin
 from flask_rebar.validation import QueryParamList
 
-
 class DisallowExtraFieldsSchema(Schema, DisallowExtraFieldsMixin):
     a = fields.String()
     b = fields.String(load_from="c")
-
-
 
 
 class ActuallyRequireOnDumpMixinSchema(Schema, ActuallyRequireOnDumpMixin):
