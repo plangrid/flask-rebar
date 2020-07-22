@@ -19,26 +19,27 @@ MARSHMALLOW_DISTRIBUTION = pkg_resources.get_distribution("marshmallow")
 MARSHMALLOW_MAJOR_VERSION = int(MARSHMALLOW_DISTRIBUTION.version.split(".")[0])
 MARSHMALLOW_V3 = MARSHMALLOW_MAJOR_VERSION == 3
 
+if MARSHMALLOW_V3:
 
-def set_data_key(field, key):
-    field.data_key = key
-    return field
-
-
-def get_data_key(field):
-    if field.data_key:
-        return field.data_key
-    return field.name
+    def set_data_key(field, key):
+        field.data_key = key
+        return field
 
 
-def load(schema, data):
-    return schema.load(data)
+    def get_data_key(field):
+        if field.data_key:
+            return field.data_key
+        return field.name
 
 
-def dump(schema, data):
-    return schema.dump(data)
+    def load(schema, data):
+        return schema.load(data)
 
 
-def exclude_unknown_fields(schema):
-    schema.unknown = marshmallow.EXCLUDE
-    return schema
+    def dump(schema, data):
+        return schema.dump(data)
+
+
+    def exclude_unknown_fields(schema):
+        schema.unknown = marshmallow.EXCLUDE
+        return schema
