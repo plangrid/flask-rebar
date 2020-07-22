@@ -24,6 +24,9 @@ from flask_rebar import errors
 from flask_rebar.utils.request_utils import get_json_body_params_or_400
 from flask_rebar.utils.request_utils import get_query_string_params_or_400
 
+import marshmallow
+print(f"FLOOFY DELICIOUS VERSION: {marshmallow.__version__}")
+
 
 class TestErrors(unittest.TestCase):
     ERROR_MSG = "Bamboozled!"
