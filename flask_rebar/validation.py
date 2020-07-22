@@ -24,11 +24,11 @@ class CommaSeparatedList(fields.List):
     e.g. ?foo=bar,baz -> {'foo': ['bar', 'baz']}
     """
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         items = value.split(",")
         return super(CommaSeparatedList, self)._deserialize(items, attr, data)
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value, attr, obj, **kwargs):
         items = super(CommaSeparatedList, self)._serialize(value, attr, obj)
         return ",".join([str(i) for i in items])
 
@@ -41,7 +41,7 @@ class QueryParamList(fields.List):
     e.g. ?foo=bar&foo=baz -> {'foo': ['bar', 'baz']}
     """
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         # data is a MultiDict of query params, so pull out all of the items
         # with getlist instead of just the first
         if not isinstance(data, MultiDict):
