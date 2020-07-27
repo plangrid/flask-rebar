@@ -727,7 +727,7 @@ class RebarTest(unittest.TestCase):
             path="/my_get_endpoint?name=QuerystringName", headers=expected_headers
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), expected_foo.data)
+        self.assertEqual(get_json_from_resp(resp), expected_foo)
 
         resp = app.test_client().post(
             path="/my_post_endpoint",
