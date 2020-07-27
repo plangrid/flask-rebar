@@ -69,7 +69,7 @@ class ActuallyRequireOnDumpMixin(object):
     def require_output_fields(self, data, many):
         errors = self.validate(data)
         if errors:
-            raise ValidationError(errors, data=data)
+            raise AttributeError()
         return data
 
 
