@@ -220,7 +220,11 @@ class NameAndOtherSchema(m.Schema):
     headers_schema=HeaderSchema(),
 )
 def get_foo(foo_uid):
-    """helpful description"""
+    """
+    a summary
+
+    helpful description
+    """
     pass
 
 
@@ -321,6 +325,7 @@ EXPECTED_SWAGGER_V2 = {
                         "type": "string",
                     }
                 ],
+                "summary": "a summary",
             },
             "patch": {
                 "operationId": "update_foo",
@@ -540,6 +545,7 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
                         "schema": {"type": "string"},
                     }
                 ],
+                "summary": "a summary",
             },
             "patch": {
                 "operationId": "update_foo",

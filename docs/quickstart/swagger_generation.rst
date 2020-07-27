@@ -73,10 +73,16 @@ The generator first checks for the value of ``endpoint`` specified when declarin
 
 In many cases, the name of the function will be good enough. If you need more control over the operationId, specific an ``endpoint`` value.
 
+summary
+^^^^^^^^^^^
+
+Swagger operations can have summaries. If a handler function has a docstring, the generator will use the content before the first blank line if any as the summary.
+
+
 description
 ^^^^^^^^^^^
 
-Swagger operations can have descriptions. If a handler function has a docstring, the generator will use this as a description.
+Swagger operations can have descriptions. If a handler function has a docstring with a blankline the generator will the texts after it as the description.
 
 definition names
 ^^^^^^^^^^^^^^^^
