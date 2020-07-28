@@ -75,7 +75,7 @@ class RequireOutputMixinTest(TestCase):
             compat.dump(self.schema, self.data)
         # it's some sort of date error
         self.assertIn(
-            "cannot be formatted as a datetime",
+            "Not a valid datetime",
             ctx.exception.messages["validation_required"][0],
         )
 
@@ -125,14 +125,13 @@ class TestCommaSeparatedList(TestCase):
 
     def test_serialize_errors(self):
         with self.assertRaises(ValidationError) as ctx:
-            compat.dump(IntegerList(), {"foos": [1, "two"]})
+            compat.dump(IntegerList(), {"foos": [42, "two"]})
 
         self.assertEqual(
             ctx.exception.messages,
             {
-                # Marshmallow's fields.List formats the dump errors differently
-                # than load :shrug:
-                "foos": ["Not a valid integer."]
+                # Element 1 in our list should produce error:
+                "foos": {1: ["Not a valid integer."]}
             },
         )
 
