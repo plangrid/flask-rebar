@@ -4,6 +4,7 @@ import sys
 import pkg_resources
 
 import marshmallow
+from marshmallow import ValidationError
 
 if int(sys.version_info[0]) == 2:
     Mapping = collections.Mapping
@@ -36,6 +37,10 @@ def load(schema, data):
 
 
 def dump(schema, data):
+    error = schema.validate(data)
+    if error:
+        raise ValidationError(error)
+
     return schema.dump(data)
 
 
