@@ -69,7 +69,7 @@ class TodoResourceSchema(ResponseSchema):
 
 
 class TodoListSchema(ResponseSchema):
-    data = fields.Nested(TodoSchema, many=True)
+    data = fields.Nested(TodoSchema, many=False)
 
     @pre_dump
     def envelope_in_data(self, data, **kwargs):
