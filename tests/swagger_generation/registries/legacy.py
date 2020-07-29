@@ -46,6 +46,7 @@ class NameAndOtherSchema(m.Schema):
     method="GET",
     marshal_schema={200: FooSchema()},
     headers_schema=HeaderSchema(),
+
 )
 def get_foo(foo_uid):
     """helpful description"""
@@ -58,6 +59,7 @@ def get_foo(foo_uid):
     marshal_schema={200: FooSchema()},
     request_body_schema=FooUpdateSchema(),
     authenticator=authenticator,
+
 )
 def update_foo(foo_uid):
     pass
@@ -70,6 +72,7 @@ def update_foo(foo_uid):
     method="GET",
     marshal_schema={200: FooSchema(many=True)},
     authenticator=None,  # Override the default!
+    hidden=True,
 )
 def list_foos():
     pass
@@ -81,6 +84,7 @@ def list_foos():
     marshal_schema={200: NestedFoosSchema()},
     query_string_schema=NameAndOtherSchema(),
     authenticator=None,  # Override the default!
+
 )
 def nested_foos():
     pass
@@ -360,31 +364,32 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
             },
         },
         "/foo_list": {
-            "get": {
-                "operationId": "list_foos",
-                "responses": {
-                    "200": {
-                        "description": "Foo",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {"$ref": "#/components/schemas/Foo"},
-                                }
-                            }
-                        },
-                    },
-                    "default": {
-                        "description": "Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {"$ref": "#/components/schemas/Error"}
-                            }
-                        },
-                    },
-                },
-                "security": [],
-            }
+            # "get": {
+            #     "operationId": "list_foos",
+            #     "responses": {
+            #         "200": {
+            #             "description": "Foo",
+            #             "content": {
+            #                 "application/json": {
+            #                     "schema": {
+            #                         "type": "array",
+            #                         "items": {"$ref": "#/components/schemas/Foo"},
+            #                     }
+            #                 }
+            #             },
+            #         },
+            #         "default": {
+            #             "description": "Error",
+            #             "content": {
+            #                 "application/json": {
+            #                     "schema": {"$ref": "#/components/schemas/Error"}
+            #                 }
+            #             },
+            #         },
+            #     },
+            #     "security": [],
+            # }
+
         },
         "/foos": {
             "get": {
