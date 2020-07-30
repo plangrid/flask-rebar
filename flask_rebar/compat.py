@@ -37,11 +37,8 @@ def load(schema, data):
 
 
 def dump(schema, data):
-    error = schema.validate(data)
-    if error:
-        raise ValidationError(error)
-
-    return schema.dump(data)
+    obj = schema.load(data)  # Deserialize to trigger validation
+    return schema.dump(obj)
 
 
 def exclude_unknown_fields(schema):
