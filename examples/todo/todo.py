@@ -83,6 +83,7 @@ class TodoListSchema(ResponseSchema):
         else:
             return data
 
+
 @registry.handles(
     rule="/todos",
     method="POST",
