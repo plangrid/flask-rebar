@@ -73,7 +73,7 @@ class TodoResourceSchema(ResponseSchema):
 
 
 class TodoListSchema(ResponseSchema):
-    data = fields.Nested(TodoSchema, many=False)
+    data = fields.Nested(TodoSchema, many=True)
 
     @pre_dump
     @pre_load
