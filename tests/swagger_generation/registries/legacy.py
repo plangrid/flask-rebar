@@ -70,7 +70,6 @@ def update_foo(foo_uid):
     method="GET",
     marshal_schema={200: FooSchema(many=True)},
     authenticator=None,  # Override the default!
-
 )
 def list_foos():
     pass

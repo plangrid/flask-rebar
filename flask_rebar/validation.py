@@ -102,7 +102,7 @@ class DisallowExtraFieldsMixin(object):
         ]
         excluded_fields = self.exclude
         unsupported_fields = (
-                set(input_fields) - set(expected_fields) - set(excluded_fields)
+            set(input_fields) - set(expected_fields) - set(excluded_fields)
         )
         if len(unsupported_fields) > 0:
             raise ValidationError(

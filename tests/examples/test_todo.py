@@ -34,10 +34,9 @@ class TestTodoApp(unittest.TestCase):
         resp = self.app.test_client().get("/todos")
         self.assertEqual(resp.status_code, 401)
         resp = self.app.test_client().get(
-            "/todos", headers={"X-MyApp-Key": "my-api-key"},
-            data=json.dumps(
-                {"complete": False}
-            ),
+            "/todos",
+            headers={"X-MyApp-Key": "my-api-key"},
+            data=json.dumps({"complete": False}),
         )
         self.assertEqual(resp.status_code, 200)
 

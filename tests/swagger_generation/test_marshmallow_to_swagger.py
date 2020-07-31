@@ -151,7 +151,6 @@ class TestConverterRegistry(unittest.TestCase):
                 {"type": "object", "title": "Foo", "properties": {"a": result}},
             )
 
-
     @skip_if_marshmallow_not_v3
     def test_data_key(self):
         registry = ConverterRegistry()

@@ -94,8 +94,7 @@ def marshal(data, schema):
     return compat.dump(schema=schema, data=data)
 
 
-def \
-        normalize_schema(schema):
+def normalize_schema(schema):
     """
     This allows for either an instance of a marshmallow.Schema or the class
     itself to be passed to functions.

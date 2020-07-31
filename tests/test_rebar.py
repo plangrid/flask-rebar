@@ -57,7 +57,9 @@ class MeSchema(m.Schema):
     user_name = m.fields.String()
 
 
-class DefaultResponseSchema(m.Schema):  # DEFAULT_RESPONSE = {"uid": "0", "name": "I'm the default for testing!"}
+class DefaultResponseSchema(
+    m.Schema
+):  # DEFAULT_RESPONSE = {"uid": "0", "name": "I'm the default for testing!"}
     uid = m.fields.String()
     name = m.fields.String()
 
@@ -78,7 +80,7 @@ def auth_headers(header=DEFAULT_AUTH_HEADER, secret=DEFAULT_AUTH_SECRET):
 
 
 def alternative_auth_headers(
-        header=DEFAULT_ALTERNATIVE_AUTH_HEADER, secret=DEFAULT_ALTERNATIVE_AUTH_SECRET
+    header=DEFAULT_ALTERNATIVE_AUTH_HEADER, secret=DEFAULT_ALTERNATIVE_AUTH_SECRET
 ):
     return dict([(header, secret)])
 
@@ -115,16 +117,16 @@ def register_multiple_authenticators(registry):
 
 
 def register_endpoint(
-        registry,
-        func=None,
-        path="/foos/<foo_uid>",
-        method="GET",
-        endpoint=None,
-        response_body_schema=None,
-        query_string_schema=None,
-        request_body_schema=None,
-        headers_schema=None,
-        authenticators=USE_DEFAULT,
+    registry,
+    func=None,
+    path="/foos/<foo_uid>",
+    method="GET",
+    endpoint=None,
+    response_body_schema=None,
+    query_string_schema=None,
+    request_body_schema=None,
+    headers_schema=None,
+    authenticators=USE_DEFAULT,
 ):
     def default_handler_func(*args, **kwargs):
         return DEFAULT_RESPONSE
@@ -396,29 +398,29 @@ class RebarTest(unittest.TestCase):
         headers = {header_key: header_value}
 
         for (
-                response_body_schema,
-                rv,
-                expected_status,
-                expected_body,
-                expected_headers,
+            response_body_schema,
+            rv,
+            expected_status,
+            expected_body,
+            expected_headers,
         ) in [
             (FooSchema(), DEFAULT_RESPONSE, 200, DEFAULT_RESPONSE, {}),
             ({201: FooSchema()}, (DEFAULT_RESPONSE, 201), 201, DEFAULT_RESPONSE, {}),
             ({201: FooSchema()}, (DEFAULT_RESPONSE, 200), 500, DEFAULT_ERROR, {}),
             ({204: None}, (None, 204), 204, "", {}),
             (
-                    {200: FooSchema()},
-                    (DEFAULT_RESPONSE, headers),
-                    200,
-                    DEFAULT_RESPONSE,
-                    headers,
+                {200: FooSchema()},
+                (DEFAULT_RESPONSE, headers),
+                200,
+                DEFAULT_RESPONSE,
+                headers,
             ),
             (
-                    {201: FooSchema()},
-                    (DEFAULT_RESPONSE, 201, headers),
-                    201,
-                    DEFAULT_RESPONSE,
-                    headers,
+                {201: FooSchema()},
+                (DEFAULT_RESPONSE, 201, headers),
+                201,
+                DEFAULT_RESPONSE,
+                headers,
             ),
             ({201: None}, (None, 201, headers), 201, "", headers),
             ({201: FooSchema()}, ({}, 201, headers), 201, {}, headers),

@@ -24,6 +24,7 @@ from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import DisallowExtraFieldsMixin
 from flask_rebar.validation import QueryParamList
 
+
 class DisallowExtraFieldsSchema(Schema, DisallowExtraFieldsMixin):
     a = fields.String()
     b = fields.String(load_from="c")
@@ -75,8 +76,7 @@ class RequireOutputMixinTest(TestCase):
             compat.dump(self.schema, self.data)
         # it's some sort of date error
         self.assertIn(
-            "Not a valid datetime",
-            ctx.exception.messages["validation_required"][0],
+            "Not a valid datetime", ctx.exception.messages["validation_required"][0]
         )
 
     def test_required_failed_validate(self):
