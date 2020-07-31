@@ -363,7 +363,7 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
                 "security": [{"sharedSecret": []}],
             },
         },
-        "/foo_list": {
+        #"/foo_list": {
             # "get": {
             #     "operationId": "list_foos",
             #     "responses": {
@@ -390,7 +390,7 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
             #     "security": [],
             # }
 
-        },
+       # },
         "/foos": {
             "get": {
                 "operationId": "nested_foos",

@@ -179,6 +179,7 @@ class SwaggerV3Generator(SwaggerGenerator):
             for method, d in methods.items():
 
                 if d.hidden and not self.include_hidden:
+                    
                     continue
 
                 responses_definition = {

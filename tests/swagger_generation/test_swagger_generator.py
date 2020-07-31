@@ -146,6 +146,7 @@ def test_swagger_v3_generator_non_registry_parameters():
                 },
             )
         ],
+        include_hidden=False,
     )
 
     rebar = Rebar()
