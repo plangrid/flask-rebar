@@ -304,18 +304,4 @@ def recursively_convert_dict_to_ordered_dict(obj):
         return obj
 
 
-def chomp_left(string):
-    """
-    Remove a newline and any following tabs whitespace to help parse docstring
-    """
-    return re.sub(r"^\s*\n*\s*", "", string)
-
-
-def chomp_right(string):
-    """
-    Remove a newline and any following tabs whitespace to help parse docstring
-    """
-    return re.sub(r"\s*\n*\s*$", "", string)
-
-
 AuthenticatorConverter = AuthenticatorConverterRegistry  # deprecated alias

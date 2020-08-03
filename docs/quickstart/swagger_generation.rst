@@ -82,7 +82,7 @@ Swagger operations can have summaries. If a handler function has a docstring, th
 description
 ^^^^^^^^^^^
 
-Swagger operations can have descriptions. If a handler function has a docstring with a blankline the generator will the texts after it as the description.
+Swagger operations can have descriptions. If a handler function has a docstring with a blank line, the generator will use the text after it as the description.
 
 definition names
 ^^^^^^^^^^^^^^^^
