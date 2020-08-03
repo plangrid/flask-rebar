@@ -21,8 +21,6 @@ from flask_rebar.swagger_generation.generator_utils import (
     recursively_convert_dict_to_ordered_dict,
     get_ref_schema,
     get_unique_authenticators,
-    chomp_left,
-    chomp_right,
 )
 from flask_rebar.swagger_generation.marshmallow_to_swagger import (
     get_swagger_title,
@@ -246,11 +244,11 @@ class SwaggerV3Generator(SwaggerGenerator):
                 }
 
                 if d.func.__doc__:
-                    docstring = chomp_right(chomp_left(d.func.__doc__))
+                    docstring = d.func.__doc__.strip()
                     doc_parts = str.split(docstring, "\n\n", 1)
                     path_definition[method_lower][sw.summary] = doc_parts[0]
                     path_definition[method_lower][sw.description] = (
-                        chomp_left(doc_parts[1]) if len(doc_parts) > 1 else ""
+                        doc_parts[1].strip() if len(doc_parts) > 1 else ""
                     )
 
                 if parameters_definition:
