@@ -186,6 +186,10 @@ class SwaggerGenerator(SwaggerGeneratorI):
             (converter_registry or default_registry).get_security_requirements,
             openapi_version=openapi_major_version,
         )
+        registry.register_type = functools.partial(
+            (converter_registry or default_registry).register_type,
+        )
+
         return registry
 
     def get_open_api_version(self):
