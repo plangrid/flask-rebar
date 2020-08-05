@@ -360,33 +360,6 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
                 "security": [{"sharedSecret": []}],
             },
         },
-        #  "/foo_list": {
-        #      "get": {
-        #          "operationId": "list_foos",
-        #          "responses": {
-        #              "200": {
-        #                  "description": "Foo",
-        #                  "content": {
-        #                      "application/json": {
-        #                          "schema": {
-        #                              "type": "array",
-        #                              "items": {"$ref": "#/components/schemas/Foo"},
-        #                          }
-        #                      }
-        #                  },
-        #              },
-        #              "default": {
-        #                  "description": "Error",
-        #                  "content": {
-        #                      "application/json": {
-        #                          "schema": {"$ref": "#/components/schemas/Error"}
-        #                      }
-        #                  },
-        #              },
-        #          },
-        #          "security": [],
-        #      }
-        # },
         "/foos": {
             "get": {
                 "operationId": "nested_foos",
