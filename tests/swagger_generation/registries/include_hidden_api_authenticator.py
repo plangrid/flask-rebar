@@ -9,7 +9,7 @@ rebar = Rebar()
 registry = rebar.create_handler_registry()
 
 swagger_v2_generator = SwaggerV2Generator()
-swagger_v3_generator = SwaggerV3Generator(include_hidden=False)
+swagger_v3_generator = SwaggerV3Generator(include_hidden=True)
 
 authenticator = HeaderApiKeyAuthenticator(header="x-auth")
 default_authenticator = HeaderApiKeyAuthenticator(header="x-another", name="default")
@@ -82,6 +82,7 @@ def list_foos():
     marshal_schema={200: NestedFoosSchema()},
     query_string_schema=NameAndOtherSchema(),
     authenticator=None,  # Override the default!
+    hidden=True,
 )
 def nested_foos():
     pass
@@ -360,33 +361,33 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
                 "security": [{"sharedSecret": []}],
             },
         },
-        #  "/foo_list": {
-        #      "get": {
-        #          "operationId": "list_foos",
-        #          "responses": {
-        #              "200": {
-        #                  "description": "Foo",
-        #                  "content": {
-        #                      "application/json": {
-        #                          "schema": {
-        #                              "type": "array",
-        #                              "items": {"$ref": "#/components/schemas/Foo"},
-        #                          }
-        #                      }
-        #                  },
-        #              },
-        #              "default": {
-        #                  "description": "Error",
-        #                  "content": {
-        #                      "application/json": {
-        #                          "schema": {"$ref": "#/components/schemas/Error"}
-        #                      }
-        #                  },
-        #              },
-        #          },
-        #          "security": [],
-        #      }
-        # },
+        "/foo_list": {
+            "get": {
+                "operationId": "list_foos",
+                "responses": {
+                    "200": {
+                        "description": "Foo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {"$ref": "#/components/schemas/Foo"},
+                                }
+                            }
+                        },
+                    },
+                    "default": {
+                        "description": "Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Error"}
+                            }
+                        },
+                    },
+                },
+                "security": [],
+            }
+        },
         "/foos": {
             "get": {
                 "operationId": "nested_foos",

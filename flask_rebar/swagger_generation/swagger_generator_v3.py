@@ -66,6 +66,9 @@ class SwaggerV3Generator(SwaggerGenerator):
         authenticator_converter_registry=None,
         include_hidden=False,
     ):
+        print("floooopy", include_hidden)
+        print("floop", version)
+
         super(SwaggerV3Generator, self).__init__(
             openapi_major_version=3,
             version=version,
@@ -141,6 +144,11 @@ class SwaggerV3Generator(SwaggerGenerator):
         for path, methods in paths.items():
             swagger_path, path_args = format_path_for_swagger(path)
 
+            if all(
+                d.hidden and not self.include_hidden for method, d in methods.items()
+            ):
+                continue
+
             # Different Flask paths might correspond to the same Swagger path
             # because of Flask URL path converters. In this case, let's just
             # work off the same path definitions.
@@ -177,10 +185,6 @@ class SwaggerV3Generator(SwaggerGenerator):
                 path_definition[sw.parameters] = path_params
 
             for method, d in methods.items():
-
-                if d.hidden and not self.include_hidden:
-                    
-                    continue
 
                 responses_definition = {
                     sw.default: self._get_response_definition(
