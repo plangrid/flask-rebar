@@ -66,8 +66,6 @@ class SwaggerV3Generator(SwaggerGenerator):
         authenticator_converter_registry=None,
         include_hidden=False,
     ):
-        print("floooopy", include_hidden)
-        print("floop", version)
 
         super(SwaggerV3Generator, self).__init__(
             openapi_major_version=3,
