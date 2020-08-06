@@ -124,7 +124,7 @@ Here's an example of a custom converter for a custom Marshmallow converter:
    request_body_converter_registry.register_type(Base64EncodedStringConverter())
 
 
-First we've defined a ``Base64EncodedString`` that handle serializing/deserializing a string to/from base64. We want this field to be represented more specifically in our Swagger spec with a "byte" format.
+First we've defined a ``Base64EncodedString`` that handles serializing/deserializing a string to/from base64. We want this field to be represented more specifically in our Swagger spec with a "byte" format.
 
 We extend the ``StringConverter``, which handles setting the "type".
 
@@ -136,7 +136,7 @@ The method should take two arguments in addition to ``self``: ``obj`` and ``cont
 
 * ``convert`` - This will hold a reference to a convert method that can be used to make recursive calls
 * ``memo`` - This holds the JSONSchema object that's been converted so far. This helps convert Validators, which might depend on the type of the object they are validating.
-* ``schema`` - This is the full schema being converted (as opposes to ``obj``, which might be a specific field in the schema).
+* ``schema`` - This is the full schema being converted (as opposed to ``obj``, which might be a specific field in the schema).
 * ``openapi_version`` - This is the major version of OpenAPI being converter for
 
 We then add an instance of the new converter to the ``request_body_converter_registry``, meaning this field will only be valid for request bodies. We can add it to multiple converter registries or choose to omit it from some if we don't think a particular type of field should be valid in certain situations (e.g. the query_string_converter_registry doesn't support ``Nested`` fields).
