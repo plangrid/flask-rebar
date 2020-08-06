@@ -10,6 +10,7 @@ registry = rebar.create_handler_registry()
 
 swagger_v2_generator = SwaggerV2Generator()
 swagger_v3_generator = SwaggerV3Generator(include_hidden=True)
+hidden_swagger_v3_generator = SwaggerV3Generator()
 
 authenticator = HeaderApiKeyAuthenticator(header="x-auth")
 default_authenticator = HeaderApiKeyAuthenticator(header="x-another", name="default")
@@ -82,7 +83,6 @@ def list_foos():
     marshal_schema={200: NestedFoosSchema()},
     query_string_schema=NameAndOtherSchema(),
     authenticator=None,  # Override the default!
-    hidden=True,
 )
 def nested_foos():
     pass
@@ -243,6 +243,179 @@ EXPECTED_SWAGGER_V2 = {
             "title": "Error",
             "properties": {"message": {"type": "string"}, "errors": {"type": "object"}},
             "required": ["message"],
+        },
+    },
+}
+
+
+EXPECTED_HIDDEN_SWAGGER_V3 = expected_swagger = {
+    "openapi": "3.0.2",
+    "info": {"title": "My API", "version": "1.0.0", "description": ""},
+    "security": [{"default": []}],
+    "components": {
+        "schemas": {
+            "Foo": {
+                "type": "object",
+                "title": "Foo",
+                "properties": {"uid": {"type": "string"}, "name": {"type": "string"}},
+            },
+            "FooUpdateSchema": {
+                "type": "object",
+                "title": "FooUpdateSchema",
+                "properties": {"name": {"type": "string"}},
+            },
+            "NestedFoosSchema": {
+                "type": "object",
+                "title": "NestedFoosSchema",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {"$ref": "#/components/schemas/Foo"},
+                    }
+                },
+            },
+            "Error": {
+                "type": "object",
+                "title": "Error",
+                "properties": {
+                    "message": {"type": "string"},
+                    "errors": {"type": "object"},
+                },
+                "required": ["message"],
+            },
+        },
+        "securitySchemes": {
+            "sharedSecret": {"type": "apiKey", "in": "header", "name": "x-auth"},
+            "default": {"type": "apiKey", "in": "header", "name": "x-another"},
+        },
+    },
+    "paths": {
+        "/foos/{foo_uid}": {
+            "parameters": [
+                {
+                    "name": "foo_uid",
+                    "in": "path",
+                    "required": True,
+                    "style": "simple",
+                    "schema": {"type": "string"},
+                }
+            ],
+            "get": {
+                "operationId": "get_foo",
+                "description": "helpful description",
+                "responses": {
+                    "200": {
+                        "description": "Foo",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Foo"}
+                            }
+                        },
+                    },
+                    "default": {
+                        "description": "Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Error"}
+                            }
+                        },
+                    },
+                },
+                "parameters": [
+                    {
+                        "name": "X-UserId",
+                        "in": "header",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    }
+                ],
+            },
+            "patch": {
+                "operationId": "update_foo",
+                "responses": {
+                    "200": {
+                        "description": "Foo",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Foo"}
+                            }
+                        },
+                    },
+                    "default": {
+                        "description": "Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Error"}
+                            }
+                        },
+                    },
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {"$ref": "#/components/schemas/FooUpdateSchema"}
+                        }
+                    },
+                    "required": True,
+                },
+                "security": [{"sharedSecret": []}],
+            },
+        },
+        "/foos": {
+            "get": {
+                "operationId": "nested_foos",
+                "responses": {
+                    "200": {
+                        "description": "NestedFoosSchema",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NestedFoosSchema"
+                                }
+                            }
+                        },
+                    },
+                    "default": {
+                        "description": "Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Error"}
+                            }
+                        },
+                    },
+                },
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                    },
+                    {
+                        "name": "other",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                    },
+                ],
+                "security": [],
+            }
+        },
+        "/tagged_foos": {
+            "get": {
+                "tags": ["bar", "baz"],
+                "operationId": "tagged_foos",
+                "responses": {
+                    "default": {
+                        "description": "Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Error"}
+                            }
+                        },
+                    }
+                },
+            }
         },
     },
 }
