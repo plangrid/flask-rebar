@@ -22,6 +22,7 @@ from flask_rebar import compat
 from flask_rebar import errors
 from flask_rebar import messages
 from flask_rebar.utils.defaults import USE_DEFAULT
+from marshmallow import ValidationError
 
 
 class HeadersProxy(compat.Mapping):
@@ -85,6 +86,11 @@ def marshal(data, schema):
       of the schema.
     """
     schema = normalize_schema(schema)
+
+    # error = schema.validate(data)
+    # if error:
+    #     raise ValidationError(error)
+
     return compat.dump(schema=schema, data=data)
 
 

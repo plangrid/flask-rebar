@@ -17,7 +17,7 @@ from flask_rebar.swagger_generation.marshmallow_to_swagger import ConverterRegis
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import DisallowExtraFieldsMixin
-from tests.helpers import skip_if_marshmallow_not_v2, skip_if_marshmallow_not_v3
+from tests.helpers import skip_if_marshmallow_not_v3
 
 
 class TestConverterRegistry(unittest.TestCase):
@@ -150,45 +150,6 @@ class TestConverterRegistry(unittest.TestCase):
                 json_schema,
                 {"type": "object", "title": "Foo", "properties": {"a": result}},
             )
-
-    @skip_if_marshmallow_not_v2
-    def test_dump_to(self):
-        class Foo(m.Schema):
-            a = m.fields.Integer(dump_to="b", required=True)
-
-        schema = Foo()
-        json_schema = self.registry.convert(schema)
-
-        self.assertEqual(
-            json_schema,
-            {
-                "type": "object",
-                "title": "Foo",
-                "properties": {"b": {"type": "integer"}},
-                "required": ["b"],
-            },
-        )
-
-    @skip_if_marshmallow_not_v2
-    def test_load_from(self):
-        registry = ConverterRegistry()
-        registry.register_types(ALL_CONVERTERS)
-
-        class Foo(m.Schema):
-            a = m.fields.Integer(load_from="b", required=True)
-
-        schema = Foo()
-        json_schema = registry.convert(schema)
-
-        self.assertEqual(
-            json_schema,
-            {
-                "type": "object",
-                "title": "Foo",
-                "properties": {"b": {"type": "integer"}},
-                "required": ["b"],
-            },
-        )
 
     @skip_if_marshmallow_not_v3
     def test_data_key(self):
