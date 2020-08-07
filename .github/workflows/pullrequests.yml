@@ -18,9 +18,9 @@ jobs:
         - 3.7
         - 3.8
         libraries:
-        - marshmallow=='2.13.*' flask=='0.10.*' werkzeug=='0.16.1'
-        - marshmallow=='2.14.*' flask=='0.11.*' werkzeug=='0.16.1'
-        - marshmallow=='2.15.*' flask=='0.12.*' werkzeug=='0.16.1'
+#        - marshmallow=='2.13.*' flask=='0.10.*' werkzeug=='0.16.1'
+#        - marshmallow=='2.14.*' flask=='0.11.*' werkzeug=='0.16.1'
+#        - marshmallow=='2.15.*' flask=='0.12.*' werkzeug=='0.16.1'
         - marshmallow=='2.16.*' flask=='1.0.*' werkzeug=='1.*'
         - marshmallow=='2.17.*' flask=='1.1.*' werkzeug=='1.*'
         - marshmallow=='2.18.*' flask=='1.1.*' werkzeug=='1.*'
