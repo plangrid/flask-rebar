@@ -20,7 +20,7 @@ from flask_rebar import compat
 from flask_rebar import messages
 from flask_rebar.utils.request_utils import normalize_schema
 from tests.helpers import skip_if_marshmallow_not_v2
-from flask_rebar.validation import ActuallyRequireOnDumpMixin
+from flask_rebar.validation import RequireOnDumpMixin
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import DisallowExtraFieldsMixin
 from flask_rebar.validation import QueryParamList
@@ -60,7 +60,7 @@ class TestDisallowExtraFieldsMixin(TestCase):
         self.assertFalse(data)
 
 
-class ActuallyRequireOnDumpMixinSchema(Schema, ActuallyRequireOnDumpMixin):
+class RequireOnDumpMixinSchema(Schema, RequireOnDumpMixin):
     optional = fields.Str()
     value_optional = fields.Str(required=True, allow_none=True)
     value_required = fields.Str(required=True, allow_none=False)
@@ -71,7 +71,7 @@ class ActuallyRequireOnDumpMixinSchema(Schema, ActuallyRequireOnDumpMixin):
 class RequireOutputMixinTest(TestCase):
     def setUp(self):
         super(RequireOutputMixinTest, self).setUp()
-        self.schema = normalize_schema(ActuallyRequireOnDumpMixinSchema)
+        self.schema = normalize_schema(RequireOnDumpMixinSchema)
         self.data = {
             "value_required": "abc",
             "value_optional": None,
