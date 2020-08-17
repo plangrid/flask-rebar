@@ -691,7 +691,7 @@ class Rebar(object):
             that are added to the API.
             If left as None, a `SwaggerV2Generator` instance will be used.
         :param str spec_path:
-            The Swagger specification as a JSON document will be hosted at this URL.
+            The OpenAPI specification as a JSON document will be hosted at this URL.
             If set as None, no swagger specification will be hosted.
         :param str swagger_ui_path:
             The HTML Swagger UI will be hosted at this URL.
