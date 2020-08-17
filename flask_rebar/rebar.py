@@ -665,7 +665,7 @@ class Rebar(object):
         default_headers_schema=None,
         default_mimetype=None,
         swagger_generator=None,
-        swagger_path="/swagger",
+        spec_path="/swagger",
         swagger_ui_path="/swagger/ui",
     ):
         """
@@ -690,7 +690,7 @@ class Rebar(object):
             the Swagger generator that is used in the endpoints swagger and swagger UI
             that are added to the API.
             If left as None, a `SwaggerV2Generator` instance will be used.
-        :param str swagger_path:
+        :param str spec_path:
             The Swagger specification as a JSON document will be hosted at this URL.
             If set as None, no swagger specification will be hosted.
         :param str swagger_ui_path:
@@ -704,7 +704,7 @@ class Rebar(object):
             default_headers_schema=default_headers_schema,
             default_mimetype=default_mimetype,
             swagger_generator=swagger_generator,
-            swagger_path=swagger_path,
+            swagger_path=spec_path,
             swagger_ui_path=swagger_ui_path,
         )
         self.add_handler_registry(registry=registry)
