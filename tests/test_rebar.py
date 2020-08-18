@@ -577,7 +577,7 @@ class RebarTest(unittest.TestCase):
 
     def test_swagger_endpoints_can_be_omitted(self):
         rebar = Rebar()
-        rebar.create_handler_registry(swagger_path=None, swagger_ui_path=None)
+        rebar.create_handler_registry(spec_path=None, swagger_ui_path=None)
         app = create_rebar_app(rebar)
 
         resp = app.test_client().get("/swagger")

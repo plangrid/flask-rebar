@@ -25,6 +25,11 @@ jobs:
         - marshmallow=='3.5.*' flask=='1.1.*' werkzeug=='1.*'
         - marshmallow=='3.6.*' flask=='1.1.*' werkzeug=='1.*'
         - marshmallow=='3.7.*' flask=='1.1.*' werkzeug=='1.*'
+        - marshmallow=='2.16.*' flask=='1.0.*' werkzeug=='1.*'
+        - marshmallow=='2.17.*' flask=='1.1.*' werkzeug=='1.*'
+        - marshmallow=='2.18.*' flask=='1.1.*' werkzeug=='1.*'
+        - marshmallow=='2.19.*' flask=='1.1.*' werkzeug=='1.*'
+        - marshmallow=='2.20.*' flask=='1.1.*' werkzeug=='1.*'
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python:${{ matrix.python }}

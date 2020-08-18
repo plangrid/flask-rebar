@@ -20,6 +20,8 @@ from flask_rebar import compat
 from flask_rebar import messages
 from flask_rebar.utils.request_utils import normalize_schema
 from flask_rebar.validation import ActuallyRequireOnDumpMixin
+from tests.helpers import skip_if_marshmallow_not_v2
+from flask_rebar.validation import RequireOnDumpMixin
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import DisallowExtraFieldsMixin
 from flask_rebar.validation import QueryParamList
@@ -31,6 +33,36 @@ class DisallowExtraFieldsSchema(Schema, DisallowExtraFieldsMixin):
 
 
 class ActuallyRequireOnDumpMixinSchema(Schema, ActuallyRequireOnDumpMixin):
+@skip_if_marshmallow_not_v2
+class TestDisallowExtraFieldsMixin(TestCase):
+    def test_nominal(self):
+        _, errors = DisallowExtraFieldsSchema(strict=True).dump({})
+        self.assertEqual(errors, {})
+
+    def test_unexpected_field(self):
+        data, errs = DisallowExtraFieldsSchema().load({"foo": "bar"})
+        self.assertEqual(errs, {"_schema": [messages.unsupported_fields(["foo"])]})
+
+    def test_respects_load_from_and_attribute(self):
+        data, errors = DisallowExtraFieldsSchema().load({"c": "bar"})
+        self.assertEqual({}, errors)
+        self.assertEqual(data, {"b": "bar"})
+
+    def test_respects_exclude(self):
+        schema = DisallowExtraFieldsSchema(exclude=("a",))
+        data, errors = schema.load({"a": "yz"})
+        self.assertEqual(errors, {})
+        self.assertEqual(data, {})
+
+    def test_doesnt_break_for_non_object_schema(self):
+        data, errors = DisallowExtraFieldsSchema().load(
+            ["im not supposed to be a list :)"]
+        )
+        self.assertEqual(errors, {"_schema": ["Invalid input type."]})
+        self.assertFalse(data)
+
+
+class RequireOnDumpMixinSchema(Schema, RequireOnDumpMixin):
     optional = fields.Str()
     value_optional = fields.Str(required=True, allow_none=True)
     value_required = fields.Str(required=True, allow_none=False)
@@ -41,7 +73,7 @@ class ActuallyRequireOnDumpMixinSchema(Schema, ActuallyRequireOnDumpMixin):
 class RequireOutputMixinTest(TestCase):
     def setUp(self):
         super(RequireOutputMixinTest, self).setUp()
-        self.schema = normalize_schema(ActuallyRequireOnDumpMixinSchema)
+        self.schema = normalize_schema(RequireOnDumpMixinSchema)
         self.data = {
             "value_required": "abc",
             "value_optional": None,
