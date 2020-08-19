@@ -25,8 +25,6 @@ class CommaSeparatedList(fields.List):
     """
 
     def _deserialize(self, value, attr, data, **kwargs):
-        print("floop", value, type(value))
-
         if not isinstance(value, list):
             value = value.split(",")
         return super(CommaSeparatedList, self)._deserialize(value, attr, data)

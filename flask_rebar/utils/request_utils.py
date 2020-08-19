@@ -87,10 +87,6 @@ def marshal(data, schema):
     """
     schema = normalize_schema(schema)
 
-    # error = schema.validate(data)
-    # if error:
-    #     raise ValidationError(error)
-
     return compat.dump(schema=schema, data=data)
 
 
