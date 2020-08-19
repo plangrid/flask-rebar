@@ -29,7 +29,6 @@ if __name__ == "__main__":
         include_package_data=True,
         extras_require={"dev": development},
         install_requires=["Flask>=0.10,<2", "marshmallow>=3.0,<4"],
-        install_requires=["Flask>=1.0,<2", "marshmallow>=2.13,<3"],
         url="https://github.com/plangrid/flask-rebar",
         classifiers=[
             "Environment :: Web Environment",
