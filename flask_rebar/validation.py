@@ -55,7 +55,7 @@ class QueryParamList(fields.List):
         return super(QueryParamList, self)._deserialize(items, attr, data)
 
 
-class ActuallyRequireOnDumpMixin(object):
+class RequireOnDumpMixin(object):
     """
     By default, Marshmallow only raises an error when required fields are missing
     when `marshmallow.Schema.load` is called.
@@ -111,7 +111,7 @@ class DisallowExtraFieldsMixin(object):
 RequestSchema = Schema
 
 
-class ResponseSchema(ActuallyRequireOnDumpMixin, Schema):
+class ResponseSchema(RequireOnDumpMixin, Schema):
     pass
 
 
