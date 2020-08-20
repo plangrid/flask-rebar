@@ -142,8 +142,8 @@ class SwaggerV3Generator(SwaggerGenerator):
         for path, methods in paths.items():
             swagger_path, path_args = format_path_for_swagger(path)
 
-            if all(
-                d.hidden and not self.include_hidden for method, d in methods.items()
+            if not self.include_hidden and all(
+                d.hidden for method, d in methods.items()
             ):
                 continue
 
@@ -183,7 +183,6 @@ class SwaggerV3Generator(SwaggerGenerator):
                 path_definition[sw.parameters] = path_params
 
             for method, d in methods.items():
-
                 responses_definition = {
                     sw.default: self._get_response_definition(
                         self.default_response_schema

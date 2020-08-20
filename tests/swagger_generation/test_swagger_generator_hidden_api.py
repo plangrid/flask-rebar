@@ -45,13 +45,13 @@ def _assert_dicts_equal(a, b):
         ),
         (
             hidden_api.registry,
-            hidden_api.hidden_swagger_v3_generator,
-            hidden_api.EXPECTED_HIDDEN_SWAGGER_V3,
+            hidden_api.normal_swagger_v3_generator,
+            hidden_api.SWAGGER_V3_WITHOUT_HIDDEN,
         ),
         (
             hidden_api.registry,
-            hidden_api.swagger_v3_generator,
-            hidden_api.EXPECTED_SWAGGER_V3,
+            hidden_api.swagger_v3_generator_with_hidden,
+            hidden_api.SWAGGER_V3_WITH_HIDDEN,
         ),
     ],
 )

@@ -468,7 +468,7 @@ class HandlerRegistry(object):
         :param Type[USE_DEFAULT]|None|str mimetype:
             Content-Type header to add to the response schema
         :param bool hidden:
-            Used to control the generation of swagger documentation of APIs
+            if hidden, documentation is not created for this request handler by default
         """
         # Fix #115: if we were passed bare classes we'll go ahead and instantiate
         headers_schema = normalize_schema(headers_schema)

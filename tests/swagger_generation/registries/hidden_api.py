@@ -9,8 +9,8 @@ rebar = Rebar()
 registry = rebar.create_handler_registry()
 
 swagger_v2_generator = SwaggerV2Generator()
-swagger_v3_generator = SwaggerV3Generator(include_hidden=True)
-hidden_swagger_v3_generator = SwaggerV3Generator()
+swagger_v3_generator_with_hidden = SwaggerV3Generator(include_hidden=True)
+normal_swagger_v3_generator = SwaggerV3Generator()
 
 authenticator = HeaderApiKeyAuthenticator(header="x-auth")
 default_authenticator = HeaderApiKeyAuthenticator(header="x-another", name="default")
@@ -248,7 +248,7 @@ EXPECTED_SWAGGER_V2 = {
 }
 
 
-EXPECTED_HIDDEN_SWAGGER_V3 = expected_swagger = {
+SWAGGER_V3_WITHOUT_HIDDEN = expected_swagger = {
     "openapi": "3.0.2",
     "info": {"title": "My API", "version": "1.0.0", "description": ""},
     "security": [{"default": []}],
@@ -421,7 +421,7 @@ EXPECTED_HIDDEN_SWAGGER_V3 = expected_swagger = {
 }
 
 
-EXPECTED_SWAGGER_V3 = expected_swagger = {
+SWAGGER_V3_WITH_HIDDEN = expected_swagger = {
     "openapi": "3.0.2",
     "info": {"title": "My API", "version": "1.0.0", "description": ""},
     "security": [{"default": []}],
