@@ -1,5 +1,3 @@
-import unittest
-from flask_rebar.compat import MARSHMALLOW_V3
 from flask import json_available
 
 if json_available:

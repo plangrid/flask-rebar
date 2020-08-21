@@ -1,22 +1,4 @@
-import abc
-import collections
-import sys
-import pkg_resources
-
 import marshmallow
-from marshmallow import ValidationError
-
-
-Mapping = collections.abc.Mapping
-
-if sys.version_info >= (3.5, 4):
-    ABC = abc.ABC
-else:
-    ABC = abc.ABCMeta("ABC", (), {})
-
-MARSHMALLOW_DISTRIBUTION = pkg_resources.get_distribution("marshmallow")
-MARSHMALLOW_MAJOR_VERSION = int(MARSHMALLOW_DISTRIBUTION.version.split(".")[0])
-MARSHMALLOW_V3 = MARSHMALLOW_MAJOR_VERSION == 3
 
 
 def set_data_key(field, key):
