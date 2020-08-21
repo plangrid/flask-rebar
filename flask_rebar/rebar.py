@@ -239,6 +239,7 @@ class PathDefinition(
             "authenticators",
             "tags",
             "mimetype",
+            "hidden",
         ],
     )
 ):
@@ -410,6 +411,7 @@ class HandlerRegistry(object):
                     authenticators=definition_.authenticators,
                     tags=definition_.tags,
                     mimetype=definition_.mimetype,
+                    hidden=definition_.hidden,
                 )
 
         return paths
@@ -435,6 +437,7 @@ class HandlerRegistry(object):
         authenticators=USE_DEFAULT,
         tags=None,
         mimetype=USE_DEFAULT,
+        hidden=False,
     ):
         """
         Registers a function as a request handler.
@@ -464,6 +467,8 @@ class HandlerRegistry(object):
             Arbitrary strings to tag the handler with. These will translate to Swagger operation tags.
         :param Type[USE_DEFAULT]|None|str mimetype:
             Content-Type header to add to the response schema
+        :param bool hidden:
+            if hidden, documentation is not created for this request handler by default
         """
         # Fix #115: if we were passed bare classes we'll go ahead and instantiate
         headers_schema = normalize_schema(headers_schema)
@@ -497,6 +502,7 @@ class HandlerRegistry(object):
             authenticators=authenticators,
             tags=tags,
             mimetype=mimetype,
+            hidden=hidden,
         )
 
     @deprecated_parameters(
@@ -519,6 +525,7 @@ class HandlerRegistry(object):
         authenticators=USE_DEFAULT,
         tags=None,
         mimetype=USE_DEFAULT,
+        hidden=False,
     ):
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
@@ -538,6 +545,7 @@ class HandlerRegistry(object):
                 authenticators=authenticators,
                 tags=tags,
                 mimetype=mimetype,
+                hidden=hidden,
             )
             return f
 
