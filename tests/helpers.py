@@ -7,11 +7,6 @@ if json_available:
 from werkzeug.utils import cached_property
 
 
-skip_if_marshmallow_not_v3 = unittest.skipIf(
-    not MARSHMALLOW_V3, reason="Only applicable for Marshmallow version 3"
-)
-
-
 class JsonResponseMixin(object):
     """
     Mixin with testing helper methods

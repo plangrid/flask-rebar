@@ -6,12 +6,10 @@ import pkg_resources
 import marshmallow
 from marshmallow import ValidationError
 
-if int(sys.version_info[0]) == 2:
-    Mapping = collections.Mapping
-else:
-    Mapping = collections.abc.Mapping
 
-if sys.version_info >= (3, 4):
+Mapping = collections.abc.Mapping
+
+if sys.version_info >= (3.5, 4):
     ABC = abc.ABC
 else:
     ABC = abc.ABCMeta("ABC", (), {})
