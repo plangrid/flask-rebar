@@ -9,6 +9,7 @@
 """
 from __future__ import unicode_literals
 
+import collections
 import copy
 
 import marshmallow
@@ -24,7 +25,7 @@ from flask_rebar import messages
 from flask_rebar.utils.defaults import USE_DEFAULT
 
 
-class HeadersProxy(compat.Mapping):
+class HeadersProxy(collections.abc.Mapping):
     """
     Marshmallow expects objects being deserialized to be instances of `Mapping`.
 

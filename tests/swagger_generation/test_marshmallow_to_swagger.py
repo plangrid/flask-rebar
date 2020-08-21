@@ -17,7 +17,6 @@ from flask_rebar.swagger_generation.marshmallow_to_swagger import ConverterRegis
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import DisallowExtraFieldsMixin
-from tests.helpers import skip_if_marshmallow_not_v3
 
 
 class TestConverterRegistry(unittest.TestCase):
@@ -151,7 +150,6 @@ class TestConverterRegistry(unittest.TestCase):
                 {"type": "object", "title": "Foo", "properties": {"a": result}},
             )
 
-    @skip_if_marshmallow_not_v3
     def test_data_key(self):
         registry = ConverterRegistry()
         registry.register_types(ALL_CONVERTERS)

@@ -12,7 +12,6 @@ import abc
 import functools
 
 from flask_rebar.swagger_generation import swagger_words as sw
-from flask_rebar.compat import ABC
 from flask_rebar.swagger_generation.authenticator_to_swagger import (
     authenticator_converter_registry as global_authenticator_converter_registry,
     make_class_from_method,
@@ -33,7 +32,7 @@ from flask_rebar.validation import Error
 from flask_rebar.utils.deprecation import deprecated
 
 
-class SwaggerGeneratorI(ABC):
+class SwaggerGeneratorI(abc.ABC):
     @abc.abstractmethod
     def get_open_api_version(self):
         """
