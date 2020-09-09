@@ -17,8 +17,14 @@ def load(schema, data):
 
 
 def dump(schema, data):
-    obj = schema.load(data)  # Deserialize to trigger validation
-    return schema.dump(obj)
+    try:
+        result = schema.dump(data)
+    except Exception as e:
+        if isinstance(e, marshmallow.ValidationError):
+            raise
+        raise marshmallow.ValidationError(str(e))
+    schema.load(result)
+    return result
 
 
 def exclude_unknown_fields(schema):
