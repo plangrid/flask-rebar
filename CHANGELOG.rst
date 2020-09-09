@@ -2,6 +2,56 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- Dropping Marshallow_v2 support (#195) [Ali Scott, Matthew Janes, Rick
+  Riensche]
+
+  * Dropping Marshallow_v2 support
+  https://github.com/plangrid/flask-rebar/issues/37
+
+  * dropping python 2.7
+  https://github.com/plangrid/flask-rebar/issues/142
+
+  * Streamline compat (#210)
+
+- Enabling hidden APIs in flask-rebar  (#191) [Ali Scott]
+
+- Rename create_handler_registry's "swagger_path" param (#209) [Ali
+  Scott]
+
+- Drop support for Flask 0.x (#206) [Ali Scott]
+
+- Dropping python 2x and 3.4  (#205) [Ali Scott]
+
+- Removing Actually from class names (#207) [Ali Scott]
+
+- Fix trigger for auto-release on tag (#203) [Rick Riensche]
+
+- Remove pyyaml pin since it is not needed anymore (#192) [Daniel
+  Wallace]
+
+  We have dropped support for python3.4, which is why pyyaml was pinned.
+- Doc: Fix code typos in recipes examples (#190) [Krismix1]
+- Fix minor typos in swagger_generation.rst (#188) [Matthew Janes]
+
+
+v1.12.2 (2020-08-04)
+--------------------
+- Change trigger. [Rick Riensche]
+
+  Auto-release on tag beginning with "v"
+- Troubleshooting build-and-publish. [Rick Riensche]
+
+  Add explicit mention of ref to checkout per https://github.com/actions/checkout/issues/20#issuecomment-524521113 (from the comment that follows this one though I'm not sure why this didn't work before if this DOES fix it.. :P )
+- Authenticator_converter_registry is missing register_type. [Brock
+  Haywood]
+- Doc: Add meeting notes from Jan 29 Roadmap Call (#165) [Rick Riensche]
+- Fix name and tweak "types" [Rick Riensche]
+
+  More closely align with what is included if you use GitHub's built-in package example (in attempt to make this actually trigger which it doesn't seem to have done when I created 1.12.1)
+
+
 v1.12.1 (2020-03-26)
 --------------------
 - Fixes for oneof on _flatten (#182) [Francisco Castro]
