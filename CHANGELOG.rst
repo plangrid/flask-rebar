@@ -4,6 +4,12 @@ Changelog
 
 (unreleased)
 ------------
+
+- Merge pull request #211 from plangrid/bh-fix-validation. [Brock
+  Haywood]
+
+  Modify validation to occur after dumping the object a serializable form
+
 - Dropping Marshallow_v2 support (#195) [Ali Scott, Matthew Janes, Rick
   Riensche]
 
