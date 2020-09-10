@@ -52,7 +52,7 @@ jobs:
     - name: "Install black"
       run: |
         python -m pip install -U pip
-        python -m pip install black
+        python -m pip install black==19.10b0
         python -m pip freeze
     - name: Run black
       run: |
