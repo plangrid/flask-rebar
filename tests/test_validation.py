@@ -75,7 +75,7 @@ class RequireOutputMixinTest(TestCase):
             compat.dump(self.schema, self.data)
         # it's some sort of date error
         self.assertIn(
-            "Not a valid datetime", ctx.exception.messages["validation_required"][0]
+            "'str' object has no attribute 'isoformat'", ctx.exception.messages[0]
         )
 
     def test_required_failed_validate(self):
@@ -127,11 +127,7 @@ class TestCommaSeparatedList(TestCase):
             compat.dump(IntegerList(), {"foos": [42, "two"]})
 
         self.assertEqual(
-            ctx.exception.messages,
-            {
-                # Element 1 in our list should produce error:
-                "foos": {1: ["Not a valid integer."]}
-            },
+            ctx.exception.messages, ["invalid literal for int() with base 10: 'two'"]
         )
 
 
