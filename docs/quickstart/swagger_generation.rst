@@ -16,8 +16,8 @@ Flask-Rebar adds two additional endpoints for every handler registry:
 .. code-block:: python
 
    registry = rebar.create_handler_registry(
-       swagger_path='/apidocs',
-       swagger_ui_path='/apidocs-ui'
+       spec_path='/apidocs',
+       spec_ui_path='/apidocs-ui'
    )
 
 The HTML documentation is generated with `Swagger UI <https://swagger.io/swagger-ui/>`_.
