@@ -140,7 +140,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         path_definitions = {}
 
         for path, methods in paths.items():
-            swagger_path, path_args = format_path_for_swagger(path)
+            spec_path, path_args = format_path_for_swagger(path)
 
             if not self.include_hidden and all(
                 d.hidden for method, d in methods.items()
@@ -150,10 +150,10 @@ class SwaggerV3Generator(SwaggerGenerator):
             # Different Flask paths might correspond to the same Swagger path
             # because of Flask URL path converters. In this case, let's just
             # work off the same path definitions.
-            if swagger_path in path_definitions:
-                path_definition = path_definitions[swagger_path]
+            if spec_path in path_definitions:
+                path_definition = path_definitions[spec_path]
             else:
-                path_definitions[swagger_path] = path_definition = {}
+                path_definitions[spec_path] = path_definition = {}
 
             if path_args:
                 path_params = [
