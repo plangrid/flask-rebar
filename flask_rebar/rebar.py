@@ -308,7 +308,9 @@ class HandlerRegistry(object):
             "default_authenticators",
             "3.0",
             _convert_authenticator_to_authenticators,
-        )
+        ),
+        swagger_path="spec_path",
+        swagger_ui_path="spec_ui_path",
     )
     def __init__(
         self,
@@ -606,7 +608,7 @@ class HandlerRegistry(object):
         if self.spec_path:
 
             @app.route(
-                self._prefixed_spec_path(), methods=["GET"], endpoint=swagger_endpoint,
+                self._prefixed_spec_path(), methods=["GET"], endpoint=swagger_endpoint
             )
             def get_swagger():
                 swagger = self.swagger_generator.generate_swagger(
