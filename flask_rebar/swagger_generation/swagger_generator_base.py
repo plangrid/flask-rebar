@@ -63,23 +63,6 @@ class SwaggerGeneratorI(abc.ABC):
         :param str swagger_type:
         """
 
-    @abc.abstractmethod
-    def register_authenticator_converter(self, authenticator_class, converter):
-        """
-        The Rebar allows for custom Authenticators.
-
-        If you have a custom Authenticator, you need to add a function that
-        can convert that authenticator to a Swagger representation.
-
-        That function should take a single positional argument, which is the
-        authenticator instance to be converted, and it should return a tuple
-        where the first item is a name to use for the Swagger security
-        definition, and the second item is the definition itself.
-
-        :param Type[Authenticator] authenticator_class:
-        :param function converter:
-        """
-
 
 class SwaggerGenerator(SwaggerGeneratorI):
     """Base class for SwaggerV2Generator and SwaggerV3Generator.
@@ -194,8 +177,3 @@ class SwaggerGenerator(SwaggerGeneratorI):
 
     def register_flask_converter_to_swagger_type(self, flask_converter, swagger_type):
         self.flask_converters_to_swagger_types[flask_converter] = swagger_type
-
-    @deprecated(eol_version="2.0")
-    def register_authenticator_converter(self, authenticator_class, converter):
-        converter_class = make_class_from_method(authenticator_class, converter)
-        self.authenticator_converter.register_type(converter_class())

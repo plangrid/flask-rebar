@@ -101,4 +101,5 @@ Here's what a basic Flask-Rebar application looks like:
    tutorials
    recipes
    contributing
+   version_history
    changelog

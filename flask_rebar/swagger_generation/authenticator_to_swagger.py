@@ -190,36 +190,6 @@ class AuthenticatorConverterRegistry(ConverterRegistry):
         for authenticator, method in deprecated_converts.items():
             self.register(authenticator, method)
 
-    @deprecated("register_type", eol_version="2.0")
-    def register(self, authenticator_class, converter):
-        converter = make_class_from_method(authenticator_class, converter)
-        self.register_type(converter())
-
-    @deprecated("get_security_requirements", eol_version="2.0")
-    def get_security_requirement(self, authenticator):
-        return self.get_security_requirements(authenticator)
-
-    @deprecated(eol_version="2.0")
-    def get_security_schemes_legacy(self, registry):
-        """
-        Get the security schemes for the provided `registry`
-
-        :param flask_rebar.rebar.HandlerRegistry registry:
-        :rtype: dict
-        """
-        from flask_rebar.swagger_generation.generator_utils import (
-            get_unique_authenticators,
-        )
-
-        security_definitions = {}
-
-        authenticators = get_unique_authenticators(registry)
-
-        for authenticator in authenticators:
-            security_definitions.update(self.get_security_schemes(authenticator))
-
-        return security_definitions
-
 
 authenticator_converter_registry = AuthenticatorConverterRegistry()
 authenticator_converter_registry.register_types((HeaderApiKeyConverter(),))

@@ -1,6 +1,8 @@
 Swagger Generation
 ------------------
 
+*Changed in 2.0*: Deprecated functions that supported attaching a "converter function" for a custom authenticator to a generator were removed. We now only support a "registry of converters" approach (consistent with approaches used elsewhere in Flask-rebar)
+
 Swagger Endpoints
 =================
 
@@ -169,34 +171,71 @@ Notice that since we've started to customize the swagger generator, we should sp
 Authenticators
 ^^^^^^^^^^^^^^
 
+*Changed in 2.0*
+
 We also need to tell the generator how to represent custom Authenticators as Swagger.
+
+To create a proper converter:
 
 .. code-block:: python
 
-   from flask_rebar.authenticators import Authenticator
-   from flask_rebar import SwaggerV2Generator
-   from flask_rebar import Rebar
+    from flask_rebar.swagger_generation import swagger_words as sw
+    from flask_rebar.swagger_generation.authenticator_to_swagger import AuthenticatorConverter
 
-   class EasyGoingAuthenticator(Authenticator):
-       def authenticate(self):
-           pass
+    class MyAuthConverter(AuthenticatorConverter):
+        AUTHENTICATOR_TYPE=MyAuthenticator
+        def get_security_schemes(self, obj, context):
+            return {
+                obj.name: {sw.type_: sw.api_key, sw.in_: sw.header, sw.name: obj.header}
+            }
+        def get_security_requirements(self, obj, context):
+            return [{obj.name: []}]
 
-   def convert_easy_going_authenticator(authenticator):
-       return {
-           sw.name: 'easy_going'
-           ...
-       }
+    auth_converter = MyAuthConverter()
 
-   generator = SwaggerV2Generator()
-   generator.register_authenticator_converter(
-       authenticator_class=EasyGoingAuthenticator,
-       converter=convert_easy_going_authenticator
-   )
-
-   rebar = Rebar()
-   registry = rebar.create_handler_registry(swagger_generator=generator)
 
 The converter function should take an instance of the authenticator as a single positional argument and return a dictionary representing the `security schema object <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#securitySchemeObject>`_.
+
+To convert an old-style function into a new-style converter:
+
+.. code-block:: python
+
+    from flask_rebar.swagger_generation.authenticator_to_swagger import make_class_from_method
+
+    from my_custom_stuff import MyAuthenticator
+
+    def my_conversion_function(authenticator):
+        return {
+            "name": MyAuthenticator._HEADER_NAME,
+            "type": "apiKey",
+            "in": "header"
+        }
+
+    auth_converter = make_class_from_method(MyAuthenticator, my_conversion_function)
+
+There are two supported methods of registering a custom ``AuthenticatorConverter``:
+You can either instantiate your own registry and pass that in when instantiating the generator:
+
+.. code-block:: python
+
+    from flask_rebar import SwaggerV3Generator
+    from flask_rebar.swagger_generation.authenticator_to_swagger import AuthenticatorConverterRegistry
+    from my_custom_stuff import auth_converter
+
+    my_auth_registry = AuthenticatorConverterRegistry()
+    my_auth_registry.register_type(auth_converter)
+
+    generator = SwaggerV3Generator(authenticator_converter_registry=my_auth_registry)
+
+or, you can register your converter with the global default registry:
+
+.. code-block:: python
+
+    from flask_rebar.swagger_generation.authenticator_to_swagger import authenticator_converter_registry as global_authenticator_converter_registry
+    from my_custom_stuff import auth_converter
+
+    global_authenticator_converter_registry.register_type(auth_converter)
+
 
 Tags
 ^^^^
