@@ -1,6 +1,8 @@
 Swagger Generation
 ------------------
 
+*Changed in 2.0*: Deprecated functions that supported attaching a "converter function" for a custom authenticator to a generator were removed. We now only support a "registry of converters" approach (consistent with approaches used elsewhere in Flask-rebar)
+
 Swagger Endpoints
 =================
 
@@ -169,7 +171,9 @@ Notice that since we've started to customize the swagger generator, we should sp
 Authenticators
 ^^^^^^^^^^^^^^
 
-We also need to tell the generator how to represent custom Authenticators as Swagger. Note that this changed somewhat in Flask-rebar 2.0:
+*Changed in 2.0*
+
+We also need to tell the generator how to represent custom Authenticators as Swagger.
 
 To create a proper converter:
 
@@ -179,12 +183,13 @@ To create a proper converter:
     from flask_rebar.swagger_generation.authenticator_to_swagger import AuthenticatorConverter
 
     class MyAuthConverter(AuthenticatorConverter):
+        AUTHENTICATOR_TYPE=MyAuthenticator
         def get_security_schemes(self, obj, context):
             return {
                 obj.name: {sw.type_: sw.api_key, sw.in_: sw.header, sw.name: obj.header}
             }
-    def get_security_requirements(self, obj, context):
-        return [{obj.name: []}]
+        def get_security_requirements(self, obj, context):
+            return [{obj.name: []}]
 
     auth_converter = MyAuthConverter()
 
