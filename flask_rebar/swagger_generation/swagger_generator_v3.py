@@ -248,12 +248,14 @@ class SwaggerV3Generator(SwaggerGenerator):
 
                 if d.func.__doc__:
                     docstring = parse(d.func.__doc__)
-                    path_definition[method_lower][
-                        sw.summary
-                    ] = docstring.short_description
-                    path_definition[method_lower][
-                        sw.description
-                    ] = docstring.long_description
+                    if docstring.short_description:
+                        path_definition[method_lower][
+                            sw.summary
+                        ] = docstring.short_description
+                    if docstring.long_description:
+                        path_definition[method_lower][
+                            sw.description
+                        ] = docstring.long_description
 
                 if parameters_definition:
                     path_definition[method_lower][sw.parameters] = parameters_definition
