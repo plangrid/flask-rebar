@@ -211,6 +211,24 @@ class TestConverterRegistry(unittest.TestCase):
             },
         )
 
+    def test_example(self):
+        class Foo(m.Schema):
+            b = m.fields.Integer(example="123", description="desc")
+
+        schema = Foo()
+        json_schema = self.registry.convert(schema)
+
+        self.assertEqual(
+            json_schema,
+            {
+                "type": "object",
+                "title": "Foo",
+                "properties": {
+                    "b": {"type": "integer", "example": "123", "description": "desc"}
+                },
+            },
+        )
+
     def test_required(self):
         class Foo(m.Schema):
             b = m.fields.Integer(required=True)

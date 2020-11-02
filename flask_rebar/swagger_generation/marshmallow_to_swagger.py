@@ -307,6 +307,13 @@ class FieldConverter(MarshmallowConverter):
         else:
             return UNSET
 
+    @sets_swagger_attr(sw.example)
+    def get_example(self, obj, context):
+        if "example" in obj.metadata:
+            return obj.metadata["example"]
+        else:
+            return UNSET
+
 
 class ValidatorConverter(MarshmallowConverter):
     """
