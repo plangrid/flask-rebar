@@ -57,6 +57,13 @@ class MeSchema(m.Schema):
     user_name = m.fields.String()
 
 
+class DefaultResponseSchema(
+    m.Schema
+):  # DEFAULT_RESPONSE = {"uid": "0", "name": "I'm the default for testing!"}
+    uid = m.fields.String()
+    name = m.fields.String()
+
+
 def get_json_from_resp(resp):
     return json.loads(resp.data.decode("utf-8"))
 
@@ -543,7 +550,7 @@ class RebarTest(unittest.TestCase):
         @registry.handles(
             rule="/myself",
             method="GET",
-            response_body_schema=MeSchema(),
+            response_body_schema=DefaultResponseSchema(),
             # Let's make sure this can be overridden
             headers_schema=None,
         )
@@ -570,7 +577,7 @@ class RebarTest(unittest.TestCase):
 
     def test_swagger_endpoints_can_be_omitted(self):
         rebar = Rebar()
-        rebar.create_handler_registry(swagger_path=None, swagger_ui_path=None)
+        rebar.create_handler_registry(spec_path=None, swagger_ui_path=None)
         app = create_rebar_app(rebar)
 
         resp = app.test_client().get("/swagger")
@@ -727,7 +734,7 @@ class RebarTest(unittest.TestCase):
             path="/my_get_endpoint?name=QuerystringName", headers=expected_headers
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), expected_foo.data)
+        self.assertEqual(get_json_from_resp(resp), expected_foo)
 
         resp = app.test_client().post(
             path="/my_post_endpoint",

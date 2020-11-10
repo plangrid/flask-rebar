@@ -15,7 +15,6 @@ from marshmallow import validates_schema
 from werkzeug.datastructures import MultiDict
 
 from flask_rebar import messages
-from flask_rebar.compat import MARSHMALLOW_V2
 
 
 class CommaSeparatedList(fields.List):
@@ -25,11 +24,12 @@ class CommaSeparatedList(fields.List):
     e.g. ?foo=bar,baz -> {'foo': ['bar', 'baz']}
     """
 
-    def _deserialize(self, value, attr, data):
-        items = value.split(",")
-        return super(CommaSeparatedList, self)._deserialize(items, attr, data)
+    def _deserialize(self, value, attr, data, **kwargs):
+        if not isinstance(value, list):
+            value = value.split(",")
+        return super(CommaSeparatedList, self)._deserialize(value, attr, data)
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value, attr, obj, **kwargs):
         items = super(CommaSeparatedList, self)._serialize(value, attr, obj)
         return ",".join([str(i) for i in items])
 
@@ -42,7 +42,7 @@ class QueryParamList(fields.List):
     e.g. ?foo=bar&foo=baz -> {'foo': ['bar', 'baz']}
     """
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         # data is a MultiDict of query params, so pull out all of the items
         # with getlist instead of just the first
         if not isinstance(data, MultiDict):
@@ -55,7 +55,7 @@ class QueryParamList(fields.List):
         return super(QueryParamList, self)._deserialize(items, attr, data)
 
 
-class ActuallyRequireOnDumpMixin(object):
+class RequireOnDumpMixin(object):
     """
     By default, Marshmallow only raises an error when required fields are missing
     when `marshmallow.Schema.load` is called.
@@ -108,14 +108,10 @@ class DisallowExtraFieldsMixin(object):
             )
 
 
-# Marshmallow version 3 starts "disallowing" extra fields by default
-if MARSHMALLOW_V2:
-    RequestSchema = type("RequestSchema", (DisallowExtraFieldsMixin, Schema), {})
-else:
-    RequestSchema = Schema
+RequestSchema = Schema
 
 
-class ResponseSchema(ActuallyRequireOnDumpMixin, Schema):
+class ResponseSchema(RequireOnDumpMixin, Schema):
     pass
 
 

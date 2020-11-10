@@ -357,7 +357,7 @@ class ListConverter(FieldConverter):
 
     @sets_swagger_attr(sw.items)
     def get_items(self, obj, context):
-        return context.convert(obj.container, context)
+        return context.convert(obj.inner, context)
 
 
 class DictConverter(FieldConverter):

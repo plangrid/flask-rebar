@@ -67,7 +67,9 @@ class SwaggerV3Generator(SwaggerGenerator):
         servers=None,
         default_response_schema=Error(),
         authenticator_converter_registry=None,
+        include_hidden=False,
     ):
+
         super(SwaggerV3Generator, self).__init__(
             openapi_major_version=3,
             version=version,
@@ -79,6 +81,7 @@ class SwaggerV3Generator(SwaggerGenerator):
             headers_converter_registry=headers_converter_registry,
             response_converter_registry=response_converter_registry,
             authenticator_converter_registry=authenticator_converter_registry,
+            include_hidden=include_hidden,
         )
         self.tags = tags
         self.servers = servers
@@ -140,15 +143,20 @@ class SwaggerV3Generator(SwaggerGenerator):
         path_definitions = {}
 
         for path, methods in paths.items():
-            swagger_path, path_args = format_path_for_swagger(path)
+            spec_path, path_args = format_path_for_swagger(path)
+
+            if not self.include_hidden and all(
+                d.hidden for method, d in methods.items()
+            ):
+                continue
 
             # Different Flask paths might correspond to the same Swagger path
             # because of Flask URL path converters. In this case, let's just
             # work off the same path definitions.
-            if swagger_path in path_definitions:
-                path_definition = path_definitions[swagger_path]
+            if spec_path in path_definitions:
+                path_definition = path_definitions[spec_path]
             else:
-                path_definitions[swagger_path] = path_definition = {}
+                path_definitions[spec_path] = path_definition = {}
 
             if path_args:
                 path_params = [

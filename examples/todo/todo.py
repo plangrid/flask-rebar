@@ -1,5 +1,5 @@
 from flask import Flask
-from marshmallow import fields, pre_dump
+from marshmallow import fields, pre_dump, pre_load
 
 from flask_rebar import (
     Rebar,
@@ -64,16 +64,24 @@ class TodoResourceSchema(ResponseSchema):
     data = fields.Nested(TodoSchema)
 
     @pre_dump
-    def envelope_in_data(self, data):
-        return {"data": data}
+    @pre_load
+    def envelope_in_data(self, data, **kwargs):
+        if type(data) is not dict or "data" not in data.keys():
+            return {"data": data}
+        else:
+            return data
 
 
 class TodoListSchema(ResponseSchema):
     data = fields.Nested(TodoSchema, many=True)
 
     @pre_dump
-    def envelope_in_data(self, data):
-        return {"data": data}
+    @pre_load
+    def envelope_in_data(self, data, **kwargs):
+        if type(data) is not dict or "data" not in data.keys():
+            return {"data": data}
+        else:
+            return data
 
 
 @registry.handles(

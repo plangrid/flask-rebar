@@ -12,7 +12,6 @@ import abc
 import functools
 
 from flask_rebar.swagger_generation import swagger_words as sw
-from flask_rebar.compat import ABC
 from flask_rebar.swagger_generation.authenticator_to_swagger import (
     authenticator_converter_registry as global_authenticator_converter_registry,
     make_class_from_method,
@@ -33,7 +32,7 @@ from flask_rebar.validation import Error
 from flask_rebar.utils.deprecation import deprecated
 
 
-class SwaggerGeneratorI(ABC):
+class SwaggerGeneratorI(abc.ABC):
     @abc.abstractmethod
     def get_open_api_version(self):
         """
@@ -62,23 +61,6 @@ class SwaggerGeneratorI(ABC):
 
         :param str flask_converter:
         :param str swagger_type:
-        """
-
-    @abc.abstractmethod
-    def register_authenticator_converter(self, authenticator_class, converter):
-        """
-        The Rebar allows for custom Authenticators.
-
-        If you have a custom Authenticator, you need to add a function that
-        can convert that authenticator to a Swagger representation.
-
-        That function should take a single positional argument, which is the
-        authenticator instance to be converted, and it should return a tuple
-        where the first item is a name to use for the Swagger security
-        definition, and the second item is the definition itself.
-
-        :param Type[Authenticator] authenticator_class:
-        :param function converter:
         """
 
 
@@ -117,7 +99,9 @@ class SwaggerGenerator(SwaggerGeneratorI):
         response_converter_registry=None,
         default_response_schema=Error(),
         authenticator_converter_registry=None,
+        include_hidden=False,
     ):
+        self.include_hidden = include_hidden
         self.title = title
         self.version = version
         self.description = description
@@ -193,8 +177,3 @@ class SwaggerGenerator(SwaggerGeneratorI):
 
     def register_flask_converter_to_swagger_type(self, flask_converter, swagger_type):
         self.flask_converters_to_swagger_types[flask_converter] = swagger_type
-
-    @deprecated(eol_version="2.0")
-    def register_authenticator_converter(self, authenticator_class, converter):
-        converter_class = make_class_from_method(authenticator_class, converter)
-        self.authenticator_converter.register_type(converter_class())

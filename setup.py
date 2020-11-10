@@ -12,13 +12,12 @@ development = [
     "bumpversion==0.5.3",
     "gitchangelog>=3.0.4,<4.0.0",
     "pre-commit>=1.14.4",
-    "pyyaml",
 ]
 
 if __name__ == "__main__":
     setup(
         name="flask-rebar",
-        version="1.12.1",
+        version="2.0.0rc2",
         author="Barak Alon",
         author_email="barak.s.alon@gmail.com",
         description="Flask-Rebar combines flask, marshmallow, and swagger for robust REST services.",
@@ -30,7 +29,7 @@ if __name__ == "__main__":
         extras_require={"dev": development},
         install_requires=[
             "Flask>=0.10,<2",
-            "marshmallow>=2.13,<3",
+            "marshmallow>=3.0,<4",
             "docstring-parser>=0.7.3<1",
         ],
         url="https://github.com/plangrid/flask-rebar",
@@ -41,10 +40,6 @@ if __name__ == "__main__":
             "License :: OSI Approved :: MIT License",
             "Operating System :: OS Independent",
             "Programming Language :: Python",
-            "Programming Language :: Python :: 2",
-            "Programming Language :: Python :: 2.7",
-            "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.4",
             "Programming Language :: Python :: 3.5",
             "Programming Language :: Python :: 3.6",
             "Programming Language :: Python :: 3.7",

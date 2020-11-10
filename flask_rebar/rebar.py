@@ -239,6 +239,7 @@ class PathDefinition(
             "authenticators",
             "tags",
             "mimetype",
+            "hidden",
         ],
     )
 ):
@@ -294,10 +295,10 @@ class HandlerRegistry(object):
         the Swagger generator that is used in the endpoints swagger and swagger UI
         that are added to the API.
         If left as None, a `SwaggerV2Generator` instance will be used.
-    :param str swagger_path:
+    :param str spec_path:
         The Swagger specification as a JSON document will be hosted at this URL.
         If set as None, no swagger specification will be hosted.
-    :param str swagger_ui_path:
+    :param str spec_ui_path:
         The HTML Swagger UI will be hosted at this URL.
         If set as None, no Swagger UI will be hosted.
     """
@@ -307,7 +308,9 @@ class HandlerRegistry(object):
             "default_authenticators",
             "3.0",
             _convert_authenticator_to_authenticators,
-        )
+        ),
+        swagger_path="spec_path",
+        swagger_ui_path="spec_ui_path",
     )
     def __init__(
         self,
@@ -316,8 +319,8 @@ class HandlerRegistry(object):
         default_headers_schema=None,
         default_mimetype=None,
         swagger_generator=None,
-        swagger_path="/swagger",
-        swagger_ui_path="/swagger/ui",
+        spec_path="/swagger",
+        spec_ui_path="/swagger/ui",
     ):
         # default_authenticators can be a single Authenticator, a list of Authenticators, or None.
         if isinstance(default_authenticators, Authenticator):
@@ -331,8 +334,8 @@ class HandlerRegistry(object):
         self.default_headers_schema = default_headers_schema
         self.default_mimetype = default_mimetype
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
-        self.swagger_path = swagger_path
-        self.swagger_ui_path = swagger_ui_path
+        self.spec_path = spec_path
+        self.spec_ui_path = spec_ui_path
 
     @property
     @deprecated("default_authenticators", "3.0")
@@ -379,11 +382,11 @@ class HandlerRegistry(object):
         else:
             return path
 
-    def _prefixed_swagger_path(self):
-        return self._prefixed(self.swagger_path)
+    def _prefixed_spec_path(self):
+        return self._prefixed(self.spec_path)
 
-    def _prefixed_swagger_ui_path(self):
-        return self._prefixed(self.swagger_ui_path)
+    def _prefixed_spec_ui_path(self):
+        return self._prefixed(self.spec_ui_path)
 
     @property
     def paths(self):
@@ -410,6 +413,7 @@ class HandlerRegistry(object):
                     authenticators=definition_.authenticators,
                     tags=definition_.tags,
                     mimetype=definition_.mimetype,
+                    hidden=definition_.hidden,
                 )
 
         return paths
@@ -435,6 +439,7 @@ class HandlerRegistry(object):
         authenticators=USE_DEFAULT,
         tags=None,
         mimetype=USE_DEFAULT,
+        hidden=False,
     ):
         """
         Registers a function as a request handler.
@@ -464,6 +469,8 @@ class HandlerRegistry(object):
             Arbitrary strings to tag the handler with. These will translate to Swagger operation tags.
         :param Type[USE_DEFAULT]|None|str mimetype:
             Content-Type header to add to the response schema
+        :param bool hidden:
+            if hidden, documentation is not created for this request handler by default
         """
         # Fix #115: if we were passed bare classes we'll go ahead and instantiate
         headers_schema = normalize_schema(headers_schema)
@@ -497,6 +504,7 @@ class HandlerRegistry(object):
             authenticators=authenticators,
             tags=tags,
             mimetype=mimetype,
+            hidden=hidden,
         )
 
     @deprecated_parameters(
@@ -519,6 +527,7 @@ class HandlerRegistry(object):
         authenticators=USE_DEFAULT,
         tags=None,
         mimetype=USE_DEFAULT,
+        hidden=False,
     ):
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
@@ -538,6 +547,7 @@ class HandlerRegistry(object):
                 authenticators=authenticators,
                 tags=tags,
                 mimetype=mimetype,
+                hidden=hidden,
             )
             return f
 
@@ -595,12 +605,10 @@ class HandlerRegistry(object):
         if self.prefix:
             swagger_endpoint = ".".join((self.prefix, swagger_endpoint))
 
-        if self.swagger_path:
+        if self.spec_path:
 
             @app.route(
-                self._prefixed_swagger_path(),
-                methods=["GET"],
-                endpoint=swagger_endpoint,
+                self._prefixed_spec_path(), methods=["GET"], endpoint=swagger_endpoint
             )
             def get_swagger():
                 swagger = self.swagger_generator.generate_swagger(
@@ -614,14 +622,14 @@ class HandlerRegistry(object):
         if self.prefix:
             blueprint_name = self.prefix + blueprint_name
 
-        if self.swagger_ui_path:
+        if self.spec_ui_path:
             blueprint = create_swagger_ui_blueprint(
                 name=blueprint_name,
-                ui_url=self._prefixed_swagger_ui_path(),
-                swagger_url=self._prefixed_swagger_path(),
+                ui_url=self._prefixed_spec_ui_path(),
+                swagger_url=self._prefixed_spec_path(),
             )
             app.register_blueprint(
-                blueprint=blueprint, url_prefix=self._prefixed_swagger_ui_path()
+                blueprint=blueprint, url_prefix=self._prefixed_spec_ui_path()
             )
 
 
@@ -665,7 +673,7 @@ class Rebar(object):
         default_headers_schema=None,
         default_mimetype=None,
         swagger_generator=None,
-        swagger_path="/swagger",
+        spec_path="/swagger",
         swagger_ui_path="/swagger/ui",
     ):
         """
@@ -690,8 +698,8 @@ class Rebar(object):
             the Swagger generator that is used in the endpoints swagger and swagger UI
             that are added to the API.
             If left as None, a `SwaggerV2Generator` instance will be used.
-        :param str swagger_path:
-            The Swagger specification as a JSON document will be hosted at this URL.
+        :param str spec_path:
+            The OpenAPI specification as a JSON document will be hosted at this URL.
             If set as None, no swagger specification will be hosted.
         :param str swagger_ui_path:
             The HTML Swagger UI will be hosted at this URL.
@@ -704,8 +712,8 @@ class Rebar(object):
             default_headers_schema=default_headers_schema,
             default_mimetype=default_mimetype,
             swagger_generator=swagger_generator,
-            swagger_path=swagger_path,
-            swagger_ui_path=swagger_ui_path,
+            spec_path=spec_path,
+            spec_ui_path=swagger_ui_path,
         )
         self.add_handler_registry(registry=registry)
         return registry
