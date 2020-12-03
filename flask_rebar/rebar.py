@@ -71,7 +71,7 @@ def _unpack_view_func_return_value(rv):
 
     This imitates Flask's own `Flask.make_response` method.
 
-    :param Optional[tuple] rv: (body, status, headers), (body, status), or (body, headers)
+    :param rv: (body, status, headers), (body, status), (body, headers), or body
     :return: (body, status, headers)
     :rtype: tuple
     """
@@ -146,11 +146,19 @@ def _wrap_handler(
         if not response_body_schema:
             return rv
 
-        data, status_code, headers = _unpack_view_func_return_value(rv)
+        if isinstance(rv, current_app.response_class):
+            schema = response_body_schema[rv.status_code]
+            # The schema may be set to None to bypass marshaling (e.g. for 204 responses).
+            if schema is None:
+                return rv
+            # Otherwise, ensure the response body conforms to the promised schema.
+            schema.loads(rv.data)  # May raise ValidationError.
+            return rv
 
+        data, status_code, headers = _unpack_view_func_return_value(rv)
         schema = response_body_schema[status_code]  # May raise KeyError.
 
-        # The schema may be declared as None to bypass marshaling (e.g. for 204 responses).
+        # The schema may be set to None to bypass marshaling (e.g. for 204 responses).
         if schema is None:
             return response(
                 data=data, status_code=status_code, headers=headers, mimetype=mimetype
