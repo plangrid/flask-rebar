@@ -13,7 +13,8 @@ import functools
 
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.authenticator_to_swagger import (
-    authenticator_converter_registry as global_authenticator_converter_registry)
+    authenticator_converter_registry as global_authenticator_converter_registry,
+)
 from flask_rebar.swagger_generation.marshmallow_to_swagger import (
     headers_converter_registry as global_headers_converter_registry,
 )

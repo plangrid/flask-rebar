@@ -352,10 +352,10 @@ class HandlerRegistry(object):
 
     def set_default_authenticators(self, authenticators):
         """
-       Sets the handler authenticators to be used by default.
+        Sets the handler authenticators to be used by default.
 
-       :param Union(List(flask_rebar.authenticators.Authenticator)) authenticators:
-       """
+        :param Union(List(flask_rebar.authenticators.Authenticator)) authenticators:
+        """
         self.default_authenticators = authenticators or []
 
     def set_default_headers_schema(self, headers_schema):
