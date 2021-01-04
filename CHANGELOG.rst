@@ -16,8 +16,9 @@ Changelog
   * Dropping Marshallow_v2 support
   https://github.com/plangrid/flask-rebar/issues/37
 
-  * dropping python 2.7
-  https://github.com/plangrid/flask-rebar/issues/142
+  * dropping python 2.7 and 3.5, which have passed
+    `end-of-life <http://python.org/downloads/>`__
+    (#142, #220)
 
   * Streamline compat (#210)
 
