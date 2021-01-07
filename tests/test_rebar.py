@@ -11,7 +11,7 @@ import json
 import unittest
 
 import marshmallow as m
-from flask import Flask
+from flask import Flask, make_response
 
 from flask_rebar import messages
 from flask_rebar import HeaderApiKeyAuthenticator, SwaggerV3Generator
@@ -247,6 +247,46 @@ class RebarTest(unittest.TestCase):
             headers={"Content-Type": "application/json"},
         )
         self.assertEqual(resp.status_code, 400)
+
+    def test_flask_response_instance_interop_body_matches_schema(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+        schema = FooUpdateSchema()
+
+        @registry.handles(rule="/foo", method="PUT", response_body_schema=schema)
+        def foo():
+            return make_response((json.dumps({"name": "foo"}), {"foo": "bar"}))
+
+        app = create_rebar_app(rebar)
+        resp = app.test_client().put(path="/foo")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.headers["foo"], "bar")
+
+    def test_flask_response_instance_interop_body_does_not_match_schema(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+        schema = FooUpdateSchema()
+
+        @registry.handles(rule="/foo", method="PUT", response_body_schema=schema)
+        def foo():
+            return make_response(json.dumps({"does not match": "foo schema"}))
+
+        app = create_rebar_app(rebar)
+        resp = app.test_client().put(path="/foo")
+        self.assertEqual(resp.status_code, 500)
+
+    def test_flask_response_instance_interop_no_schema(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        @registry.handles(rule="/foo", response_body_schema={302: None})
+        def foo():
+            return make_response(("Redirecting", 302, {"Location": "http://foo.com"}))
+
+        app = create_rebar_app(rebar)
+        resp = app.test_client().get(path="/foo")
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.headers["Location"], "http://foo.com")
 
     def test_validate_query_parameters(self):
         rebar = Rebar()
