@@ -308,6 +308,31 @@ class TestConverterRegistry(unittest.TestCase):
             },
         )
 
+    def test_self_referential_nested(self):
+        # Issue 90
+        class Foo(m.Schema):
+            a = m.fields.Nested('self', exclude=('a'))
+            b = m.fields.Integer()
+
+        schema = Foo()
+        json_schema = self.registry.convert(schema)
+
+        self.assertEqual(
+            json_schema,
+            {
+                "type": "object",
+                "title": "Foo",
+                "properties": {
+                    "a": {
+                        "type": "object",
+                        "title": "Foo",
+                        "properties": {"b": {"type": "integer"}},
+                    },
+                    "b": {"type": "integer"}
+                },
+            },
+        )
+
     def test_many(self):
         class Foo(m.Schema):
             a = m.fields.Integer()
