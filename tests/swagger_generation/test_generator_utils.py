@@ -231,8 +231,7 @@ def convert_my_customer_authenticator(authenticator):
 
 class TestAuthenticatorConverter(unittest.TestCase):
     def test_legacy_behaviour(self):
-        """Check that the AuthenticatorConverter maintains backward compatibility with functions as the converters
-        """
+        """Check that the AuthenticatorConverter maintains backward compatibility with functions as the converters"""
         with warnings.catch_warnings(record=True) as caught_warnings:
             converter = AuthenticatorConverter(
                 {HeaderApiKeyAuthenticator: convert_header_api_key_authenticator}
