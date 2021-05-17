@@ -775,6 +775,8 @@ class Rebar(object):
         for registry in self.handler_registries:
             registry.register(app=app)
 
+        app.extensions["rebar"] = {"handler_registries": self.handler_registries}
+
     def _init_error_handling(self, app):
         @app.errorhandler(errors.HttpJsonError)
         def handle_http_error(error):
