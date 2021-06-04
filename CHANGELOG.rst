@@ -2,6 +2,31 @@ Changelog
 =========
 
 
+v1.12.3 (2021-05-17)
+--------------------
+- Store "rebar" in app.extensions on rebar.init_app (#233) [twosigmajab]
+
+  Include handler_registries so that it's possible to enumerate all the
+  Rebar APIs a Flask app provides given only a reference to the app object.
+- Black changed some formatting rules. [Rick Riensche]
+
+
+v1.12.2 (2020-08-04)
+--------------------
+- Change trigger. [Rick Riensche]
+
+  Auto-release on tag beginning with "v"
+- Troubleshooting build-and-publish. [Rick Riensche]
+
+  Add explicit mention of ref to checkout per https://github.com/actions/checkout/issues/20#issuecomment-524521113 (from the comment that follows this one though I'm not sure why this didn't work before if this DOES fix it.. :P )
+- Authenticator_converter_registry is missing register_type. [Brock
+  Haywood]
+- Doc: Add meeting notes from Jan 29 Roadmap Call (#165) [Rick Riensche]
+- Fix name and tweak "types" [Rick Riensche]
+
+  More closely align with what is included if you use GitHub's built-in package example (in attempt to make this actually trigger which it doesn't seem to have done when I created 1.12.1)
+
+
 v1.12.1 (2020-03-26)
 --------------------
 - Fixes for oneof on _flatten (#182) [Francisco Castro]
