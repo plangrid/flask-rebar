@@ -8,17 +8,10 @@
     :license: MIT, see LICENSE for details.
 """
 import unittest
-import warnings
 
 from flask_rebar.swagger_generation.generator_utils import PathArgument
 from flask_rebar.swagger_generation.generator_utils import flatten
 from flask_rebar.swagger_generation.generator_utils import format_path_for_swagger
-from flask_rebar.swagger_generation.generator_utils import (
-    AuthenticatorConverter,
-    convert_header_api_key_authenticator,
-)
-from flask_rebar.authenticators import HeaderApiKeyAuthenticator, Authenticator
-from flask_rebar import HandlerRegistry
 
 
 class TestFlatten(unittest.TestCase):

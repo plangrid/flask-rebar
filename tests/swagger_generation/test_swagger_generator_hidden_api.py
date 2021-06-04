@@ -8,17 +8,7 @@
     :license: MIT, see LICENSE for details.
 """
 import json
-
-import marshmallow as m
 import pytest
-
-from flask_rebar.rebar import Rebar
-from flask_rebar.swagger_generation import ExternalDocumentation
-from flask_rebar.swagger_generation import SwaggerV2Generator
-from flask_rebar.swagger_generation import SwaggerV3Generator
-from flask_rebar.swagger_generation import Server
-from flask_rebar.swagger_generation import ServerVariable
-from flask_rebar.swagger_generation import Tag
 from flask_rebar.testing import validate_swagger
 from flask_rebar.testing.swagger_jsonschema import (
     SWAGGER_V2_JSONSCHEMA,
