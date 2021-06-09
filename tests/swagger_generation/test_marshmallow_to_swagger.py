@@ -24,6 +24,9 @@ class TestConverterRegistry(unittest.TestCase):
         self.registry = ConverterRegistry()
         self.registry.register_types(ALL_CONVERTERS)
 
+    def do_nothing(self):
+        pass
+
     def test_primitive_types(self):
         for field, result in [
             (m.fields.Integer(), {"type": "integer"}),
@@ -117,6 +120,11 @@ class TestConverterRegistry(unittest.TestCase):
 
             class Foo(m.Schema):
                 a = field
+
+                # in marshmallow >= 3.11.x, if the 'serialize' / 'deserialize' functions for
+                # a field.Method aren't defined, an exception will be raised.
+                x = self.do_nothing
+                y = self.do_nothing
 
             schema = Foo()
             json_schema = self.registry.convert(schema)
