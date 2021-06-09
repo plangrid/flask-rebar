@@ -119,9 +119,6 @@ class TestConverterRegistry(unittest.TestCase):
         ]:
 
             class Foo(m.Schema):
-                def test(self):
-                    pass
-
                 a = field
 
                 # in marshmallow >= 3.11.x, if the 'serialize' / 'deserialize' functions for
