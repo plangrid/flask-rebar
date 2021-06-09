@@ -126,8 +126,6 @@ class TestConverterRegistry(unittest.TestCase):
                 {"type": "object", "title": "Foo", "properties": {"a": result}},
             )
 
-            # code change to force tests
-
     def test_primitive_types_openapi_v3(self):
         for field, result in [
             (m.fields.Integer(allow_none=True), {"type": "integer", "nullable": True}),
