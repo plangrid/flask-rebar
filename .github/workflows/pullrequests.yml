@@ -30,6 +30,9 @@ jobs:
         - marshmallow=='3.10.*' flask=='1.1.*' werkzeug=='1.*'
         - marshmallow=='3.11.*' flask=='1.1.*' werkzeug=='1.*'
         - marshmallow=='3.12.*' flask=='1.1.*' werkzeug=='1.*'
+        - marshmallow=='3.0.*' flask=='2.0.*' werkzeug=='2.*'
+        - marshmallow=='3.6.*' flask=='2.0.*' werkzeug=='2.*'
+        - marshmallow=='3.12.*' flask=='2.0.*' werkzeug=='2.*'
 
     steps:
     - uses: actions/checkout@v1
