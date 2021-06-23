@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
+from flask_rebar.utils.deprecation import deprecated_parameters
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator, Authenticator
 from .marshmallow_to_swagger import ConverterRegistry
 from . import swagger_words as sw

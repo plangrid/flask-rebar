@@ -72,7 +72,7 @@ Links to notes from team meetings:
 Releasing to PyPI
 -----------------
 
-We use Travis CI to automate releasing package versions to PyPI.
+We use GitHub Actions to automate releasing package versions to PyPI.
 
 .. warning:: These steps must be completed by an administrator.  We generally do at least patch releases fairly frequently, but if you have a feature that urgently requires release, feel free to reach out and request one and we'll do our best to accommodate.
 
@@ -96,6 +96,6 @@ Then push the new commits and tags:
 
    git push && git push --tags
 
-Finally, while you're waiting for Travis CI to pick up the tagged version, build it, and deploy it to PyPi, don't forget to reset branch protection settings (for normal operation, administrators should be subject to these restrictions to enforce PR code review requirements).
+Finally, while you're waiting for GitHub to pick up the tagged version, build it, and deploy it to PyPi, don't forget to reset branch protection settings (for normal operation, administrators should be subject to these restrictions to enforce PR code review requirements).
 
 

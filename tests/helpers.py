@@ -1,7 +1,4 @@
-from flask import json_available
-
-if json_available:
-    from flask import json
+from flask import json
 from werkzeug.utils import cached_property
 
 
@@ -12,8 +9,6 @@ class JsonResponseMixin(object):
 
     @cached_property
     def json(self):
-        if not json_available:  # pragma: no cover
-            raise NotImplementedError
         return json.loads(self.data)
 
 
