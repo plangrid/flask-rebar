@@ -330,13 +330,7 @@ class NestedConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Nested
 
     def convert(self, obj, context):
-        # instantiate the object because the converter expects it to be
-        inst = obj.sch
-
-        if obj.many:
-            return {sw.type_: sw.array, sw.items: context.convert(inst, context)}
-        else:
-            return context.convert(inst, context)
+        return context.convert(obj.schema, context)
 
 
 class ListConverter(FieldConverter):
