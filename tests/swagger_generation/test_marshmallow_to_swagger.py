@@ -316,6 +316,57 @@ class TestConverterRegistry(unittest.TestCase):
             },
         )
 
+    def test_self_referential_nested(self):
+        # Issue 90
+        # note for Marshmallow >= 3.3, preferred format is e.g.,:
+        # m.fields.Nested(lambda: Foo(only=("d", "b")))
+        # and passing "self" as a string is deprecated
+        # but that doesn't work in < 3.3, so until 4.x we'll keep supporting/testing with "self"
+        class Foo(m.Schema):
+            a = m.fields.Nested("self", exclude=("a",))
+            b = m.fields.Integer()
+            c = m.fields.Nested("self", only=("d", "b"))
+            d = m.fields.Email()
+
+        schema = Foo()
+        json_schema = self.registry.convert(schema)
+
+        self.assertEqual(
+            json_schema,
+            {
+                "properties": {
+                    "a": {
+                        "properties": {
+                            "b": {"type": "integer"},
+                            "c": {
+                                "properties": {
+                                    "b": {"type": "integer"},
+                                    "d": {"type": "string"},
+                                },
+                                "title": "Foo",
+                                "type": "object",
+                            },
+                            "d": {"type": "string"},
+                        },
+                        "title": "Foo",
+                        "type": "object",
+                    },
+                    "b": {"type": "integer"},
+                    "c": {
+                        "properties": {
+                            "b": {"type": "integer"},
+                            "d": {"type": "string"},
+                        },
+                        "title": "Foo",
+                        "type": "object",
+                    },
+                    "d": {"type": "string"},
+                },
+                "title": "Foo",
+                "type": "object",
+            },
+        )
+
     def test_many(self):
         class Foo(m.Schema):
             a = m.fields.Integer()
