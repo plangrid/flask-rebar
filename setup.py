@@ -4,14 +4,15 @@ from setuptools import setup, find_packages
 
 # packages required for local development and testing
 development = [
-    "pytest==4.6.8",
-    "mock==2.0.0",
-    "jsonschema==3.0.2",
-    "Sphinx==1.7.0",
-    "sphinx_rtd_theme==0.2.4",
     "bumpversion==0.5.3",
     "gitchangelog>=3.0.4,<4.0.0",
+    "jsonschema==3.0.2",
+    "marshmallow-objects~=2.3",
+    "mock==2.0.0",
     "pre-commit>=1.14.4",
+    "pytest==4.6.8",
+    "Sphinx==1.7.0",
+    "sphinx_rtd_theme==0.2.4",
 ]
 
 if __name__ == "__main__":

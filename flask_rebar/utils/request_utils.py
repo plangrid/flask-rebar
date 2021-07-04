@@ -94,9 +94,22 @@ def normalize_schema(schema):
     """
     This allows for either an instance of a marshmallow.Schema or the class
     itself to be passed to functions.
+    For Marshmallow-objects support, if a Model class is passed, return its __schema__
+    Tacit assumption, if __schema__ exists, we're dealing with marshmallow_objects, caveat emptor
     """
     if schema not in (None, USE_DEFAULT) and not isinstance(schema, marshmallow.Schema):
-        schema = schema()
+        # Note we don't have a hard dependency on marshmallow-objects (outside of dev extras for unit tests)
+        # so we can't explicitly check for Model type here, instead we'll make a best-effort assumption:
+        if hasattr(schema, "__schema__"):
+            # Assume this is a marshmallow-objects class or instance
+            if schema.__schema__ is None:
+                # __schema__ exists but empty: assume we have a Model class, not instance
+                schema = schema().__schema__
+            else:
+                schema = schema.__schema__
+        else:
+            # assume we were passed a Schema class (not an instance)
+            schema = schema()
     return schema
 
 
