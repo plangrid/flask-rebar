@@ -1,6 +1,9 @@
 Basics
 ------
 
+TODO: ADD INFO ON OPTION TO USE MARSHMALLOW OBJECTS AND APPROPRIATE WARNINGS ABOUT VERSIONS, YMMV, ETC
+
+
 Registering a Handler
 =====================
 
