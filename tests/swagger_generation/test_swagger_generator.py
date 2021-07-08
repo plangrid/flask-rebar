@@ -28,6 +28,7 @@ from flask_rebar.testing.swagger_jsonschema import (
 from tests.swagger_generation.registries import (
     legacy,
     exploded_query_string,
+    marshmallow_objects,
     multiple_authenticators,
 )
 
@@ -237,6 +238,16 @@ def test_path_parameter_types_must_be_the_same_for_same_path(generator):
             multiple_authenticators.registry,
             multiple_authenticators.swagger_v3_generator,
             multiple_authenticators.EXPECTED_SWAGGER_V3,
+        ),
+        (
+            marshmallow_objects.registry,
+            marshmallow_objects.swagger_v2_generator,
+            marshmallow_objects.EXPECTED_SWAGGER_V2,
+        ),
+        (
+            marshmallow_objects.registry,
+            marshmallow_objects.swagger_v3_generator,
+            marshmallow_objects.EXPECTED_SWAGGER_V3,
         ),
     ],
 )

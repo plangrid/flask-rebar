@@ -2,6 +2,8 @@ Basics
 ------
 
 TODO: ADD INFO ON OPTION TO USE MARSHMALLOW OBJECTS AND APPROPRIATE WARNINGS ABOUT VERSIONS, YMMV, ETC
+Include: difference in default name in Swagger (for m_o it is your class name + "Schema")
+and nuance around use __swagger_title__ for NestedModel
 
 
 Registering a Handler

@@ -100,13 +100,13 @@ def normalize_schema(schema):
     if schema not in (None, USE_DEFAULT) and not isinstance(schema, marshmallow.Schema):
         # Note we don't have a hard dependency on marshmallow-objects (outside of dev extras for unit tests)
         # so we can't explicitly check for Model type here, instead we'll make a best-effort assumption:
-        if hasattr(schema, "__schema__"):
-            # Assume this is a marshmallow-objects class or instance
-            if schema.__schema__ is None:
-                # __schema__ exists but empty: assume we have a Model class, not instance
-                schema = schema().__schema__
-            else:
-                schema = schema.__schema__
+        if hasattr(schema, "__get_schema_class__"):
+            # Assumption: this is a marshmallow-objects class or instance
+            model = schema
+            schema = schema.__get_schema_class__()
+            # If __swagger_title__ is defined on the Model, propagate that down:
+            if hasattr(model, "__swagger_title__"):
+                schema.__swagger_title__ = model.__swagger_title__
         else:
             # assume we were passed a Schema class (not an instance)
             schema = schema()
