@@ -1,15 +1,12 @@
 Basics
 ------
 
-TODO: ADD INFO ON OPTION TO USE MARSHMALLOW OBJECTS AND APPROPRIATE WARNINGS ABOUT VERSIONS, YMMV, ETC
-Include: difference in default name in Swagger (for m_o it is your class name + "Schema")
-and nuance around use __swagger_title__ for NestedModel
-
-
 Registering a Handler
 =====================
 
-Let's take a look at a very basic API using Flask-Rebar:
+Let's first take a look at a very basic API using Flask-Rebar. For these examples we will use basic
+marshmallow Schemas. As of flask-rebar 2.0, we now have support for marshmallow-objects as well,
+which we'll describe after the basic examples.
 
 .. code-block:: python
 
@@ -227,3 +224,23 @@ Flask-Rebar includes a set of error classes that can be raised to produce HTTP e
 The ``msg`` parameter will override the "message" key of the JSON response. Furthermore, the JSON response will be updated with ``additional_data``.
 
 Validation errors are raised automatically, and the JSON response will include an ``errors`` key with more specific errors about what in the payload was invalid (this is done with the help of Marshmallow validation).
+
+Support for marshmallow-objects
+===============================
+New and by request in version 2.0, we include some support for ``marshmallow-objects``!
+
+CAVEAT: We do not have a dependency on ``marshmallow-objects`` outside of ``dev`` extras. If you're developing a flask-rebar app
+that depends on ``marshmallow-objects``, be sure to include it in your explicit dependencies, and be aware that ``flask-rebar``
+is only tested with 2.3.x versions.
+
+In many cases, you can just use a ``Model`` where you would use a ``Schema``, but there are a couple of things to look out for:
+
+* In many places throughout ``flask-rebar``, when you need to provide a schema (for example, when registering a handler),
+  you can pass either your ``Schema`` *class or an instance of it* and rebar does the rest. This is also true of ``Model``;
+  however, you can't instantiate a ``Model`` without providing data if there are required fields. We recommend just passing
+  relevant ``Model`` subclasses consistently.
+* When generating OpenAPI specification, if you use ``marshmallow.Schema`` classes, they are represented in OpenAPI by their
+  class name. If you use ``marshmallow_objects.Model`` classes, they are represented as the class name **with a suffix** of "Schema".
+  Note that you can use ``__swagger_title__`` to override this and call them whatever you want.
+* ``NestedModel`` is supported, but there is not a good way to specify a "title" for OpenAPI generation. If you need to
+  provide custom titles for your nested models, use ``flask_rebar.utils.marshmallow_objects_helpers.NestedTitledModel``
