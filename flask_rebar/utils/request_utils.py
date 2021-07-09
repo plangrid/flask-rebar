@@ -23,6 +23,7 @@ from flask_rebar import compat
 from flask_rebar import errors
 from flask_rebar import messages
 from flask_rebar.utils.defaults import USE_DEFAULT
+from flask_rebar.utils.marshmallow_objects_helpers import get_marshmallow_objects_schema
 
 
 class HeadersProxy(collections.abc.Mapping):
@@ -98,12 +99,11 @@ def normalize_schema(schema):
     Tacit assumption, if __schema__ exists, we're dealing with marshmallow_objects, caveat emptor
     """
     if schema not in (None, USE_DEFAULT) and not isinstance(schema, marshmallow.Schema):
-        # Note we don't have a hard dependency on marshmallow-objects (outside of dev extras for unit tests)
-        # so we can't explicitly check for Model type here, instead we'll make a best-effort assumption:
-        if hasattr(schema, "__get_schema_class__"):
-            # Assumption: this is a marshmallow-objects class or instance
+        # See if we were handed a marshmallow_objects Model class or instance:
+        mo_schema = get_marshmallow_objects_schema(schema)
+        if mo_schema:
             model = schema
-            schema = schema.__get_schema_class__()
+            schema = mo_schema
             # If __swagger_title__ is defined on the Model, propagate that down:
             if hasattr(model, "__swagger_title__"):
                 schema.__swagger_title__ = model.__swagger_title__
