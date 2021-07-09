@@ -372,7 +372,7 @@ class HandlerRegistry(object):
 
         :param marshmallow.Schema headers_schema:
         """
-        self.default_headers_schema = headers_schema
+        self.default_headers_schema = normalize_schema(headers_schema)
 
     def clone(self):
         """

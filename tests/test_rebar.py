@@ -635,14 +635,22 @@ class RebarTest(unittest.TestCase):
         self.assertIn("get", swagger["paths"]["/foos/{foo_uid}"])
         self.assertIn("patch", swagger["paths"]["/foos/{foo_uid}"])
 
-    def test_default_headers(self):
+    @parametrize(
+        "headers_def, use_model", [(HeadersSchema(), False), (HeadersModel, True)]
+    )
+    def test_default_headers(self, headers_def, use_model):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
-        registry.set_default_headers_schema(HeadersSchema())
+        registry.set_default_headers_schema(headers_def)
 
         @registry.handles(rule="/me", method="GET", response_body_schema=MeSchema())
         def get_me():
-            return {"user_name": rebar.validated_headers["name"]}
+            name = (
+                rebar.validated_headers.name
+                if use_model
+                else rebar.validated_headers["name"]
+            )
+            return {"user_name": name}
 
         @registry.handles(
             rule="/myself",
