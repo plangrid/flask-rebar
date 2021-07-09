@@ -11,7 +11,10 @@ import json
 import unittest
 
 import marshmallow as m
+import marshmallow_objects as mo
 from flask import Flask, make_response
+
+from parametrize import parametrize
 
 from flask_rebar import messages
 from flask_rebar import HeaderApiKeyAuthenticator, SwaggerV3Generator
@@ -35,21 +38,44 @@ class FooSchema(m.Schema):
     name = m.fields.String()
 
 
+class FooModel(mo.Model):
+    uid = mo.fields.String()
+    name = mo.fields.String()
+
+
 class ListOfFooSchema(m.Schema):
     data = m.fields.Nested(FooSchema, many=True)
+
+
+class ListOfFooModel(mo.Model):
+    data = mo.NestedModel(FooModel, many=True)
 
 
 class FooUpdateSchema(m.Schema):
     name = m.fields.String()
 
 
+class FooUpdateModel(mo.Model):
+    name = mo.fields.String()
+
+
 class FooListSchema(m.Schema):
     name = m.fields.String(required=True)
+
+
+class FooListModel(mo.Model):
+    name = mo.fields.String(required=True)
 
 
 class HeadersSchema(m.Schema):
     name = set_data_key(
         field=m.fields.String(load_from="x-name", required=True), key="x-name"
+    )
+
+
+class HeadersModel(mo.Model):
+    name = set_data_key(
+        field=mo.fields.String(load_from="x-name", required=True), key="x-name"
     )
 
 
@@ -218,18 +244,27 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
 
-    def test_validate_body_parameters(self):
+    @parametrize(
+        "foo_cls,foo_update_cls,use_model",
+        [(FooSchema, FooUpdateSchema, False), (FooModel, FooUpdateModel, True)],
+    )
+    def test_validate_body_parameters(self, foo_cls, foo_update_cls, use_model):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
         @registry.handles(
             rule="/foos/<foo_uid>",
             method="PATCH",
-            response_body_schema={200: FooSchema()},
-            request_body_schema=FooUpdateSchema(),
+            response_body_schema={200: foo_cls()},
+            request_body_schema=foo_update_cls(),
         )
         def update_foo(foo_uid):
-            return {"uid": foo_uid, "name": rebar.validated_body["name"]}
+            if use_model:
+                # Here we can also verify that in handler we get our expected FooModel type object
+                self.assertIsInstance(rebar.validated_body, foo_update_cls)
+                return foo_cls(name=rebar.validated_body.name, uid=foo_uid)
+            else:
+                return {"uid": foo_uid, "name": rebar.validated_body["name"]}
 
         app = create_rebar_app(rebar)
 
@@ -248,10 +283,11 @@ class RebarTest(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
 
-    def test_flask_response_instance_interop_body_matches_schema(self):
+    @parametrize("foo_update_cls", [(FooUpdateSchema,), (FooUpdateModel,)])
+    def test_flask_response_instance_interop_body_matches_schema(self, foo_update_cls):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
-        schema = FooUpdateSchema()
+        schema = foo_update_cls()
 
         @registry.handles(rule="/foo", method="PUT", response_body_schema=schema)
         def foo():
@@ -262,10 +298,13 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.headers["foo"], "bar")
 
-    def test_flask_response_instance_interop_body_does_not_match_schema(self):
+    @parametrize("foo_update_cls", [(FooUpdateSchema,), (FooUpdateModel,)])
+    def test_flask_response_instance_interop_body_does_not_match_schema(
+        self, foo_update_cls
+    ):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
-        schema = FooUpdateSchema()
+        schema = foo_update_cls()
 
         @registry.handles(rule="/foo", method="PUT", response_body_schema=schema)
         def foo():
@@ -288,14 +327,15 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.headers["Location"], "http://foo.com")
 
-    def test_validate_query_parameters(self):
+    @parametrize("list_of_foo_cls", [(ListOfFooSchema,), (ListOfFooModel,)])
+    def test_validate_query_parameters(self, list_of_foo_cls):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
         @registry.handles(
             rule="/foos",
             method="GET",
-            response_body_schema={200: ListOfFooSchema()},
+            response_body_schema={200: list_of_foo_cls()},
             query_string_schema=FooListSchema(),
         )
         def list_foos():
@@ -312,7 +352,10 @@ class RebarTest(unittest.TestCase):
         resp = app.test_client().get(path="/foos?foo=bar")  # missing required parameter
         self.assertEqual(resp.status_code, 400)
 
-    def test_validate_headers(self):
+    @parametrize(
+        "headers_cls, use_model", [(HeadersSchema, False), (HeadersModel, True)]
+    )
+    def test_validate_headers(self, headers_cls, use_model):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
         register_default_authenticator(registry)
@@ -321,10 +364,15 @@ class RebarTest(unittest.TestCase):
             rule="/me",
             method="GET",
             response_body_schema={200: MeSchema()},
-            headers_schema=HeadersSchema(),
+            headers_schema=headers_cls,
         )
         def get_me():
-            return {"user_name": rebar.validated_headers["name"]}
+            name = (
+                rebar.validated_headers.name
+                if use_model
+                else rebar.validated_headers["name"]
+            )
+            return {"user_name": name}
 
         app = create_rebar_app(rebar)
 
@@ -432,7 +480,8 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.data.decode("utf-8"), "")
         self.assertEqual(resp.headers["Content-Type"], "handler/type")
 
-    def test_view_function_tuple_response(self):
+    @parametrize("foo_definition", [(FooSchema,), (FooModel,)])
+    def test_view_function_tuple_response(self, foo_definition):
         header_key = "X-Foo"
         header_value = "bar"
         headers = {header_key: header_value}
@@ -444,26 +493,32 @@ class RebarTest(unittest.TestCase):
             expected_body,
             expected_headers,
         ) in [
-            (FooSchema(), DEFAULT_RESPONSE, 200, DEFAULT_RESPONSE, {}),
-            ({201: FooSchema()}, (DEFAULT_RESPONSE, 201), 201, DEFAULT_RESPONSE, {}),
-            ({201: FooSchema()}, (DEFAULT_RESPONSE, 200), 500, DEFAULT_ERROR, {}),
+            (foo_definition(), DEFAULT_RESPONSE, 200, DEFAULT_RESPONSE, {}),
+            (
+                {201: foo_definition()},
+                (DEFAULT_RESPONSE, 201),
+                201,
+                DEFAULT_RESPONSE,
+                {},
+            ),
+            ({201: foo_definition()}, (DEFAULT_RESPONSE, 200), 500, DEFAULT_ERROR, {}),
             ({204: None}, (None, 204), 204, "", {}),
             (
-                {200: FooSchema()},
+                {200: foo_definition()},
                 (DEFAULT_RESPONSE, headers),
                 200,
                 DEFAULT_RESPONSE,
                 headers,
             ),
             (
-                {201: FooSchema()},
+                {201: foo_definition()},
                 (DEFAULT_RESPONSE, 201, headers),
                 201,
                 DEFAULT_RESPONSE,
                 headers,
             ),
             ({201: None}, (None, 201, headers), 201, "", headers),
-            ({201: FooSchema()}, ({}, 201, headers), 201, {}, headers),
+            ({201: foo_definition()}, ({}, 201, headers), 201, {}, headers),
         ]:
             rebar = Rebar()
             registry = rebar.create_handler_registry()
@@ -522,11 +577,12 @@ class RebarTest(unittest.TestCase):
         resp = app.test_client().get("/swagger/ui/")
         self.assertEqual(resp.status_code, 200)
 
-    def test_register_multiple_paths(self):
+    @parametrize("foo_definition", [(FooSchema(),), (FooModel(),)])
+    def test_register_multiple_paths(self, foo_definition):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
-        common_kwargs = {"method": "GET", "response_body_schema": {200: FooSchema()}}
+        common_kwargs = {"method": "GET", "response_body_schema": {200: foo_definition}}
 
         @registry.handles(rule="/bars/<foo_uid>", endpoint="bar", **common_kwargs)
         @registry.handles(rule="/foos/<foo_uid>", endpoint="foo", **common_kwargs)
@@ -547,13 +603,14 @@ class RebarTest(unittest.TestCase):
         self.assertIn("/bars/{foo_uid}", swagger["paths"])
         self.assertIn("/foos/{foo_uid}", swagger["paths"])
 
-    def test_register_multiple_methods(self):
+    @parametrize("foo_definition", [(FooSchema(),), (FooModel(),)])
+    def test_register_multiple_methods(self, foo_definition):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
         common_kwargs = {
             "rule": "/foos/<foo_uid>",
-            "response_body_schema": {200: FooSchema()},
+            "response_body_schema": {200: foo_definition},
         }
 
         @registry.handles(method="GET", endpoint="get_foo", **common_kwargs)
@@ -578,14 +635,22 @@ class RebarTest(unittest.TestCase):
         self.assertIn("get", swagger["paths"]["/foos/{foo_uid}"])
         self.assertIn("patch", swagger["paths"]["/foos/{foo_uid}"])
 
-    def test_default_headers(self):
+    @parametrize(
+        "headers_def, use_model", [(HeadersSchema(), False), (HeadersModel, True)]
+    )
+    def test_default_headers(self, headers_def, use_model):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
-        registry.set_default_headers_schema(HeadersSchema())
+        registry.set_default_headers_schema(headers_def)
 
         @registry.handles(rule="/me", method="GET", response_body_schema=MeSchema())
         def get_me():
-            return {"user_name": rebar.validated_headers["name"]}
+            name = (
+                rebar.validated_headers.name
+                if use_model
+                else rebar.validated_headers["name"]
+            )
+            return {"user_name": name}
 
         @registry.handles(
             rule="/myself",
@@ -724,11 +789,17 @@ class RebarTest(unittest.TestCase):
         self.assertIn(resp.status_code, (301, 308))
         self.assertTrue(resp.headers["Location"].endswith("/with_trailing_slash/"))
 
-    def test_bare_class_schemas_handled(self):
+    @parametrize(
+        "foo_cls, foo_list_cls, headers_cls",
+        [
+            (FooSchema, FooListSchema, HeadersSchema),
+            (FooModel, FooListModel, HeadersModel),
+        ],
+    )
+    def test_bare_class_schemas_handled(self, foo_cls, foo_list_cls, headers_cls):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
 
-        expected_foo = FooSchema().load({"uid": "some_uid", "name": "Namey McNamerton"})
         expected_headers = {"x-name": "Header Name"}
 
         def get_foo(*args, **kwargs):
@@ -741,9 +812,9 @@ class RebarTest(unittest.TestCase):
             registry=registry,
             method="GET",
             path="/my_get_endpoint",
-            headers_schema=HeadersSchema,
-            response_body_schema={200: FooSchema},
-            query_string_schema=FooListSchema,
+            headers_schema=headers_cls,
+            response_body_schema={200: foo_cls},
+            query_string_schema=foo_list_cls,
             func=get_foo,
         )
 
@@ -751,10 +822,12 @@ class RebarTest(unittest.TestCase):
             registry=registry,
             method="POST",
             path="/my_post_endpoint",
-            request_body_schema=FooListSchema,
-            response_body_schema=FooSchema,
+            request_body_schema=foo_list_cls,
+            response_body_schema=foo_cls,
             func=post_foo,
         )
+
+        expected_foo = FooSchema().load({"uid": "some_uid", "name": "Namey McNamerton"})
 
         app = create_rebar_app(rebar)
         # violate headers schema:
