@@ -96,7 +96,6 @@ def normalize_schema(schema):
     This allows for either an instance of a marshmallow.Schema or the class
     itself to be passed to functions.
     For Marshmallow-objects support, if a Model class is passed, return its __schema__
-    Tacit assumption, if __schema__ exists, we're dealing with marshmallow_objects, caveat emptor
     """
     if schema not in (None, USE_DEFAULT) and not isinstance(schema, marshmallow.Schema):
         # See if we were handed a marshmallow_objects Model class or instance:
