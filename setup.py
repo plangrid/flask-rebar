@@ -9,6 +9,7 @@ development = [
     "jsonschema==3.0.2",
     "marshmallow-objects~=2.3",
     "mock==2.0.0",
+    "parametrize==0.1.1",
     "pre-commit>=1.14.4",
     "pytest==4.6.8",
     "Sphinx==1.7.0",
