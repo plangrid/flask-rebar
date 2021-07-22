@@ -31,8 +31,8 @@ DEFAULT_ALTERNATIVE_AUTH_HEADER = "x-api-default-auth"
 DEFAULT_ALTERNATIVE_AUTH_SECRET = "ALSO A SECRET!"
 DEFAULT_RESPONSE = {"uid": "0", "name": "I'm the default for testing!"}
 DEFAULT_ERROR = (
-    messages.internal_server_error._asdict()
-)  # noqa - _asdict is NOT internal.
+    messages.internal_server_error._asdict()  # noqa - _asdict is NOT internal.
+)
 
 
 class FooSchema(m.Schema):
