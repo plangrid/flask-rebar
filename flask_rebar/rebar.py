@@ -850,7 +850,7 @@ class Rebar(object):
         """
         Compiles a response object for an error.
 
-        :param str message:
+        :param Union[messages.ErrorMessage,str] message:
         :param int http_status_code:
           An optional, application-specific error code to add to the response.
         :param dict additional_data:
@@ -859,9 +859,17 @@ class Rebar(object):
           Additional headers to attach to the response.
         :rtype: flask.Response
         """
-        body = {"message": message}
+        if isinstance(message, messages.ErrorMessage):
+            message_text = message.message
+            rebar_error_code = message.rebar_error_code
+        else:
+            message_text = message
+            rebar_error_code = None
+        body = {"message": message_text}
         if additional_data:
             body.update(additional_data)
+        if rebar_error_code:
+            body["rebar_error_code"] = rebar_error_code
         resp = jsonify(body)
         if headers:
             for key, value in headers.items():
