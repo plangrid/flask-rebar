@@ -45,7 +45,7 @@ class NameAndOtherSchema(m.Schema):
 @registry.handles(
     rule="/foos/<uuid_string:foo_uid>",
     method="GET",
-    marshal_schema={200: FooSchema()},
+    response_body_schema={200: FooSchema()},
     headers_schema=HeaderSchema(),
 )
 def get_foo(foo_uid):
@@ -56,7 +56,7 @@ def get_foo(foo_uid):
 @registry.handles(
     rule="/foos/<foo_uid>",
     method="PATCH",
-    marshal_schema={200: FooSchema()},
+    response_body_schema={200: FooSchema()},
     request_body_schema=FooUpdateSchema(),
     authenticator=authenticator,
 )
@@ -69,7 +69,7 @@ def update_foo(foo_uid):
 @registry.handles(
     rule="/foo_list",
     method="GET",
-    marshal_schema={200: FooSchema(many=True)},
+    response_body_schema={200: FooSchema(many=True)},
     authenticator=None,  # Override the default!
     hidden=True,
 )
@@ -80,7 +80,7 @@ def list_foos():
 @registry.handles(
     rule="/foos",
     method="GET",
-    marshal_schema={200: NestedFoosSchema()},
+    response_body_schema={200: NestedFoosSchema()},
     query_string_schema=NameAndOtherSchema(),
     authenticator=None,  # Override the default!
 )

@@ -46,7 +46,7 @@ class NameAndOtherModel(mo.Model):
 @registry.handles(
     rule="/foos/<uuid_string:foo_uid>",
     method="GET",
-    marshal_schema={200: FooModel},
+    response_body_schema={200: FooModel},
     headers_schema=HeaderModel,
 )
 def get_foo(foo_uid):
@@ -57,7 +57,7 @@ def get_foo(foo_uid):
 @registry.handles(
     rule="/foos/<foo_uid>",
     method="PATCH",
-    marshal_schema={200: FooModel},
+    response_body_schema={200: FooModel},
     request_body_schema=FooUpdateModel,
     authenticator=authenticator,
 )
@@ -68,7 +68,7 @@ def update_foo(foo_uid):
 @registry.handles(
     rule="/foos",
     method="GET",
-    marshal_schema={200: NestedFoosModel},
+    response_body_schema={200: NestedFoosModel},
     query_string_schema=NameAndOtherModel,
     authenticator=None,  # Override the default!
 )
