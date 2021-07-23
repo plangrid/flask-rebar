@@ -183,13 +183,6 @@ class AuthenticatorConverterRegistry(ConverterRegistry):
             authenticator, _Context(openapi_version=openapi_version)
         )
 
-    @deprecated_parameters(converters=("", "2.0"))
-    def __init__(self, *args, **kwargs):
-        super(AuthenticatorConverterRegistry, self).__init__()
-        deprecated_converts = args[0] if args else kwargs.get("", {})
-        for authenticator, method in deprecated_converts.items():
-            self.register(authenticator, method)
-
 
 authenticator_converter_registry = AuthenticatorConverterRegistry()
 authenticator_converter_registry.register_types((HeaderApiKeyConverter(),))
