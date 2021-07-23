@@ -30,12 +30,10 @@ class HttpJsonError(Exception):
 
     default_message = None
     http_status_code = None
-    rebar_error_code = None
 
-    def __init__(self, msg=None, additional_data=None, rebar_error_code=None):
+    def __init__(self, msg=None, additional_data=None):
         self.error_message = msg or self.default_message
         self.additional_data = additional_data
-        self.rebar_error_code = rebar_error_code
         super(HttpJsonError, self).__init__(self.error_message)
 
 

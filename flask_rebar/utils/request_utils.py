@@ -130,9 +130,7 @@ def raise_400_for_marshmallow_errors(errs, msg):
     additional_data = {"errors": copied}
     message, rebar_code = msg if isinstance(msg, tuple) else msg, None
 
-    raise errors.BadRequest(
-        msg=msg, additional_data=additional_data, rebar_error_code=rebar_code
-    )
+    raise errors.BadRequest(msg=msg, additional_data=additional_data)
 
 
 def get_json_body_params_or_400(schema):
