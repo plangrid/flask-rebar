@@ -11,7 +11,6 @@ import copy
 import re
 from collections import namedtuple, OrderedDict
 
-from flask_rebar.utils.deprecation import deprecated
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
@@ -181,25 +180,6 @@ def format_path_for_swagger(path):
         repl=lambda match: "{{{}}}".format(match.group("name")), string=path
     )
     return subbed_path, args
-
-
-@deprecated(eol_version="2.0")
-def convert_header_api_key_authenticator(authenticator):
-    """
-    Converts a HeaderApiKeyAuthenticator object to a Swagger definition.
-
-    :param flask_rebar.authenticators.HeaderApiKeyAuthenticator authenticator:
-    :rtype: tuple(str, dict)
-    :returns: Tuple where the first item is a name for the authenticator, and
-    the second item is a Swagger definition for it.
-    """
-    key = authenticator.name
-    definition = {
-        sw.name: authenticator.header,
-        sw.in_: sw.header,
-        sw.type_: sw.api_key,
-    }
-    return key, definition
 
 
 def verify_parameters_are_the_same(a, b):
