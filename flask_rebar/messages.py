@@ -11,19 +11,20 @@ from collections import namedtuple
 from enum import IntEnum
 
 
-class ErrorCode(IntEnum):
-    BODY_VALIDATION_FAILED = 1
-    EMPTY_JSON_BODY = 2
-    INTERNAL_SERVER_ERROR = 3
-    INVALID_AUTH_TOKEN = 4
-    INVALID_JSON = 5
-    MISSING_AUTH_TOKEN = 6
-    QUERY_STRING_VALIDATION_FAILED = 7
-    UNSUPPORTED_CONTENT_TYPE = 8
-    HEADER_VALIDATION_FAILED = 9
-    REQUIRED_FIELD_MISSING = 10
-    REQUIRED_FIELD_EMPTY = 11
-    UNSUPPORTED_FIELDS = 12
+# machine-friendly equivalents of associated human-friendly messages
+class ErrorCode:
+    BODY_VALIDATION_FAILED = "body_validation_failed"
+    EMPTY_JSON_BODY = "empty_json_body"
+    INTERNAL_SERVER_ERROR = "internal_server_error"
+    INVALID_AUTH_TOKEN = "invalid_auth_token"
+    INVALID_JSON = "invalid_json"
+    MISSING_AUTH_TOKEN = "missing_auth_token"
+    QUERY_STRING_VALIDATION_FAILED = "query_string_validation_failed"
+    UNSUPPORTED_CONTENT_TYPE = "unsupported_content_type"
+    HEADER_VALIDATION_FAILED = "header_validation_failed"
+    REQUIRED_FIELD_MISSING = "required_fields_missing"
+    REQUIRED_FIELD_EMPTY = "required_field_empty"
+    UNSUPPORTED_FIELDS = "unsupported_fields"
 
 
 ErrorMessage = namedtuple("ErrorMessage", "message, rebar_error_code")
