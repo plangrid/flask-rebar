@@ -308,7 +308,7 @@ class HandlerRegistry(object):
             "3.0",
             _convert_authenticator_to_authenticators,
         ),
-        swagger_path="spec_path",
+        swagger_path="spec_path",  # we didn't specify an EOL for these two, maybe they just live forever (fine imho)
         swagger_ui_path="spec_ui_path",
     )
     def __init__(

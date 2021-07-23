@@ -282,6 +282,3 @@ def recursively_convert_dict_to_ordered_dict(obj):
         return [recursively_convert_dict_to_ordered_dict(item) for item in obj]
     else:
         return obj
-
-
-AuthenticatorConverter = AuthenticatorConverterRegistry  # deprecated alias
