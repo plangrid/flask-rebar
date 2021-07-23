@@ -8,7 +8,6 @@
     :license: MIT, see LICENSE for details.
 """
 from collections import namedtuple
-from enum import IntEnum
 
 
 # machine-friendly equivalents of associated human-friendly messages
