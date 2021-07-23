@@ -117,7 +117,7 @@ def raise_400_for_marshmallow_errors(errs, msg):
     Throws a 400 error properly formatted from the given marshmallow errors.
 
     :param dict errs: Error dictionary as returned by marshmallow
-    :param str msg: The overall message to use in the response.
+    :param Union[str,messages.ErrorMessage] msg: The overall message to use in the response.
     :raises: errors.BadRequest
     """
     if not errs:
@@ -128,6 +128,7 @@ def raise_400_for_marshmallow_errors(errs, msg):
     _format_marshmallow_errors_for_response_in_place(copied)
 
     additional_data = {"errors": copied}
+    message, rebar_code = msg if isinstance(msg, tuple) else msg, None
 
     raise errors.BadRequest(msg=msg, additional_data=additional_data)
 
