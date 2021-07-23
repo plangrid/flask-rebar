@@ -26,7 +26,9 @@ from flask_rebar.utils.request_utils import get_query_string_params_or_400
 
 
 class TestErrors(unittest.TestCase):
-    ERROR_MSG = "Bamboozled!"
+    ERROR_MSG = messages.ErrorMessage(
+        "Bamboozled!", messages.ErrorCode.INTERNAL_SERVER_ERROR
+    )
 
     def setUp(self):
         self.app = self.create_app()
@@ -65,13 +67,31 @@ class TestErrors(unittest.TestCase):
         resp = self.app.test_client().get("/errors")
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.content_type, "application/json")
-        self.assertEqual(resp.json, {"message": TestErrors.ERROR_MSG})
+        self.assertEqual(resp.json, TestErrors.ERROR_MSG._asdict())
 
     def test_custom_http_errors_can_have_additional_data(self):
         resp = self.app.test_client().get("/verbose_errors")
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.content_type, "application/json")
-        self.assertEqual(resp.json, {"message": TestErrors.ERROR_MSG, "foo": "bar"})
+        expected = TestErrors.ERROR_MSG._asdict()
+        expected["foo"] = "bar"
+        self.assertEqual(resp.json, expected)
+
+    def test_customize_rebar_error_attribute(self):
+        rebar = self.app.extensions["rebar"]["instance"]
+        # option 1: supply custom name for attribute in response
+        rebar.error_code_attr = "xyz123"
+        resp = self.app.test_client().get("/errors")
+        expected = TestErrors.ERROR_MSG._asdict()
+        expected["xyz123"] = expected.pop("rebar_error_code")
+        self.assertEqual(resp.json, expected)
+
+        # option 2: suppress rebar-internal error codes entirely
+        rebar.error_code_attr = None
+        resp = self.app.test_client().get("/errors")
+        expected = TestErrors.ERROR_MSG._asdict()
+        expected.pop("rebar_error_code")
+        self.assertEqual(resp.json, expected)
 
     def test_default_400_errors_are_formatted_correctly(self):
         resp = self.app.test_client().get("/route_that_fails_validation")

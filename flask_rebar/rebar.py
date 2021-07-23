@@ -664,6 +664,9 @@ class Rebar(object):
         self.handler_registries = set()
         self.paths = defaultdict(dict)
         self.uncaught_exception_handlers = []
+        # If a developer doesn't wish to advertise that they are using rebar this can be used to control
+        # the name of the attribute in error responses, or set to None to supress inclusion of error codes entirely
+        self.error_code_attr = "rebar_error_code"
 
     @deprecated_parameters(
         default_authenticator=(
@@ -789,7 +792,10 @@ class Rebar(object):
         for registry in self.handler_registries:
             registry.register(app=app)
 
-        app.extensions["rebar"] = {"handler_registries": self.handler_registries}
+        app.extensions["rebar"] = {
+            "instance": self,
+            "handler_registries": self.handler_registries,
+        }
 
     def _init_error_handling(self, app):
         @app.errorhandler(errors.HttpJsonError)
@@ -868,8 +874,8 @@ class Rebar(object):
         body = {"message": message_text}
         if additional_data:
             body.update(additional_data)
-        if rebar_error_code:
-            body["rebar_error_code"] = rebar_error_code
+        if rebar_error_code and self.error_code_attr:
+            body[self.error_code_attr] = rebar_error_code
         resp = jsonify(body)
         if headers:
             for key, value in headers.items():
