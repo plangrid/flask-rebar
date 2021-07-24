@@ -26,7 +26,9 @@ from flask_rebar.utils.request_utils import get_query_string_params_or_400
 
 
 class TestErrors(unittest.TestCase):
-    ERROR_MSG = "Bamboozled!"
+    ERROR_MSG = messages.ErrorMessage(
+        "Bamboozled!", messages.ErrorCode.INTERNAL_SERVER_ERROR
+    )
 
     def setUp(self):
         self.app = self.create_app()
@@ -65,13 +67,31 @@ class TestErrors(unittest.TestCase):
         resp = self.app.test_client().get("/errors")
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.content_type, "application/json")
-        self.assertEqual(resp.json, {"message": TestErrors.ERROR_MSG})
+        self.assertEqual(resp.json, TestErrors.ERROR_MSG._asdict())
 
     def test_custom_http_errors_can_have_additional_data(self):
         resp = self.app.test_client().get("/verbose_errors")
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.content_type, "application/json")
-        self.assertEqual(resp.json, {"message": TestErrors.ERROR_MSG, "foo": "bar"})
+        expected = TestErrors.ERROR_MSG._asdict()
+        expected["foo"] = "bar"
+        self.assertEqual(resp.json, expected)
+
+    def test_customize_rebar_error_attribute(self):
+        rebar = self.app.extensions["rebar"]["instance"]
+        # option 1: supply custom name for attribute in response
+        rebar.error_code_attr = "xyz123"
+        resp = self.app.test_client().get("/errors")
+        expected = TestErrors.ERROR_MSG._asdict()
+        expected["xyz123"] = expected.pop("rebar_error_code")
+        self.assertEqual(resp.json, expected)
+
+        # option 2: suppress rebar-internal error codes entirely
+        rebar.error_code_attr = None
+        resp = self.app.test_client().get("/errors")
+        expected = TestErrors.ERROR_MSG._asdict()
+        expected.pop("rebar_error_code")
+        self.assertEqual(resp.json, expected)
 
     def test_default_400_errors_are_formatted_correctly(self):
         resp = self.app.test_client().get("/route_that_fails_validation")
@@ -101,7 +121,7 @@ class TestErrors(unittest.TestCase):
         resp = self.app.test_client().get("/uncaught_errors")
         self.assertEqual(resp.status_code, 500)
         self.assertEqual(resp.content_type, "application/json")
-        self.assertEqual(resp.json, {"message": messages.internal_server_error})
+        self.assertEqual(resp.json, messages.internal_server_error._asdict())
 
     def test_timeouts_log_exceptions(self):
         # in the wild, gunicorn or nginx will cutoff the wsgi server and return a 502
@@ -151,7 +171,7 @@ class TestJsonBodyValidation(unittest.TestCase):
             path="/stuffs", headers={"Content-Type": "application/json"}
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {"message": messages.empty_json_body})
+        self.assertEqual(resp.json, messages.empty_json_body._asdict())
 
         resp = self.app.test_client().post(
             path="/stuffs",
@@ -159,7 +179,7 @@ class TestJsonBodyValidation(unittest.TestCase):
             headers={"Content-Type": "text/csv"},
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {"message": messages.unsupported_content_type})
+        self.assertEqual(resp.json, messages.unsupported_content_type._asdict())
 
         resp = self.app.test_client().post(
             path="/stuffs",
@@ -167,55 +187,44 @@ class TestJsonBodyValidation(unittest.TestCase):
             headers={"Content-Type": "application/json"},
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {"message": messages.invalid_json})
+        self.assertEqual(resp.json, messages.invalid_json._asdict())
 
     def test_json_body_parameter_validation(self):
         # Only field errors
         resp = self.post_json(
             path="/stuffs", data={"foo": "one", "bar": "not-an-email"}
         )
+        expected = messages.body_validation_failed._asdict()
+        expected["errors"] = {
+            "foo": "Not a valid integer.",
+            "bar": "Not a valid email address.",
+        }
+
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(
-            resp.json,
-            {
-                "message": messages.body_validation_failed,
-                "errors": {
-                    "foo": "Not a valid integer.",
-                    "bar": "Not a valid email address.",
-                },
-            },
-        )
+        self.assertEqual(resp.json, expected)
 
         # Only general errors
         resp = self.post_json(
             path="/stuffs", data={"foo": 1, "baz": "This is an unexpected field!"}
         )
+        expected = messages.body_validation_failed._asdict()
+        expected["errors"] = {"baz": "Unknown field."}
         self.assertEqual(resp.status_code, 400)
 
-        self.assertEqual(
-            resp.json,
-            {
-                "message": messages.body_validation_failed,
-                "errors": {"baz": "Unknown field."},
-            },
-        )
+        self.assertEqual(resp.json, expected)
 
         # Both field errors and general errors
         resp = self.post_json(
             path="/stuffs", data={"baz": "This is an unexpected field!"}
         )
         self.assertEqual(resp.status_code, 400)
+        expected = messages.body_validation_failed._asdict()
+        expected["errors"] = {
+            "baz": "Unknown field.",
+            "foo": "Missing data for required field.",
+        }
 
-        self.assertEqual(
-            resp.json,
-            {
-                "message": messages.body_validation_failed,
-                "errors": {
-                    "baz": "Unknown field.",
-                    "foo": "Missing data for required field.",
-                },
-            },
-        )
+        self.assertEqual(resp.json, expected)
 
         # Happy path
         resp = self.post_json(path="/stuffs", data={"foo": 1})
@@ -229,25 +238,19 @@ class TestJsonBodyValidation(unittest.TestCase):
                 "nested": {"baz": ["one", "two"], "unexpected": "surprise!"},
             },
         )
+        expected = messages.body_validation_failed._asdict()
+        expected["errors"] = {
+            "bam": "Unknown field.",
+            "foo": "Missing data for required field.",
+            "nested": {
+                "unexpected": "Unknown field.",
+                "baz": {"0": "Not a valid integer.", "1": "Not a valid integer."},
+            },
+        }
+
         self.assertEqual(resp.status_code, 400)
 
-        self.assertEqual(
-            resp.json,
-            {
-                "message": messages.body_validation_failed,
-                "errors": {
-                    "bam": "Unknown field.",
-                    "foo": "Missing data for required field.",
-                    "nested": {
-                        "unexpected": "Unknown field.",
-                        "baz": {
-                            "0": "Not a valid integer.",
-                            "1": "Not a valid integer.",
-                        },
-                    },
-                },
-            },
-        )
+        self.assertEqual(resp.json, expected)
 
     def test_invalid_json_error(self):
         resp = self.app.test_client().post(
@@ -256,7 +259,7 @@ class TestJsonBodyValidation(unittest.TestCase):
             headers={"Content-Type": "application/json"},
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json, {"message": messages.invalid_json})
+        self.assertEqual(resp.json, messages.invalid_json._asdict())
 
 
 class TestQueryStringValidation(unittest.TestCase):
@@ -282,35 +285,24 @@ class TestQueryStringValidation(unittest.TestCase):
 
     def test_query_string_parameter_validation(self):
         resp = self.app.test_client().get(path="/stuffs?foo=one")
+        expected = messages.query_string_validation_failed._asdict()
+        expected["errors"] = {"foo": "Not a valid integer."}
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(
-            resp.json,
-            {
-                "message": messages.query_string_validation_failed,
-                "errors": {"foo": "Not a valid integer."},
-            },
-        )
+        self.assertEqual(resp.json, expected)
 
         resp = self.app.test_client().get(path="/stuffs?bar=true")
+        expected = messages.query_string_validation_failed._asdict()
+        expected["errors"] = {"foo": "Missing data for required field."}
+
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(
-            resp.json,
-            {
-                "message": messages.query_string_validation_failed,
-                "errors": {"foo": "Missing data for required field."},
-            },
-        )
+        self.assertEqual(resp.json, expected)
 
         resp = self.app.test_client().get(path="/stuffs?foo=1&unexpected=true")
-        self.assertEqual(resp.status_code, 400)
+        expected = messages.query_string_validation_failed._asdict()
+        expected["errors"] = {"unexpected": "Unknown field."}
 
-        self.assertEqual(
-            resp.json,
-            {
-                "message": messages.query_string_validation_failed,
-                "errors": {"unexpected": "Unknown field."},
-            },
-        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json, expected)
 
         resp = self.app.test_client().get(path="/stuffs?foo=1&bar=true&baz=1,2,3")
         self.assertEqual(resp.status_code, 200)

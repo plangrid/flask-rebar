@@ -30,7 +30,9 @@ DEFAULT_AUTH_SECRET = "SECRET!"
 DEFAULT_ALTERNATIVE_AUTH_HEADER = "x-api-default-auth"
 DEFAULT_ALTERNATIVE_AUTH_SECRET = "ALSO A SECRET!"
 DEFAULT_RESPONSE = {"uid": "0", "name": "I'm the default for testing!"}
-DEFAULT_ERROR = {"message": messages.internal_server_error}
+DEFAULT_ERROR = (
+    messages.internal_server_error._asdict()  # noqa - _asdict is NOT internal.
+)
 
 
 class FooSchema(m.Schema):
@@ -90,15 +92,11 @@ class DefaultResponseSchema(
     name = m.fields.String()
 
 
-def get_json_from_resp(resp):
-    return json.loads(resp.data.decode("utf-8"))
-
-
 def get_swagger(test_client, prefix=None):
     url = "/swagger"
     if prefix:
         url = prefix_url(prefix=prefix, url=url)
-    return get_json_from_resp(test_client.get(url))
+    return test_client.get(url).json
 
 
 def auth_headers(header=DEFAULT_AUTH_HEADER, secret=DEFAULT_AUTH_SECRET):
@@ -180,7 +178,7 @@ class RebarTest(unittest.TestCase):
 
         resp = app.test_client().get(path="/foos/1", headers=auth_headers())
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+        self.assertEqual(resp.json, DEFAULT_RESPONSE)
 
         resp = app.test_client().get(
             path="/foos/1", headers=auth_headers(secret="LIES!")
@@ -197,12 +195,12 @@ class RebarTest(unittest.TestCase):
         # Test main
         resp = app.test_client().get(path="/foos/1", headers=auth_headers())
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+        self.assertEqual(resp.json, DEFAULT_RESPONSE)
 
         # Test alternative
         resp = app.test_client().get(path="/foos/1", headers=alternative_auth_headers())
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+        self.assertEqual(resp.json, DEFAULT_RESPONSE)
 
         resp = app.test_client().get(
             path="/foos/1", headers=auth_headers(secret="LIES!")
@@ -227,7 +225,7 @@ class RebarTest(unittest.TestCase):
             path="/foos/1", headers=auth_headers(header=auth_header, secret=auth_secret)
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+        self.assertEqual(resp.json, DEFAULT_RESPONSE)
 
         # The default authentication doesn't work anymore!
         resp = app.test_client().get(path="/foos/1", headers=auth_headers())
@@ -242,7 +240,7 @@ class RebarTest(unittest.TestCase):
 
         resp = app.test_client().get(path="/foos/1")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+        self.assertEqual(resp.json, DEFAULT_RESPONSE)
 
     @parametrize(
         "foo_cls,foo_update_cls,use_model",
@@ -274,7 +272,7 @@ class RebarTest(unittest.TestCase):
             headers={"Content-Type": "application/json"},
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), {"uid": "1", "name": "jill"})
+        self.assertEqual(resp.json, {"uid": "1", "name": "jill"})
 
         resp = app.test_client().patch(
             path="/foos/1",
@@ -345,9 +343,7 @@ class RebarTest(unittest.TestCase):
 
         resp = app.test_client().get(path="/foos?name=jill")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(
-            get_json_from_resp(resp), {"data": [{"uid": "1", "name": "jill"}]}
-        )
+        self.assertEqual(resp.json, {"data": [{"uid": "1", "name": "jill"}]})
 
         resp = app.test_client().get(path="/foos?foo=bar")  # missing required parameter
         self.assertEqual(resp.status_code, 400)
@@ -381,7 +377,7 @@ class RebarTest(unittest.TestCase):
 
         resp = app.test_client().get(path="/me", headers=headers)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), {"user_name": "hello"})
+        self.assertEqual(resp.json, {"user_name": "hello"})
 
         resp = app.test_client().get(
             path="/me", headers=auth_headers()  # Missing the x-name header!
@@ -531,7 +527,7 @@ class RebarTest(unittest.TestCase):
 
             resp = app.test_client().get("/foo")
 
-            body = get_json_from_resp(resp) if resp.data else resp.data.decode()
+            body = resp.json if resp.data else resp.data.decode()
             self.assertEqual(body, expected_body)
             self.assertEqual(resp.status_code, expected_status)
 
@@ -547,7 +543,7 @@ class RebarTest(unittest.TestCase):
 
         self.assertEqual(resp.status_code, 200)
 
-        validate_swagger(get_json_from_resp(resp))
+        validate_swagger(resp.json)
 
     def test_swagger_ui_endpoint_is_automatically_created(self):
         rebar = Rebar()
@@ -572,7 +568,7 @@ class RebarTest(unittest.TestCase):
 
         resp = app.test_client().get("/swagger")
         self.assertEqual(resp.status_code, 200)
-        validate_swagger(get_json_from_resp(resp), SWAGGER_V3_JSONSCHEMA)
+        validate_swagger(resp.json, SWAGGER_V3_JSONSCHEMA)
 
         resp = app.test_client().get("/swagger/ui/")
         self.assertEqual(resp.status_code, 200)
@@ -593,11 +589,11 @@ class RebarTest(unittest.TestCase):
 
         resp = app.test_client().get(path="/foos/1")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+        self.assertEqual(resp.json, DEFAULT_RESPONSE)
 
         resp = app.test_client().get(path="/bars/1")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+        self.assertEqual(resp.json, DEFAULT_RESPONSE)
 
         swagger = get_swagger(test_client=app.test_client())
         self.assertIn("/bars/{foo_uid}", swagger["paths"])
@@ -622,11 +618,11 @@ class RebarTest(unittest.TestCase):
 
         resp = app.test_client().get(path="/foos/1")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+        self.assertEqual(resp.json, DEFAULT_RESPONSE)
 
         resp = app.test_client().patch(path="/foos/1")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), DEFAULT_RESPONSE)
+        self.assertEqual(resp.json, DEFAULT_RESPONSE)
 
         resp = app.test_client().post(path="/foos/1")
         self.assertEqual(resp.status_code, 405)
@@ -666,7 +662,7 @@ class RebarTest(unittest.TestCase):
 
         resp = app.test_client().get(path="/me", headers={"x-name": "hello"})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), {"user_name": "hello"})
+        self.assertEqual(resp.json, {"user_name": "hello"})
 
         resp = app.test_client().get(path="/me")
         self.assertEqual(resp.status_code, 400)
@@ -834,20 +830,21 @@ class RebarTest(unittest.TestCase):
         resp = app.test_client().get(path="/my_get_endpoint?name=QuerystringName")
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(
-            get_json_from_resp(resp)["message"], messages.header_validation_failed
+            resp.json["message"], messages.header_validation_failed.message
         )
+
         # violate querystring schema:
         resp = app.test_client().get(path="/my_get_endpoint", headers=expected_headers)
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(
-            get_json_from_resp(resp)["message"], messages.query_string_validation_failed
+            resp.json["message"], messages.query_string_validation_failed.message
         )
         # valid request:
         resp = app.test_client().get(
             path="/my_get_endpoint?name=QuerystringName", headers=expected_headers
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(get_json_from_resp(resp), expected_foo)
+        self.assertEqual(resp.json, expected_foo)
 
         resp = app.test_client().post(
             path="/my_post_endpoint",
@@ -855,9 +852,7 @@ class RebarTest(unittest.TestCase):
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(
-            get_json_from_resp(resp)["message"], messages.body_validation_failed
-        )
+        self.assertEqual(resp.json["message"], messages.body_validation_failed.message)
 
         resp = app.test_client().post(
             path="/my_post_endpoint",
