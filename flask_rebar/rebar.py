@@ -95,7 +95,6 @@ def _unpack_view_func_return_value(rv):
     return data, int(status), headers
 
 
-@deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
 def _wrap_handler(
     f,
     authenticators=None,
@@ -251,7 +250,6 @@ class PathDefinition(
 ):
     __slots__ = ()
 
-    @deprecated_parameters(marshal_schema=("response_body_schema", "2.0"))
     @deprecated_parameters(
         authenticator=(
             "authenticators",
@@ -261,11 +259,6 @@ class PathDefinition(
     )
     def __new__(cls, *args, **kwargs):
         return super(PathDefinition, cls).__new__(cls, *args, **kwargs)
-
-    @property
-    @deprecated("response_body_schema", "2.0")
-    def marshal_schema(self):
-        return self.response_body_schema
 
     @property
     @deprecated("authenticator", "3.0")
@@ -315,7 +308,7 @@ class HandlerRegistry(object):
             "3.0",
             _convert_authenticator_to_authenticators,
         ),
-        swagger_path="spec_path",
+        swagger_path="spec_path",  # we didn't specify an EOL for these two, maybe they just live forever (fine imho)
         swagger_ui_path="spec_ui_path",
     )
     def __init__(
@@ -425,12 +418,11 @@ class HandlerRegistry(object):
         return paths
 
     @deprecated_parameters(
-        marshal_schema=("response_body_schema", "2.0"),
         authenticator=(
             "authenticators",
             "3.0",
             _convert_authenticator_to_authenticators,
-        ),
+        )
     )
     def add_handler(
         self,
@@ -514,12 +506,11 @@ class HandlerRegistry(object):
         )
 
     @deprecated_parameters(
-        marshal_schema=("response_body_schema", "2.0"),
         authenticator=(
             "authenticators",
             "3.0",
             _convert_authenticator_to_authenticators,
-        ),
+        )
     )
     def handles(
         self,
