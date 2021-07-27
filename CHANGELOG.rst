@@ -2,116 +2,84 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+v2.0.0 (2021-07-27)
+-------------------
 
 Changes
 ~~~~~~~
+- Add internal error codes  (#245) [Rick Riensche]
+
+  * add error codes to ride alongside human-readable messages
+
+  * Allow rename or suppression of flask_error_code in error responses
 - Rename swagger_path to spec_path (#214) [Matthew Janes, Rick Riensche]
 
-  * chg: Rename swagger_path to spec_path
+  * https://github.com/plangrid/flask-rebar/issues/98
 
-  https://github.com/plangrid/flask-rebar/issues/98
-  Continuation of work started here: https://github.com/plangrid/flask-rebar/pull/209
+  * Continuation of work started here: https://github.com/plangrid/flask-rebar/pull/209
 
   * Use deprecation util to make this more forgiving
+  
+- Remove previously deprecated things that have passed EOL (#246) [Rick
+  Riensche]
+
+  * remove deprecated 'marshal_schema' alias for 'response_body_schema'
+
+  * remove deprecated (and already broken) converters parameter to ``AuthenticatorConverterRegistry``
+
+- Add support for marshmallow-objects (#243) [Rick Riensche]
+
+- Add support for flask 2.0 (#239) [Eugene Kim]
+
+- Store "rebar" in app.extensions on rebar.init_app (#230) [twosigmajab]
+
+  *  Include handler_registries so that it's possible to enumerate all the Rebar APIs a Flask app provides given only a reference to the app object.
+
 
 Fix
 ~~~
 - Update list of versions for automated tests + fix broken test (#238)
   [Eugene Kim]
 
-  * add more versions of marshmallow for automated tests
-
 - Remove deprecated method and update docs (#216) [Rick Riensche]
 
   * fix: remove deprecated authenticator converter methods and update docs
-  * doc: Add placeholder version history and tweak version notes
 
-- Change got squashed by another PR (#215) [Rick Riensche]
+- Issue 90: Fix for self-referential nested fields (#226) [Pratik
+  Pramanik, Rick Riensche]
 
-  Dropping support for flask < 1.0 was merged but then got overwritten in a subsequent PR
+- Fix bug that prevents returning `Flask.Response`s. (#153)
+  [twosigmajab]
 
 Other
 ~~~~~
-- Add support for flask 2.0 (#239) [Eugene Kim]
-
-  * try updating flask to 2.0
 
 - Remove unused imports via Deepsource (#222) [Matthew Janes,
   deepsource-autofix[bot]]
 
-- Apply black to rebar.py (#229) [twosigmajab]
-- Store "rebar" in app.extensions on rebar.init_app (#230) [twosigmajab]
 
-  Include handler_registries so that it's possible to enumerate all the
-  Rebar APIs a Flask app provides given only a reference to the app object.
 - Remove old ref to TravisCI. [Rick Riensche]
-- Fix bug that prevents returning `Flask.Response`s. (#153)
-  [twosigmajab]
 
-  * Drop Python 3.5 (fixes #220)
-
-  * Fix bug that prevents returning Flask.Response's as promised by https://flask-rebar.readthedocs.io/en/latest/quickstart/basics.html#marshaling
 - Drop Python 3.5 (fixes #220) (#221) [twosigmajab]
 - Bump version to RC2. [Brock Haywood]
-- Merge pull request #211 from plangrid/bh-fix-validation. [Brock
-  Haywood]
-
-  Modify validation to occur after dumping the object a serializable form
-- Bump version to RC. [Rick Riensche]
 - Dropping Marshallow_v2 support (#195) [Ali Scott, Matthew Janes, Rick
   Riensche]
 
-  * Dropping Marshallow_v2 support
-  https://github.com/plangrid/flask-rebar/issues/37
 
-
-  * dropping python 2.7
-  https://github.com/plangrid/flask-rebar/issues/142
-
-  * Streamline compat (#210)
-
-  * Dropped this from last commit
 - Enabling hidden APIs in flask-rebar  (#191) [Ali Scott]
 
-
-  * Enabling hidden APIs in flask-rebar
-  https://github.com/plangrid/flask-rebar/issues/141
-
-
-  * Control full private/public swagger doc generation
-  https://github.com/plangrid/flask-rebar/issues/141
-
-  * adding test coverage (#201)
 
 - Rename create_handler_registry's "swagger_path" param (#209) [Ali
   Scott]
 
-  * rename create_handler_registry's "swagger_path" param
-  https://github.com/plangrid/flask-rebar/issues/98
-
-- Drop support for Flask 0.x (#206) [Ali Scott]
-
-  * Drop support for Flask 0.x
-  https://github.com/plangrid/flask-rebar/issues/174
-
-- Dropping python 2x and 3.4  (#205) [Ali Scott]
-
-
-  * Drop support for Python 2.x (and Python 3.4)
-  https://github.com/plangrid/flask-rebar/issues/142
 
 - Removing Actually from class names (#207) [Ali Scott]
 
-  https://github.com/plangrid/flask-rebar/issues/170
-
 - Fix trigger for auto-release on tag (#203) [Rick Riensche]
-
 - Remove pyyaml pin since it is not needed anymore (#192) [Daniel
   Wallace]
 
-  We have dropped support for python3.4, which is why pyyaml was pinned.
+  * We have dropped support for python3.4, which is why pyyaml was pinned.
 - Doc: Fix code typos in recipes examples (#190) [Krismix1]
 - Fix minor typos in swagger_generation.rst (#188) [Matthew Janes]
 
