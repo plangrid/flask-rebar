@@ -10,46 +10,64 @@ which we'll describe after the basic examples.
 
 .. code-block:: python
 
+   # todos.py
+
    from flask import Flask
    from flask_rebar import Rebar
-   from flask_rebar import ResponseSchema
-   from marshmallow import fields
+   from marshmallow import Schema, fields
 
 
    rebar = Rebar()
    registry = rebar.create_handler_registry()
 
 
-   class TodoSchema(ResponseSchema):
-       id = fields.Integer()
+   class TodoSchema(Schema):
+       # The task we have to do.
+       description = fields.String(required=True)
+
+       # The unique id for this Todo. Determined by whatever database we're using.
+       id = fields.Integer(
+           # We'll explain the dump_only=True shortly.
+           dump_only=True
+       )
 
 
    @registry.handles(
-      rule='/todos/<id>',
+      rule='/todos/<int:id>',
       method='GET',
-      response_body_schema=TodoSchema()  # for versions <= 1.7.0, use marshal_schema
+      # Marshal bodies of 200 (default) responses using the TodoSchema.
+      response_body_schema=TodoSchema()
    )
    def get_todo(id):
-       ...
-       return {'id': id}
+       todo = _get_todo_or_404(id)  # Some helper function that queries our database.
+       # If we got here, it means we were able to find a Todo with the given id.
+       # As with Flask, a 200 response code is assumed when we don't say otherwise.
+       # Return a dictionary with the data for this Todo, which Rebar will marshal
+       # into the response body using our TodoSchema, as we specified above.
+       return {'id': todo.id, 'description': todo.description}
 
    app = Flask(__name__)
    rebar.init_app(app)
 
-   if __name__ == '__main__':
-       app.run()
+
+Now run your Flask app `as usual <https://flask.palletsprojects.com/en/1.1.x/quickstart/>`__,
+e.g.:
+
+.. code-block:: bash
+
+   export FLASK_APP=todos.py
+   flask run
+
 
 We first create a ``Rebar`` instance. This is a Flask extension and takes care of attaching all the Flask-Rebar goodies to the Flask application.
 
 We then create a handler registry that we will use to declare handlers for the service.
 
-``ResponseSchema`` is an extension of ``marshmallow.Schema`` that throws an error if additional fields not specified in the schema are included in the request parameters. It's usage is optional - a normal Marshmallow schema will also work.
-
 ``rule`` is the same as Flask's `rule <http://flask.pocoo.org/docs/latest/api/#url-route-registrations>`_, and is the URL rule for the handler as a string.
 
 ``method`` is the HTTP method that the handler will accept. To register multiple methods for a single handler function, decorate the function multiple times.
 
-``response_body_schema`` is a Marshmallow schema that will be used marshal the return value of the function. `marshmallow.Schema.dump <http://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema.dump>`_ will be called on the return value. ``response_body_schema`` can also be a dictionary mapping status codes to Marshmallow schemas - see :ref:`Marshaling`.  *NOTE: In Flask-Rebar 1.0-1.7.0, this was referred to as ``marshal_schema``. It is being renamed and both names will function until version 2.0*
+``response_body_schema`` is a Marshmallow schema that will be used to marshal the return value of the function for 200 responses, which (as with Flask) is the default response code when we don't say otherwise. `marshmallow.Schema.dump <http://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema.dump>`_ will be called on the return value to marshal it. ``response_body_schema`` can also be a dictionary mapping different status codes to Marshmallow schemas - see :ref:`Marshaling`.  *NOTE: In Flask-Rebar 1.0-1.7.0, this was referred to as ``marshal_schema``. It is being renamed and both names will function until version 2.0*
 
 The handler function should accept any arguments specified in ``rule``, just like a Flask view function.
 
@@ -62,29 +80,42 @@ Request Body Validation
 
 .. code-block:: python
 
-   from flask_rebar import RequestSchema
-
-
-   class CreateTodoSchema(RequestSchema):
-       description = fields.String(required=True)
-
-
    @registry.handles(
-      rule='/todos',
+      rule='/todos/',
       method='POST',
-      request_body_schema=CreateTodoSchema(),
+      request_body_schema=TodoSchema(),
+      response_body_schema={201: TodoSchema()}
    )
    def create_todo():
-       body = rebar.validated_body
-       description = body['description']
-       . . .
+       # If we got here, it means we have valid Todo data in the request body.
+       # Thanks to specifying the request_body_schema above, Rebar takes care
+       # of sending nice 400 responses (with human- and machine-friendly bodies)
+       # in response to invalid request data for us.
+       description = rebar.validated_body['description']
+       new_todo = _insert_todo(description)  # Insert a Todo in our db and return it.
+       # We'll want to return a 201 Created response with a Location header, so calculate
+       # the url of the new Todo. We use flask.url_for rather than hard-coding this so
+       # that if we change the get_todo endpoint's url rule in the future, the url here
+       # will stay up-to-date.
+       new_todo_url = flask.url_for(
+           f'{registry.prefix}.{get_todo.__name__}',
+           id=new_todo.id
+       )
+       response_data = {"id": new_todo.id, "description": new_todo.description}
+       return (response_data, 201, {"Location": new_todo_url})
 
-
-``RequestSchema`` is an extension of ``marshmallow.Schema`` that throws an internal server error if an object is missing a required field. It's usage is optional - a normal Marshmallow schema will also work.
 
 This request schema is passed to ``request_body_schema``, and the handler will now call `marshmallow.Schema.load <http://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema.load>`_ on the request body decoded as JSON. A 400 error with a descriptive error will be returned if validation fails.
 
 The validated parameters are available as a dictionary via the ``rebar.validated_body`` proxy.
+
+Remember when we passed ``dump_only=True`` when defining ``TodoSchema``'s ``id`` field above?
+This lets us ignore the ``id`` field when unmarshaling (loading) data,
+and only look at it when marshaling (dumping) data.
+This allows this schema to be used not just to marshal response bodies,
+but also to unmarshal request bodies, where the request either won't know the id
+ahead of time, as when creating a new Todo, or otherwise where the id is specified
+in the URL path rather than in the body, as when updating a Todo (see below).
 
 
 Query String Validation
@@ -92,14 +123,17 @@ Query String Validation
 
 .. code-block:: python
 
-   class GetTodosSchema(RequestSchema):
-       exclude_completed = fields.String(missing=False)
+   class ExcludeCompletedSchema(Schema):
+       exclude_completed = fields.String(
+           # When this param is not provided, use False as its default value.
+           missing=False
+       )
 
 
    @registry.handles(
-      rule='/todos',
+      rule='/todos/',
       method='GET',
-      query_string_schema=GetTodosSchema(),
+      query_string_schema=ExcludeCompletedSchema(),
    )
    def get_todos():
        args = rebar.validated_args
@@ -119,27 +153,31 @@ Header Parameters
 
 .. code-block:: python
 
-   from marshmallow import Schema
-
-
-   class HeadersSchema(Schema):
+   class UserIdSchema(Schema):
        user_id = fields.String(required=True, load_from='X-MyApp-UserId')
 
 
    @registry.handles(
-      rule='/todos/<id>',
+      rule='/todos/<int:id>',
       method='PUT',
-      headers_schema=HeadersSchema(),
+      request_body_schema=TodoSchema(),
+      response_body_schema={204: None},
+      # Assume we can trust a special header to contain the authenticated user (e.g.
+      # it can only have been set by a gateway that rejects unauthenticated requests).
+      headers_schema=UserIdSchema(),
    )
    def update_todo(id):
-       headers = rebar.validated_headers
-       user_id = headers['user_id']
-       . . .
+       user_id = rebar.validated_headers['user_id']
+       # Make sure this user is authorized to update this Todo.
+       _authorized_or_403(user_id, ...)
+       _update_todo(id, rebar.validated_body['description'])  # Update our database.
+       # Return a 204 No Content response to indicate operation completed successfully
+       # and we have no additional data to return.
+       return None, 204
 
 
-.. note:: In version 3 of Marshmallow, The `load_from` parameter of fields changes to `data_key`
 
-In this case we use a regular Marshmallow schema, since there will almost certainly be other HTTP headers in the request that we don't want to validate against.
+.. note:: This example assumes Marshmallow v2. In version 3 of Marshmallow, The `load_from` parameter of fields changes to `data_key`.
 
 This schema is passed to ``headers_schema``, and the handler will now call `marshmallow.Schema.load <http://marshmallow.readthedocs.io/en/latest/api_reference.html#marshmallow.Schema.load>`_ on the header values retrieved from Flask's ``request.headers``. A 400 error with a descriptive error will be returned if validation fails.
 
@@ -157,40 +195,31 @@ This default can be overriden in any particular handler by setting ``headers_sch
 Marshaling
 ==========
 
-The ``response_body_schema`` (previously ``marshal_schema``) argument of ``HandlerRegistry.handles`` can be one of three types: a ``marshmallow.Schema``, a dictionary mapping integers to ``marshmallow.Schema``, or ``None``.
+The ``response_body_schema`` argument of ``HandlerRegistry.handles`` can be one of three types: a ``marshmallow.Schema``, a dictionary mapping integers to ``marshmallow.Schema``, or ``None``.
 
-In the case of a ``marshmallow.Schema``, that schema is used to ``dump`` the return value of the handler function.
+In the case of a ``marshmallow.Schema``, that schema is used to ``dump`` the return value of the handler function for 200 responses.
 
-In the case of a dictionary mapping integers to ``marshmallow.Schemas``, the integers are interpreted as status codes, and the handler function must return a tuple of ``(response_body, status_code)``:
+In the case of a dictionary mapping integers to ``marshmallow.Schemas``, the integers are interpreted as status codes, and the handler function must return a tuple like ``(response_body, status_code)``
+(or like ``(response_body, status_code, headers)`` to also include custom headers),
+as in the example ``create_todo`` handler function above.
+The Schema in the dictionary corresponding to the returned status code will be used to marshal the response.
+So ``response_body_schema=Foo()`` is just shorthand for ``response_body_schema={200: Foo()}``.
 
-.. code-block:: python
+A status code in the dictionary may also map to ``None``, in which case Rebar will pass whatever value was returned in the body for this status code straight through to Flask. Note, the value must be a return value that Flask supports, e.g. a string, dictionary (as of Flask 1.1.0), or a ``Flask.Response`` object.
 
-   @registry.handles(
-      rule='/todos',
-      method='POST',
-      response_body_schema={
-          201: TodoSchema()
-      }
-   )
-   def create_todo():
-       ...
-       return {'id': id}, 201
-
-The schema to use for marshaling will be retrieved based on the status code the handler function returns. This isn't the prettiest part of Flask-Rebar, but it's done this way to help with the automatic Swagger generation.
-
-In the case of ``None`` (which is also the default), no marshaling takes place, and the return value is passed directly through to Flask. This means the if ``response_body_schema`` is ``None``, the return value must be a return value that Flask supports, e.g. a string or a ``Flask.Response`` object.
+Finally, ``response_body_schema`` may be ``None``, which is the default, and works just like ``{200: None}``.
 
 .. code-block:: python
 
 
    @registry.handles(
-      rule='/todos',
+      rule='/foo',
       method='GET',
       response_body_schema=None
    )
-   def get_todos():
+   def foo():
        ...
-       return 'Hello World!'
+       return 'This string gets returned directly without marshaling'
 
 This is a handy escape hatch when handlers don't fit the Swagger/REST mold very well, but it the swagger generation won't know how to describe this handler's response and should be avoided.
 
@@ -205,7 +234,7 @@ Flask-Rebar includes a set of error classes that can be raised to produce HTTP e
    from flask_rebar import errors
 
    @registry.handles(
-      rule='/todos/<id>',
+      rule='/todos/<int:id>',
       method='GET',
    )
    def get_todo(id):
