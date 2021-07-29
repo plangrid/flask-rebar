@@ -10,6 +10,8 @@
 from datetime import datetime
 from unittest import TestCase
 
+from flask import Flask
+
 from marshmallow import Schema
 from marshmallow import ValidationError
 from marshmallow import fields
@@ -17,6 +19,7 @@ from marshmallow.validate import OneOf
 from werkzeug.datastructures import MultiDict
 
 from flask_rebar import compat
+from flask_rebar import rebar
 from flask_rebar.utils.request_utils import normalize_schema
 from flask_rebar.validation import RequireOnDumpMixin
 from flask_rebar.validation import CommaSeparatedList
@@ -123,12 +126,18 @@ class TestCommaSeparatedList(TestCase):
         )
 
     def test_serialize_errors(self):
-        with self.assertRaises(ValidationError) as ctx:
-            compat.dump(IntegerList(), {"foos": [42, "two"]})
+        app = Flask(__name__)
+        with app.app_context():
+            rebar.set_validate_on_dump(
+                True
+            )  # cause ValueError to be wrapped in ValidationError
+            with self.assertRaises(ValidationError) as ctx:
+                compat.dump(IntegerList(), {"foos": [42, "two"]})
 
-        self.assertEqual(
-            ctx.exception.messages, ["invalid literal for int() with base 10: 'two'"]
-        )
+            self.assertEqual(
+                ctx.exception.messages,
+                ["invalid literal for int() with base 10: 'two'"],
+            )
 
 
 class StringQuery(Schema):

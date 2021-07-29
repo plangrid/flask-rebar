@@ -27,7 +27,11 @@ def dump(schema, data):
     RequireOnDumpMixin or globally via rebar.set_validate_on_dump(True)
     CAVEAT: Regardless of the Schema's "unknown" field setting, unknown fields will behave like EXCLUDE (ignored) here.
     """
-    force_validation = getattr(g, "validate_on_dump", False)
+    try:
+        force_validation = getattr(g, "validate_on_dump", False)
+    except RuntimeError:  # running outside app context (some unit test cases, potentially ad hoc scripts)
+        force_validation = False
+
     if isinstance(schema, RequireOnDumpMixin) or force_validation:
         try:
             # We do an initial schema.dump here in order to support arbitrary data objects (e.g., ORM objects, etc.)
