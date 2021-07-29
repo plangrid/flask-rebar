@@ -630,6 +630,10 @@ class HandlerRegistry(object):
             )
 
 
+def set_validate_on_dump(value):
+    g.validate_on_dump = value
+
+
 class Rebar(object):
     """
     The main entry point for the Flask-Rebar extension.

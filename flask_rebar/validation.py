@@ -7,6 +7,8 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
+from collections import Mapping
+
 from marshmallow import Schema
 from marshmallow import ValidationError
 from marshmallow import fields
@@ -15,6 +17,28 @@ from marshmallow import validates_schema
 from werkzeug.datastructures import MultiDict
 
 from flask_rebar import messages
+
+
+def filter_dump_only(schema, data):
+    """
+    Return a filtered copy of data in which any items matching a "dump_only" field are removed
+    :param schema: Instance of a Schema class
+    :param data: Dict or collection of dicts with data
+    :return: Filtered dict
+    """
+    # Note as of marshmallow 3.13.0, schema.dump_only is NOT populated if fields are declared as dump_only inline,
+    # so we'll calculate "dump_only" ourselves.
+    # ref: https://github.com/marshmallow-code/marshmallow/issues/1857
+    dump_only_fields = schema.dump_fields.keys() - schema.load_fields.keys()
+    if isinstance(data, Mapping):
+        return {k: v for k, v in data.items() if k not in dump_only_fields}
+    elif isinstance(data, list):
+        return [filter_dump_only(schema, item) for item in data]
+    else:
+        # I am not aware of any case where we should get something other than a Mapping or list, but just in case
+        # we can raise a hopefully helpful error if there's some weird Schema that can cause that, so we know
+        # we need to update this and patch rebar ;)
+        raise TypeError(f"filter_dump_only doesn't understand data type {type(data)}")
 
 
 class CommaSeparatedList(fields.List):
@@ -67,7 +91,8 @@ class RequireOnDumpMixin(object):
 
     @post_dump(pass_many=True)
     def require_output_fields(self, data, many):
-        errors = self.validate(data)
+        filtered = filter_dump_only(self, data)
+        errors = self.validate(filtered)
         if errors:
             raise ValidationError(errors, data=data)
         return data
