@@ -35,6 +35,7 @@ def dump(schema, data):
     if isinstance(schema, RequireOnDumpMixin) or force_validation:
         try:
             # We do an initial schema.dump here in order to support arbitrary data objects (e.g., ORM objects, etc.)
+            # and give us something we can pass to .load below
             # Since marshmallow 3 doesn't validate on dump, this has the effect of stripping unknown fields.
             result = schema.dump(data)
         except Exception as e:
@@ -46,7 +47,18 @@ def dump(schema, data):
         # (We use load because that's how Marshmallow docs recommend doing this sort of validation, presumably because
         # @pre_load massaging of data could make otherwise invalid data valid.
         filtered = filter_dump_only(schema, result)
-        schema.load(filtered)
+        validated = schema.dump(
+            schema.load(filtered.loadable)
+        )  # validation (and supply things like missing defaults)
+
+        # and finally add back the dump_only data we had to filter out during validation.
+        if type(validated) is list:  # of dicts
+            recombined = [
+                {**item[0], **item[1]} for item in zip(validated, filtered.dump_only)
+            ]
+        else:  # dict
+            recombined = {**validated, **filtered.dump_only}
+        return recombined
     else:
         result = schema.dump(data)
     return result

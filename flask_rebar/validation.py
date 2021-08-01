@@ -7,7 +7,7 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from collections import Mapping
+from collections import Mapping, namedtuple
 
 from marshmallow import Schema
 from marshmallow import ValidationError
@@ -18,22 +18,56 @@ from werkzeug.datastructures import MultiDict
 
 from flask_rebar import messages
 
+FilterResult = namedtuple("FilterResult", "loadable, dump_only")
+
 
 def filter_dump_only(schema, data):
     """
     Return a filtered copy of data in which any items matching a "dump_only" field are removed
     :param schema: Instance of a Schema class
     :param data: Dict or collection of dicts with data
-    :return: Filtered dict
+    :return: Union[FilterResult, list[FilterResult]]
     """
-    # Note as of marshmallow 3.13.0, schema.dump_only is NOT populated if fields are declared as dump_only inline,
-    # so we'll calculate "dump_only" ourselves.
-    # ref: https://github.com/marshmallow-code/marshmallow/issues/1857
+    # Note as of marshmallow 3.13.0, Schema.dump_only is NOT populated if fields are declared as dump_only inline,
+    # so we'll calculate "dump_only" ourselves.  ref: https://github.com/marshmallow-code/marshmallow/issues/1857
     dump_only_fields = schema.dump_fields.keys() - schema.load_fields.keys()
     if isinstance(data, Mapping):
-        return {k: v for k, v in data.items() if k not in dump_only_fields}
+        filter_result = FilterResult(
+            dict(),  # we may need to do some recursion so we'll build these in following loop
+            {
+                k: v for k, v in data.items() if k in dump_only_fields
+            },  # dump_only won't require further recursion
+        )
+        for k, v in {
+            k: v for k, v in data.items() if k not in dump_only_fields
+        }.items():  # "loadable" fields
+            field = schema.fields[k]
+            # see if we have a nested schema (using either Nested(many=True) or List(Nested()
+            field_schema = (
+                field.schema
+                if isinstance(field, fields.Nested)
+                else field.inner.schema
+                if isinstance(field, fields.List)
+                and isinstance(field.inner, fields.Nested)
+                else None
+            )
+            if field_schema is not None:
+                ##### WOMP WOMP - YOU EFFECTIVELY DISCARD THE FIELD'S LOAD_ONLY ELEMENTS HERE...
+                # Need to figure out how to preserve those so they can be reinserted later in calling routine..
+                # and/or need to re-engineer this whole approach T_T
+                # gut feel: maybe some of this looping/recursion should actually be pushed up to the caller...we'll see
+                filter_result.loadable[k] = filter_dump_only(field_schema, v).loadable
+            else:
+                filter_result.loadable[k] = v
+
+        return filter_result
     elif isinstance(data, list):
-        return [filter_dump_only(schema, item) for item in data]
+        processed_items = [filter_dump_only(schema, item) for item in data]
+        return FilterResult(
+            [item.loadable for item in processed_items],
+            [item.dump_only for item in processed_items],
+        )
+
     else:
         # I am not aware of any case where we should get something other than a Mapping or list, but just in case
         # we can raise a hopefully helpful error if there's some weird Schema that can cause that, so we know
@@ -92,7 +126,7 @@ class RequireOnDumpMixin(object):
     @post_dump(pass_many=True)
     def require_output_fields(self, data, many):
         filtered = filter_dump_only(self, data)
-        errors = self.validate(filtered)
+        errors = self.validate(filtered.loadable)
         if errors:
             raise ValidationError(errors, data=data)
         return data
