@@ -1,3 +1,5 @@
+from collections import Mapping
+
 import marshmallow
 
 from flask import g
@@ -52,13 +54,8 @@ def dump(schema, data):
         )  # validation (and supply things like missing defaults)
 
         # and finally add back the dump_only data we had to filter out during validation.
-        if type(validated) is list:  # of dicts
-            recombined = [
-                {**item[0], **item[1]} for item in zip(validated, filtered.dump_only)
-            ]
-        else:  # dict
-            recombined = {**validated, **filtered.dump_only}
-        return recombined
+        _recombine_filtered_dicts(validated, filtered.dump_only)
+        return validated
     else:
         result = schema.dump(data)
     return result
@@ -67,3 +64,21 @@ def dump(schema, data):
 def exclude_unknown_fields(schema):
     schema.unknown = marshmallow.EXCLUDE
     return schema
+
+
+def _recombine_filtered_dicts(result, filter_results):
+    """
+    For use in our "validated dump" case
+    Fold anything that was "dump_only" (passed as "filter_results") back into result dict (or list of dicts).
+    WILL MODIFY result IN PLACE!
+    """
+    if isinstance(filter_results, list):
+        for i, filtered_val in enumerate(filter_results):
+            _recombine_filtered_dicts(result[i], filter_results[i])
+    else:
+        for k, v in filter_results.items():
+            if isinstance(v, Mapping) or isinstance(v, list):
+                _recombine_filtered_dicts(result[k], v)
+            else:
+                result[k] = filter_results[k]
+    return result

@@ -52,11 +52,9 @@ def filter_dump_only(schema, data):
                 else None
             )
             if field_schema is not None:
-                ##### WOMP WOMP - YOU EFFECTIVELY DISCARD THE FIELD'S LOAD_ONLY ELEMENTS HERE...
-                # Need to figure out how to preserve those so they can be reinserted later in calling routine..
-                # and/or need to re-engineer this whole approach T_T
-                # gut feel: maybe some of this looping/recursion should actually be pushed up to the caller...we'll see
-                filter_result.loadable[k] = filter_dump_only(field_schema, v).loadable
+                field_filtered = filter_dump_only(field_schema, v)
+                filter_result.loadable[k] = field_filtered.loadable
+                filter_result.dump_only[k] = field_filtered.dump_only
             else:
                 filter_result.loadable[k] = v
 
