@@ -33,8 +33,8 @@ def filter_dump_only(schema, data):
     dump_only_fields = schema.dump_fields.keys() - schema.load_fields.keys()
     if isinstance(data, Mapping):
         filter_result = FilterResult(
-            dict(),  # we may need to do some recursion so we'll build these in following loop
-            {
+            loadable=dict(),  # we may need to do some recursion so we'll build these in following loop
+            dump_only={
                 k: v for k, v in data.items() if k in dump_only_fields
             },  # dump_only won't require further recursion
         )
