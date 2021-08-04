@@ -8,6 +8,7 @@
     :license: MIT, see LICENSE for details.
 """
 import unittest
+from parametrize import parametrize
 
 import marshmallow as m
 from marshmallow import validate as v
@@ -16,7 +17,6 @@ from flask_rebar.swagger_generation.marshmallow_to_swagger import ALL_CONVERTERS
 from flask_rebar.swagger_generation.marshmallow_to_swagger import ConverterRegistry
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
-from flask_rebar.validation import DisallowExtraFieldsMixin
 
 
 class TestConverterRegistry(unittest.TestCase):
@@ -131,7 +131,12 @@ class TestConverterRegistry(unittest.TestCase):
 
             self.assertEqual(
                 json_schema,
-                {"type": "object", "title": "Foo", "properties": {"a": result}},
+                {
+                    "additionalProperties": False,
+                    "type": "object",
+                    "title": "Foo",
+                    "properties": {"a": result},
+                },
             )
 
     def test_primitive_types_openapi_v3(self):
@@ -155,7 +160,12 @@ class TestConverterRegistry(unittest.TestCase):
 
             self.assertEqual(
                 json_schema,
-                {"type": "object", "title": "Foo", "properties": {"a": result}},
+                {
+                    "additionalProperties": False,
+                    "type": "object",
+                    "title": "Foo",
+                    "properties": {"a": result},
+                },
             )
 
     def test_data_key(self):
@@ -175,6 +185,7 @@ class TestConverterRegistry(unittest.TestCase):
                 "title": "Foo",
                 "properties": {"b": {"type": "integer"}},
                 "required": ["b"],
+                "additionalProperties": False,
             },
         )
 
@@ -190,6 +201,7 @@ class TestConverterRegistry(unittest.TestCase):
         self.assertEqual(
             json_schema,
             {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Foo",
                 "properties": {
@@ -216,6 +228,7 @@ class TestConverterRegistry(unittest.TestCase):
         self.assertEqual(
             json_schema,
             {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Foo",
                 "properties": {
@@ -239,6 +252,7 @@ class TestConverterRegistry(unittest.TestCase):
         self.assertEqual(
             json_schema,
             {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Foo",
                 "properties": {
@@ -262,6 +276,7 @@ class TestConverterRegistry(unittest.TestCase):
         self.assertEqual(
             json_schema,
             {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Foo",
                 "properties": {
@@ -284,6 +299,7 @@ class TestConverterRegistry(unittest.TestCase):
         self.assertEqual(
             json_schema,
             {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Foo",
                 "description": "I'm the description!",
@@ -304,6 +320,7 @@ class TestConverterRegistry(unittest.TestCase):
         self.assertEqual(
             json_schema,
             {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Foo",
                 "properties": {
@@ -311,6 +328,7 @@ class TestConverterRegistry(unittest.TestCase):
                         "type": "object",
                         "title": "Bar",
                         "properties": {"a": {"type": "integer"}},
+                        "additionalProperties": False,
                     }
                 },
             },
@@ -336,9 +354,11 @@ class TestConverterRegistry(unittest.TestCase):
             {
                 "properties": {
                     "a": {
+                        "additionalProperties": False,
                         "properties": {
                             "b": {"type": "integer"},
                             "c": {
+                                "additionalProperties": False,
                                 "properties": {
                                     "b": {"type": "integer"},
                                     "d": {"type": "string"},
@@ -353,6 +373,7 @@ class TestConverterRegistry(unittest.TestCase):
                     },
                     "b": {"type": "integer"},
                     "c": {
+                        "additionalProperties": False,
                         "properties": {
                             "b": {"type": "integer"},
                             "d": {"type": "string"},
@@ -364,6 +385,7 @@ class TestConverterRegistry(unittest.TestCase):
                 },
                 "title": "Foo",
                 "type": "object",
+                "additionalProperties": False,
             },
         )
 
@@ -377,11 +399,13 @@ class TestConverterRegistry(unittest.TestCase):
         self.assertEqual(
             json_schema,
             {
+                "additionalProperties": False,
                 "type": "array",
                 "items": {
                     "type": "object",
                     "title": "Foo",
                     "properties": {"a": {"type": "integer"}},
+                    "additionalProperties": False,
                 },
             },
         )
@@ -399,15 +423,18 @@ class TestConverterRegistry(unittest.TestCase):
         self.assertEqual(
             json_schema,
             {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Foo",
                 "properties": {
                     "a": {
+                        "additionalProperties": False,
                         "type": "array",
                         "items": {
                             "type": "object",
                             "title": "Bar",
                             "properties": {"a": {"type": "integer"}},
+                            "additionalProperties": False,
                         },
                     }
                 },
@@ -430,6 +457,7 @@ class TestConverterRegistry(unittest.TestCase):
                 "type": "object",
                 "title": "Bar",
                 "properties": {"a": {"type": "integer"}, "b": {"type": "integer"}},
+                "additionalProperties": False,
             },
         )
 
@@ -445,25 +473,49 @@ class TestConverterRegistry(unittest.TestCase):
 
         self.assertEqual(
             json_schema,
-            {"type": "object", "title": "Foo", "properties": {"a": {"type": "string"}}},
-        )
-
-    def test_additional_properties(self):
-        class Foo(DisallowExtraFieldsMixin, m.Schema):
-            a = m.fields.Integer()
-
-        schema = Foo()
-        json_schema = self.registry.convert(schema)
-
-        self.assertEqual(
-            json_schema,
             {
                 "type": "object",
                 "title": "Foo",
-                "properties": {"a": {"type": "integer"}},
+                "properties": {"a": {"type": "string"}},
                 "additionalProperties": False,
             },
         )
+
+    class FooDefault(m.Schema):  # default in marshmallow 3 will raise
+        a = m.fields.Integer()
+
+    class FooExplicitRaise(FooDefault):
+        class Meta:
+            unknown = m.RAISE
+
+    class FooExplicitExclude(FooDefault):
+        class Meta:
+            unknown = m.EXCLUDE
+
+    class FooExplicitInclude(FooDefault):
+        class Meta:
+            unknown = m.INCLUDE
+
+    @parametrize(
+        "schema_cls, expected_additional_value",
+        [
+            (FooDefault, False),
+            (FooExplicitRaise, False),
+            (FooExplicitExclude, False),
+            (FooExplicitInclude, True),
+        ],
+    )
+    def test_additional_properties(self, schema_cls, expected_additional_value):
+        expected = {
+            "type": "object",
+            "title": schema_cls.__name__,
+            "properties": {"a": {"type": "integer"}},
+            "additionalProperties": expected_additional_value,
+        }
+
+        schema = schema_cls()
+        json_schema = self.registry.convert(schema)
+        self.assertEqual(json_schema, expected)
 
 
 if __name__ == "__main__":

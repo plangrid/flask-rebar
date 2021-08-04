@@ -20,13 +20,7 @@ from flask_rebar import compat
 from flask_rebar.utils.request_utils import normalize_schema
 from flask_rebar.validation import RequireOnDumpMixin
 from flask_rebar.validation import CommaSeparatedList
-from flask_rebar.validation import DisallowExtraFieldsMixin
 from flask_rebar.validation import QueryParamList
-
-
-class DisallowExtraFieldsSchema(Schema, DisallowExtraFieldsMixin):
-    a = fields.String()
-    b = fields.String(load_from="c")
 
 
 class RequireOnDumpMixinSchema(Schema, RequireOnDumpMixin):

@@ -416,23 +416,31 @@ EXPECTED_SWAGGER_V2 = {
     },
     "definitions": {
         "Foo": {
+            "additionalProperties": False,
             "type": "object",
             "title": "Foo",
             "properties": {"uid": {"type": "string"}, "name": {"type": "string"}},
         },
         "FooUpdateSchema": {
+            "additionalProperties": False,
             "type": "object",
             "title": "FooUpdateSchema",
             "properties": {"name": {"type": "string"}},
         },
         "NestedFoosSchema": {
+            "additionalProperties": False,
             "type": "object",
             "title": "NestedFoosSchema",
             "properties": {
-                "data": {"type": "array", "items": {"$ref": "#/definitions/Foo"}}
+                "data": {
+                    "additionalProperties": False,
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/Foo"},
+                }
             },
         },
         "Error": {
+            "additionalProperties": False,
             "type": "object",
             "title": "Error",
             "properties": {"message": {"type": "string"}, "errors": {"type": "object"}},
@@ -449,26 +457,31 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
     "components": {
         "schemas": {
             "Foo": {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Foo",
                 "properties": {"uid": {"type": "string"}, "name": {"type": "string"}},
             },
             "FooUpdateSchema": {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "FooUpdateSchema",
                 "properties": {"name": {"type": "string"}},
             },
             "NestedFoosSchema": {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "NestedFoosSchema",
                 "properties": {
                     "data": {
+                        "additionalProperties": False,
                         "type": "array",
                         "items": {"$ref": "#/components/schemas/Foo"},
                     }
                 },
             },
             "Error": {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Error",
                 "properties": {
