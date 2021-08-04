@@ -115,16 +115,15 @@ class RequireOutputMixinTest(TestCase):
         self.assertEqual(result["dump_only"], 42)
 
     def test_validation_opt_in(self):
-        # opt in/out via global setting:
         app = Flask(__name__)
         self.data["one_of_validation"] = "c"
         with app.app_context():
-            # explicit opt-in:
+            # explicit global opt-in:
             rebar.set_validate_on_dump(True)
             with self.assertRaises(ValidationError):
                 compat.dump(self.unvalidated_schema, self.data)
 
-            # explicit opt-out:
+            # explicit global opt-out:
             rebar.set_validate_on_dump(False)
             result = compat.dump(self.unvalidated_schema, self.data)
             self.assertEqual(result["one_of_validation"], "c")  # invalid but no error
