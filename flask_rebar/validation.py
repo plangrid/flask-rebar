@@ -113,21 +113,13 @@ class QueryParamList(fields.List):
 
 class RequireOnDumpMixin(object):
     """
-    By default, Marshmallow only raises an error when required fields are missing
-    when `marshmallow.Schema.load` is called.
-
-    This is a `marshmallow.Schema` mixin that will throw an error when an object is
-    missing required fields when `marshmallow.Schema.dump` is called, or if one of
-    the required fields fails a validator.
+    DEPRECATED AND MAY BE REMOVED IN VERSION 3.0
+    In previous versions, this mixin was used to force validation on dump. As of 2.0.1, that
+    validation is now fully encapsulated in compat.dump, with the presence of this mixin as one of
+    the triggers.
     """
 
-    @post_dump(pass_many=True)
-    def require_output_fields(self, data, many):
-        filtered = filter_dump_only(self, data)
-        errors = self.validate(filtered.loadable)
-        if errors:
-            raise ValidationError(errors, data=data)
-        return data
+    pass
 
 
 class DisallowExtraFieldsMixin(object):
