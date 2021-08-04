@@ -9,9 +9,11 @@
 """
 from datetime import datetime
 from unittest import TestCase
+from pytest import mark
 
 from flask import Flask
 
+from marshmallow import __version_info__ as MARSHMALLOW_VERSION
 from marshmallow import Schema
 from marshmallow import ValidationError
 from marshmallow import fields
@@ -169,6 +171,10 @@ class TestComplexNesting(TestCase):
             "nested_list": [self.base_valid_inner_wrapper.copy() for _ in range(3)],
         }
 
+    @mark.skipif(
+        MARSHMALLOW_VERSION < (3, 5),
+        reason="https://github.com/marshmallow-code/marshmallow/issues/1497",
+    )
     def test_dump_only_fields_defaults(self):
         """Our handling of dump_only fields respects defaults"""
         result = compat.dump(OuterNested(), self.base_valid_outer_wrapper)
@@ -184,6 +190,10 @@ class TestComplexNesting(TestCase):
                     "dump_only", nested_nested_item
                 )  # no default for this one
 
+    @mark.skipif(
+        MARSHMALLOW_VERSION < (3, 5),
+        reason="https://github.com/marshmallow-code/marshmallow/issues/1497",
+    )
     def test_dump_only_fields_specified(self):
         """Our handling of dump_only fields preserves provided values"""
         self.base_valid_outer_wrapper["outer_dump_only"] = "Outer supplied"
