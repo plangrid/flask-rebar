@@ -32,18 +32,26 @@ def filter_dump_only(schema, data):
     # so we'll calculate "dump_only" ourselves.  ref: https://github.com/marshmallow-code/marshmallow/issues/1857
     dump_only_fields = schema.dump_fields.keys() - schema.load_fields.keys()
     if isinstance(data, Mapping):
-        dump_only = {  # won't require further recursion
-            k: v for k, v in data.items() if k in dump_only_fields
-        }
-        non_dump_only = data.items() - dump_only.items()
-        loadable = {}  # we may need to do some recursion so we'll build these in following loop
-        for k, v in non_dump_only:
+        dump_only = dict()
+        non_dump_only = dict()
+        # get our dump_only fields directly, and candidates for loadable:
+        for k, v in data.items():
+            if k in dump_only_fields:
+                dump_only[k] = v
+            else:
+                non_dump_only[k] = v
+
+        # construct loadable (a subset of non_dump_only, with recursive filter of nested dump_only fields)
+        loadable = dict()
+        for k, v in non_dump_only.items():
             field = schema.fields[k]
             # see if we have a nested schema (using either Nested(many=True) or List(Nested())
             field_schema = None
             if isinstance(field, fields.Nested):
                 field_schema = field.schema
-            elif isinstance(field, fields.List) and isinstance(field.inner, fields.Nested):
+            elif isinstance(field, fields.List) and isinstance(
+                field.inner, fields.Nested
+            ):
                 field_schema = field.inner.schema
             if field_schema is None:
                 loadable[k] = v
