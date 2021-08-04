@@ -157,7 +157,7 @@ This default can be overriden in any particular handler by setting ``headers_sch
 Marshaling
 ==========
 
-.. note:: In version 2.0, we updated our supported versions of Marshmallow from 2.x to 3.x. One of the more significant changes in Marshmallow is that ``Schema.dump`` does not trigger validation. This can result in significant performance improvements. In Flask-Rebar 2.0, we have made validation of marshalled results *opt-in*.
+.. note:: In version 2.0, we updated our supported versions of Marshmallow from 2.x to 3.x. (The Marshmallow maintainers stopped supporting 2.x `on 2020-08-18 <https://github.com/marshmallow-code/marshmallow/issues/1582>`__.) One of the more significant changes in Marshmallow v3 is that ``Schema.dump`` does not trigger validation. This can result in significant performance improvements. In Flask-Rebar 2.0, we have made validation of marshalled results *opt-in*.
 
 The ``response_body_schema`` (previously ``marshal_schema``) argument of ``HandlerRegistry.handles`` can be one of three types: a ``marshmallow.Schema``, a dictionary mapping integers to ``marshmallow.Schema``, or ``None``.
 
