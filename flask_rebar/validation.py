@@ -32,33 +32,26 @@ def filter_dump_only(schema, data):
     # so we'll calculate "dump_only" ourselves.  ref: https://github.com/marshmallow-code/marshmallow/issues/1857
     dump_only_fields = schema.dump_fields.keys() - schema.load_fields.keys()
     if isinstance(data, Mapping):
-        filter_result = FilterResult(
-            loadable=dict(),  # we may need to do some recursion so we'll build these in following loop
-            dump_only={
-                k: v for k, v in data.items() if k in dump_only_fields
-            },  # dump_only won't require further recursion
-        )
-        for k, v in {
-            k: v for k, v in data.items() if k not in dump_only_fields
-        }.items():  # "loadable" fields
+        dump_only = {  # won't require further recursion
+            k: v for k, v in data.items() if k in dump_only_fields
+        }
+        non_dump_only = data.items() - dump_only.items()
+        loadable = {}  # we may need to do some recursion so we'll build these in following loop
+        for k, v in non_dump_only:
             field = schema.fields[k]
-            # see if we have a nested schema (using either Nested(many=True) or List(Nested()
-            field_schema = (
-                field.schema
-                if isinstance(field, fields.Nested)
-                else field.inner.schema
-                if isinstance(field, fields.List)
-                and isinstance(field.inner, fields.Nested)
-                else None
-            )
-            if field_schema is not None:
-                field_filtered = filter_dump_only(field_schema, v)
-                filter_result.loadable[k] = field_filtered.loadable
-                filter_result.dump_only[k] = field_filtered.dump_only
+            # see if we have a nested schema (using either Nested(many=True) or List(Nested())
+            field_schema = None
+            if isinstance(field, fields.Nested):
+                field_schema = field.schema
+            elif isinstance(field, fields.List) and isinstance(field.inner, fields.Nested):
+                field_schema = field.inner.schema
+            if field_schema is None:
+                loadable[k] = v
             else:
-                filter_result.loadable[k] = v
-
-        return filter_result
+                field_filtered = filter_dump_only(field_schema, v)
+                loadable[k] = field_filtered.loadable
+                dump_only[k] = field_filtered.dump_only
+        return FilterResult(loadable=loadable, dump_only=dump_only)
     elif isinstance(data, list):
         processed_items = [filter_dump_only(schema, item) for item in data]
         return FilterResult(
