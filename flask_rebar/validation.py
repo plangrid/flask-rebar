@@ -23,7 +23,7 @@ FilterResult = namedtuple("FilterResult", "loadable, dump_only")
 
 def filter_dump_only(schema, data):
     """
-    Return a filtered copy of data in which any items matching a "dump_only" field are removed
+    Return a filtered copy of data in which any items matching a "dump_only" field are separated
     :param schema: Instance of a Schema class
     :param data: Dict or collection of dicts with data
     :return: Union[FilterResult, list[FilterResult]]
