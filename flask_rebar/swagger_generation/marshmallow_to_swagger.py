@@ -240,8 +240,12 @@ class SchemaConverter(MarshmallowConverter):
     def get_additional_properties(self, obj, context):
         if obj.unknown in (m.RAISE, m.EXCLUDE):
             return False
-        else:
+        elif obj.unknown is m.INCLUDE:
             return True
+        else:
+            raise ValueError(
+                f"Unexpected Schema.unknown value {obj.unknown} for {obj} "
+            )
 
 
 class FieldConverter(MarshmallowConverter):
