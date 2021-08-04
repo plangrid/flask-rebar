@@ -27,7 +27,6 @@ def dump(schema, data):
     Note that as of Flask-Rebar 2.x (hence Marshmallow 3.x), Marshmallow's default behavior is to NOT validate on dump
     Accordingly, we are making validation "opt-in" here, which can be controlled at schema level with
     RequireOnDumpMixin or globally via rebar.set_validate_on_dump(True)
-    CAVEAT: Regardless of the Schema's "unknown" field setting, unknown fields will behave like EXCLUDE (ignored) here.
     """
     try:
         force_validation = getattr(g, "validate_on_dump", False)

@@ -660,7 +660,7 @@ class Rebar(object):
         self.paths = defaultdict(dict)
         self.uncaught_exception_handlers = []
         # If a developer doesn't wish to advertise that they are using rebar this can be used to control
-        # the name of the attribute in error responses, or set to None to supress inclusion of error codes entirely
+        # the name of the attribute in error responses, or set to None to suppress inclusion of error codes entirely
         self.error_code_attr = "rebar_error_code"
 
     @deprecated_parameters(

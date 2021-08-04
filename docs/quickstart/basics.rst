@@ -1,5 +1,5 @@
 Basics
-------
+******
 
 Registering a Handler
 =====================
@@ -157,6 +157,8 @@ This default can be overriden in any particular handler by setting ``headers_sch
 Marshaling
 ==========
 
+.. note:: In version 2.0, we updated our supported versions of Marshmallow from 2.x to 3.x. One of the more significant changes in Marshmallow is that ``Schema.dump`` does not trigger validation. This can result in significant performance improvements. In Flask-Rebar 2.0, we have made validation of marshalled results *opt-in*.
+
 The ``response_body_schema`` (previously ``marshal_schema``) argument of ``HandlerRegistry.handles`` can be one of three types: a ``marshmallow.Schema``, a dictionary mapping integers to ``marshmallow.Schema``, or ``None``.
 
 In the case of a ``marshmallow.Schema``, that schema is used to ``dump`` the return value of the handler function.
@@ -194,6 +196,15 @@ In the case of ``None`` (which is also the default), no marshaling takes place, 
 
 This is a handy escape hatch when handlers don't fit the Swagger/REST mold very well, but it the swagger generation won't know how to describe this handler's response and should be avoided.
 
+Opting In to Response Validation
+--------------------------------
+
+There are two ways to opt-in to response validation:
+
+#. Globally, via ``rebar.set_validate_on_dump(bool)``. Using this method, it is easy to turn on validation for things like test cases, while reaping performance gains by leaving it off in your production endpoints (assuming your API contract testing is sufficient to guarantee that your API can't return invalid data).
+#. At schema level, via ``flask_rebar.validation.RequireOnDumpMixin`` (including if you use our legacy pre-canned ``ResponseSchema`` as the base class for your schemas). Any schema that includes that mixin is automatically opted in to response validation, regardless of global setting. Note that in Flask-Rebar 2, that mixin serves *only* as a "marker" to trigger validation; we plan to augment/replace this with ability to use `SchemaOpts` as a more logical way of accomplishing the same thing in the near future (https://github.com/plangrid/flask-rebar/issues/252).
+
+
 
 Errors
 ======
@@ -216,7 +227,7 @@ Flask-Rebar includes a set of error classes that can be raised to produce HTTP e
            raise errors.Forbidden(
                msg='User not allowed to access todo object.',
                additional_data={
-                   'error_code': 123
+                   'my_app_internal_error_code': 123
                }
            )
        ...
@@ -224,6 +235,8 @@ Flask-Rebar includes a set of error classes that can be raised to produce HTTP e
 The ``msg`` parameter will override the "message" key of the JSON response. Furthermore, the JSON response will be updated with ``additional_data``.
 
 Validation errors are raised automatically, and the JSON response will include an ``errors`` key with more specific errors about what in the payload was invalid (this is done with the help of Marshmallow validation).
+
+For most of our predefined errors, as of version 2.0 we include not just a message but also a "rebar-internal" error "code". By default this is included in those responses as ``rebar_error_code`` but you can control that by setting the ``error_code_attr`` attribute on your instance of ``Rebar`` to your preferred name, or to ``None`` to suppress inclusion of rebar-internal error codes entirely.
 
 Support for marshmallow-objects
 ===============================
