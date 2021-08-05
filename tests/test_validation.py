@@ -284,8 +284,8 @@ class TestCommaSeparatedList(TestCase):
         app = create_rebar_app(rebar_instance)
         with app.app_context():
             rebar_instance.validate_on_dump = (
-                True
-            )  # cause ValueError to be wrapped in ValidationError
+                True  # cause ValueError to be wrapped in ValidationError
+            )
             with self.assertRaises(ValidationError) as ctx:
                 compat.dump(IntegerList(), {"foos": [42, "two"]})
 
