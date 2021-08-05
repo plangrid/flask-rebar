@@ -2,7 +2,7 @@ from collections import Mapping
 
 import marshmallow
 
-from flask import g
+from flask import current_app
 from flask_rebar.validation import filter_dump_only, RequireOnDumpMixin
 
 
@@ -26,10 +26,10 @@ def dump(schema, data):
     Our wrapper for Schema.dump that includes optional validation.
     Note that as of Flask-Rebar 2.x (hence Marshmallow 3.x), Marshmallow's default behavior is to NOT validate on dump
     Accordingly, we are making validation "opt-in" here, which can be controlled at schema level with
-    RequireOnDumpMixin or globally via rebar.set_validate_on_dump(True)
+    RequireOnDumpMixin or globally via validate_on_dump attribute of Rebar instance
     """
     try:
-        force_validation = getattr(g, "validate_on_dump", False)
+        force_validation = current_app.extensions["rebar"]["instance"].validate_on_dump
     except RuntimeError:  # running outside app context (some unit test cases, potentially ad hoc scripts)
         force_validation = False
 

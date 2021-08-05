@@ -27,6 +27,7 @@ from flask_rebar.validation import RequireOnDumpMixin
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import DisallowExtraFieldsMixin
 from flask_rebar.validation import QueryParamList
+from tests.test_rebar import create_rebar_app
 
 
 class DisallowExtraFieldsSchema(Schema, DisallowExtraFieldsMixin):
@@ -115,16 +116,18 @@ class RequireOutputMixinTest(TestCase):
         self.assertEqual(result["dump_only"], 42)
 
     def test_validation_opt_in(self):
-        app = Flask(__name__)
+        rebar_instance = rebar.Rebar()
+        app = create_rebar_app(rebar_instance)
+
         self.data["one_of_validation"] = "c"
         with app.app_context():
             # explicit global opt-in:
-            rebar.set_validate_on_dump(True)
+            rebar_instance.validate_on_dump = True
             with self.assertRaises(ValidationError):
                 compat.dump(self.unvalidated_schema, self.data)
 
             # explicit global opt-out:
-            rebar.set_validate_on_dump(False)
+            rebar_instance.validate_on_dump = False
             result = compat.dump(self.unvalidated_schema, self.data)
             self.assertEqual(result["one_of_validation"], "c")  # invalid but no error
 
@@ -277,9 +280,10 @@ class TestCommaSeparatedList(TestCase):
         )
 
     def test_serialize_errors(self):
-        app = Flask(__name__)
+        rebar_instance = rebar.Rebar()
+        app = create_rebar_app(rebar_instance)
         with app.app_context():
-            rebar.set_validate_on_dump(
+            rebar_instance.validate_on_dump = (
                 True
             )  # cause ValueError to be wrapped in ValidationError
             with self.assertRaises(ValidationError) as ctx:

@@ -201,7 +201,7 @@ Opting In to Response Validation
 
 There are two ways to opt-in to response validation:
 
-#. Globally, via ``rebar.set_validate_on_dump(bool)``. Using this method, it is easy to turn on validation for things like test cases, while reaping performance gains by leaving it off in your production endpoints (assuming your API contract testing is sufficient to guarantee that your API can't return invalid data).
+#. Globally, via ``validate_on_dump`` attribute of your ``Rebar`` instance. Using this method, it is easy to turn on validation for things like test cases, while reaping performance gains by leaving it off in your production endpoints (assuming your API contract testing is sufficient to guarantee that your API can't return invalid data).
 #. At schema level, via ``flask_rebar.validation.RequireOnDumpMixin`` (including if you use our legacy pre-canned ``ResponseSchema`` as the base class for your schemas). Any schema that includes that mixin is automatically opted in to response validation, regardless of global setting. Note that in Flask-Rebar 2, that mixin serves *only* as a "marker" to trigger validation; we plan to augment/replace this with ability to use `SchemaOpts` as a more logical way of accomplishing the same thing in the near future (https://github.com/plangrid/flask-rebar/issues/252).
 
 

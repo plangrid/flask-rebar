@@ -630,10 +630,6 @@ class HandlerRegistry(object):
             )
 
 
-def set_validate_on_dump(value):
-    g.validate_on_dump = value
-
-
 class Rebar(object):
     """
     The main entry point for the Flask-Rebar extension.
@@ -662,6 +658,7 @@ class Rebar(object):
         # If a developer doesn't wish to advertise that they are using rebar this can be used to control
         # the name of the attribute in error responses, or set to None to suppress inclusion of error codes entirely
         self.error_code_attr = "rebar_error_code"
+        self.validate_on_dump = False
 
     @deprecated_parameters(
         default_authenticator=(
