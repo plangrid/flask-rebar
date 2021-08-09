@@ -96,6 +96,7 @@ def test_swagger_v2_generator_non_registry_parameters():
         "paths": {},
         "definitions": {
             "Error": {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Error",
                 "properties": {
@@ -182,6 +183,7 @@ def test_swagger_v3_generator_non_registry_parameters():
         "components": {
             "schemas": {
                 "Error": {
+                    "additionalProperties": False,
                     "type": "object",
                     "title": "Error",
                     "properties": {

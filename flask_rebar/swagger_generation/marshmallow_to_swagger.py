@@ -25,7 +25,6 @@ from marshmallow.validate import Validator
 from flask_rebar import compat
 from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import CommaSeparatedList
-from flask_rebar.validation import DisallowExtraFieldsMixin
 from flask_rebar.swagger_generation import swagger_words as sw
 
 
@@ -237,6 +236,17 @@ class SchemaConverter(MarshmallowConverter):
         else:
             return UNSET
 
+    @sets_swagger_attr(sw.additional_properties)
+    def get_additional_properties(self, obj, context):
+        if obj.unknown in (m.RAISE, m.EXCLUDE):
+            return False
+        elif obj.unknown is m.INCLUDE:
+            return True
+        else:
+            raise ValueError(
+                f"Unexpected Schema.unknown value {obj.unknown} for {obj} "
+            )
+
 
 class FieldConverter(MarshmallowConverter):
     """
@@ -316,14 +326,6 @@ class ValidatorConverter(MarshmallowConverter):
     """
 
     MARSHMALLOW_TYPE = Validator
-
-
-class DisallowExtraFieldsConverter(SchemaConverter):
-    MARSHMALLOW_TYPE = DisallowExtraFieldsMixin
-
-    @sets_swagger_attr(sw.additional_properties)
-    def get_additional_properties(self, obj, context):
-        return False
 
 
 class NestedConverter(FieldConverter):
@@ -686,7 +688,6 @@ request_body_converter_registry.register_types(
         DateConverter(),
         DateTimeConverter(),
         DictConverter(),
-        DisallowExtraFieldsConverter(),
         FunctionConverter(),
         IntegerConverter(),
         LengthConverter(),
@@ -710,7 +711,6 @@ response_converter_registry.register_types(
         DateConverter(),
         DateTimeConverter(),
         DictConverter(),
-        DisallowExtraFieldsConverter(),
         FunctionConverter(),
         IntegerConverter(),
         LengthConverter(),

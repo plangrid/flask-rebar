@@ -11,6 +11,8 @@ Version 2.0 (2021-07-26)
 *  Removed support for versions < 3.6 of Python
 *  Removed support for versions < 1.0 of Flask, and added support for Flask 2.x; we now support only Flask 1.x and 2.x.
 *  Removed support for versions < 3.0 of Marshmallow; we now support only Marshmallow 3.x
+*  Removed ``flask_rebar.validation.DisallowExtraFieldsMixin`` - with Marshmallow 3, this is now default behavior.
+  * We now generate appropriate OpenAPI spec based on ``Schema``'s ``Meta`` (ref https://marshmallow.readthedocs.io/en/stable/quickstart.html#handling-unknown-fields)
 *  Removed support for previously deprecated parameter names (https://github.com/plangrid/flask-rebar/pull/246/files)
   * In methods that register handlers, ``marshal_schema`` is now ``response_body_schema`` and the former name is no longer supported
   * ``AuthenticatorConverterRegistry`` no longer accepts a ``converters`` parameter when instantiating. Use ``register_type`` on an instance to add a converter

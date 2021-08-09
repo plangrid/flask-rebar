@@ -123,41 +123,6 @@ class RequireOnDumpMixin(object):
     pass
 
 
-class DisallowExtraFieldsMixin(object):
-    """
-    By default, Marshmallow will silently ignore fields that aren't included in a schema
-    when serializing/deserializing.
-
-    This can be undesirable when doing request validation, as we want to notify a client
-    when unrecognized fields are included.
-
-    This is a `marshmallow.Schema` mixin that will throw an error when an object has
-    unrecognized fields.
-    """
-
-    @validates_schema(pass_original=True)
-    def disallow_extra_fields(self, processed_data, original_data):
-        # If the input data isn't a dict just short-circuit and let the Marshmallow unmarshaller
-        # raise an error.
-        if not isinstance(original_data, dict):
-            return
-
-        input_fields = original_data.keys()
-        expected_fields = list(self.fields) + [
-            field.load_from
-            for field in self.fields.values()
-            if field.load_from is not None
-        ]
-        excluded_fields = self.exclude
-        unsupported_fields = (
-            set(input_fields) - set(expected_fields) - set(excluded_fields)
-        )
-        if len(unsupported_fields) > 0:
-            raise ValidationError(
-                message=messages.unsupported_fields(unsupported_fields)
-            )
-
-
 RequestSchema = Schema
 
 

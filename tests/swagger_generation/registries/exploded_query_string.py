@@ -35,6 +35,7 @@ EXPECTED_SWAGGER_V2 = {
     "info": {"title": "My API", "version": "1.0.0", "description": ""},
     "definitions": {
         "Error": {
+            "additionalProperties": False,
             "type": "object",
             "title": "Error",
             "properties": {"message": {"type": "string"}, "errors": {"type": "object"}},
@@ -73,6 +74,7 @@ EXPECTED_SWAGGER_V3 = {
     "components": {
         "schemas": {
             "Error": {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Error",
                 "properties": {
