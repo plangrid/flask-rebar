@@ -9,7 +9,7 @@ development = [
     "gitchangelog>=3.0.4,<4.0.0",
     "jsonschema==3.0.2",
     "marshmallow-objects~=2.3",
-    "mock==2.0.0",
+    "mock==2.0.1",
     "parametrize==0.1.1",
     "pre-commit>=1.14.4",
     "pytest==4.6.8",
@@ -20,7 +20,7 @@ development = [
 if __name__ == "__main__":
     setup(
         name="flask-rebar",
-        version="2.0.0",
+        version="2.0.1",
         author="Barak Alon",
         author_email="barak.s.alon@gmail.com",
         description="Flask-Rebar combines flask, marshmallow, and swagger for robust REST services.",
