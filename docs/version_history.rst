@@ -8,10 +8,17 @@ change that we neglected to note here, please let us know (or open a PR to add i
 Version 2.0 (2021-07-26)
 ========================
 
+Errata
+******
+Version 2.0.0 included a couple of bugs related to the upgrade from Marshmallow 2 to 3. While the fix for one of those
+(removal of ``DisallowExtraFieldsMixin``) might technically be considered a "breaking change" requiring a new major
+version, we deemed it acceptable to bend the rules of semantic versioning since that mixin **never actually functioned**
+in 2.0.0.
+
 *  Removed support for versions < 3.6 of Python
 *  Removed support for versions < 1.0 of Flask, and added support for Flask 2.x; we now support only Flask 1.x and 2.x.
 *  Removed support for versions < 3.0 of Marshmallow; we now support only Marshmallow 3.x
-*  Removed ``flask_rebar.validation.DisallowExtraFieldsMixin`` - with Marshmallow 3, this is now default behavior.
+*  (2.0.1) Removed ``flask_rebar.validation.DisallowExtraFieldsMixin`` - with Marshmallow 3, this is now default behavior and this mixin was broken in 2.0.0
   * We now generate appropriate OpenAPI spec based on ``Schema``'s ``Meta`` (ref https://marshmallow.readthedocs.io/en/stable/quickstart.html#handling-unknown-fields)
 *  Removed support for previously deprecated parameter names (https://github.com/plangrid/flask-rebar/pull/246/files)
   * In methods that register handlers, ``marshal_schema`` is now ``response_body_schema`` and the former name is no longer supported
