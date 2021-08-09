@@ -39,9 +39,9 @@ def dump(schema, data):
             # and give us something we can pass to .load below
             # Since marshmallow 3 doesn't validate on dump, this has the effect of stripping unknown fields.
             result = schema.dump(data)
+        except marshmallow.ValidationError:
+            raise
         except Exception as e:
-            if isinstance(e, marshmallow.ValidationError):
-                raise
             raise marshmallow.ValidationError(str(e))
 
         # filter out "dump_only" fields before we call load - we are only calling load to validate data we are dumping
