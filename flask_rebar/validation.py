@@ -7,6 +7,8 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
+from collections import Mapping, namedtuple
+
 from marshmallow import Schema
 from marshmallow import ValidationError
 from marshmallow import fields
@@ -15,6 +17,61 @@ from marshmallow import validates_schema
 from werkzeug.datastructures import MultiDict
 
 from flask_rebar import messages
+
+FilterResult = namedtuple("FilterResult", "loadable, dump_only")
+
+
+def filter_dump_only(schema, data):
+    """
+    Return a filtered copy of data in which any items matching a "dump_only" field are separated
+    :param schema: Instance of a Schema class
+    :param data: Dict or collection of dicts with data
+    :return: Union[FilterResult, list[FilterResult]]
+    """
+    # Note as of marshmallow 3.13.0, Schema.dump_only is NOT populated if fields are declared as dump_only inline,
+    # so we'll calculate "dump_only" ourselves.  ref: https://github.com/marshmallow-code/marshmallow/issues/1857
+    dump_only_fields = schema.dump_fields.keys() - schema.load_fields.keys()
+    if isinstance(data, Mapping):
+        dump_only = dict()
+        non_dump_only = dict()
+        # get our dump_only fields directly, and candidates for loadable:
+        for k, v in data.items():
+            if k in dump_only_fields:
+                dump_only[k] = v
+            else:
+                non_dump_only[k] = v
+
+        # construct loadable (a subset of non_dump_only, with recursive filter of nested dump_only fields)
+        loadable = dict()
+        for k, v in non_dump_only.items():
+            field = schema.fields[k]
+            # see if we have a nested schema (using either Nested(many=True) or List(Nested())
+            field_schema = None
+            if isinstance(field, fields.Nested):
+                field_schema = field.schema
+            elif isinstance(field, fields.List) and isinstance(
+                field.inner, fields.Nested
+            ):
+                field_schema = field.inner.schema
+            if field_schema is None:
+                loadable[k] = v
+            else:
+                field_filtered = filter_dump_only(field_schema, v)
+                loadable[k] = field_filtered.loadable
+                dump_only[k] = field_filtered.dump_only
+        return FilterResult(loadable=loadable, dump_only=dump_only)
+    elif isinstance(data, list):
+        processed_items = [filter_dump_only(schema, item) for item in data]
+        return FilterResult(
+            [item.loadable for item in processed_items],
+            [item.dump_only for item in processed_items],
+        )
+
+    else:
+        # I am not aware of any case where we should get something other than a Mapping or list, but just in case
+        # we can raise a hopefully helpful error if there's some weird Schema that can cause that, so we know
+        # we need to update this and patch rebar ;)
+        raise TypeError(f"filter_dump_only doesn't understand data type {type(data)}")
 
 
 class CommaSeparatedList(fields.List):
@@ -57,20 +114,13 @@ class QueryParamList(fields.List):
 
 class RequireOnDumpMixin(object):
     """
-    By default, Marshmallow only raises an error when required fields are missing
-    when `marshmallow.Schema.load` is called.
-
-    This is a `marshmallow.Schema` mixin that will throw an error when an object is
-    missing required fields when `marshmallow.Schema.dump` is called, or if one of
-    the required fields fails a validator.
+    DEPRECATED AND MAY BE REMOVED IN VERSION 3.0
+    In previous versions, this mixin was used to force validation on dump. As of 2.0.1, that
+    validation is now fully encapsulated in compat.dump, with the presence of this mixin as one of
+    the triggers.
     """
 
-    @post_dump(pass_many=True)
-    def require_output_fields(self, data, many):
-        errors = self.validate(data)
-        if errors:
-            raise ValidationError(errors, data=data)
-        return data
+    pass
 
 
 class DisallowExtraFieldsMixin(object):
