@@ -9,7 +9,7 @@ development = [
     "gitchangelog>=3.0.4,<4.0.0",
     "jsonschema==3.0.2",
     "marshmallow-objects~=2.3",
-    "mock==2.0.1",
+    "mock==2.0.0",
     "parametrize==0.1.1",
     "pre-commit>=1.14.4",
     "pytest==4.6.8",
