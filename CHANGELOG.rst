@@ -2,6 +2,16 @@ Changelog
 =========
 
 
+v2.0.1 (2021-08-09)
+-------------------
+
+Fix
+~~~
+- Remove now-pointless (and worse, broken) DisallowExtraFieldsMixin
+  (#253) [Rick Riensche]
+- Handle dump_only fields properly (#251) [Rick Riensche]
+
+
 v2.0.0 (2021-07-27)
 -------------------
 
