@@ -643,6 +643,7 @@ class EnumConverter(FieldConverter):
     def get_enum(self, obj, context):
         return [entry.name for entry in obj.enum]
 
+
 ALL_CONVERTERS = tuple(
     [
         klass()
