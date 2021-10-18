@@ -50,7 +50,10 @@ class TestConverterRegistry(unittest.TestCase):
             (m.fields.Integer(missing=5), {"type": "integer", "default": 5}),
             (m.fields.Integer(dump_only=True), {"type": "integer", "readOnly": True}),
             (m.fields.Integer(missing=lambda: 5), {"type": "integer"}),
-            (me.EnumField(StopLight), {'enum': ['green', 'yellow', 'red'], 'type': 'string'}),
+            (
+                me.EnumField(StopLight),
+                {"enum": ["green", "yellow", "red"], "type": "string"},
+            ),
             (
                 m.fields.Integer(allow_none=True),
                 {"type": "integer", "x-nullable": True},
