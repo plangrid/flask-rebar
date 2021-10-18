@@ -31,13 +31,13 @@ We recommend using a `virtual environment <https://docs.python.org/3/tutorial/ve
 
 .. code-block:: bash
 
-   pip install .[dev]
+   pip install .[dev,enum]
 
 For `zsh` shell users, use
 
 .. code-block:: bash
 
-   pip install '.[dev]'
+   pip install '.[dev,enum]'
 
 
 We use `black` to format code and keep it all consistent within the repo. With that in mind, you'll also want to install the precommit hooks because your build will fail if your code isn't black:
