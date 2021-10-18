@@ -12,7 +12,7 @@ development = [
     "mock==2.0.0",
     "parametrize==0.1.1",
     "pre-commit>=1.14.4",
-    "pytest==4.6.8",
+    "pytest~=6.0",
     "Sphinx==1.7.0",
     "sphinx_rtd_theme==0.2.4",
 ]
@@ -43,6 +43,7 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.10",
             "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
             "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
             "Topic :: Software Development :: Libraries :: Application Frameworks",
