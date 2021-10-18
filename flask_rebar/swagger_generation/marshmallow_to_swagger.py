@@ -27,6 +27,11 @@ from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.swagger_generation import swagger_words as sw
 
+try:
+    from marshmallow_enum import EnumField
+except ImportError:
+    EnumField = None
+
 
 # Special value to signify that a JSONSchema field should be left unset
 class UNSET(object):
@@ -627,6 +632,17 @@ class ConverterRegistry(object):
         )
 
 
+class EnumConverter(FieldConverter):
+    MARSHMALLOW_TYPE = EnumField
+
+    @sets_swagger_attr(sw.type_)
+    def get_type(self, obj, context):
+        return sw.string
+
+    @sets_swagger_attr(sw.enum)
+    def get_enum(self, obj, context):
+        return [entry.name for entry in obj.enum]
+
 ALL_CONVERTERS = tuple(
     [
         klass()
@@ -642,6 +658,7 @@ query_string_converter_registry.register_types(
         CsvArrayConverter(),
         DateConverter(),
         DateTimeConverter(),
+        EnumConverter(),
         FunctionConverter(),
         IntegerConverter(),
         LengthConverter(),
@@ -665,6 +682,7 @@ headers_converter_registry.register_types(
         CsvArrayConverter(),
         DateConverter(),
         DateTimeConverter(),
+        EnumConverter(),
         FunctionConverter(),
         IntegerConverter(),
         LengthConverter(),
@@ -688,6 +706,7 @@ request_body_converter_registry.register_types(
         DateConverter(),
         DateTimeConverter(),
         DictConverter(),
+        EnumConverter(),
         FunctionConverter(),
         IntegerConverter(),
         LengthConverter(),
@@ -711,6 +730,7 @@ response_converter_registry.register_types(
         DateConverter(),
         DateTimeConverter(),
         DictConverter(),
+        EnumConverter(),
         FunctionConverter(),
         IntegerConverter(),
         LengthConverter(),
