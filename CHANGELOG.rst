@@ -2,6 +2,26 @@ Changelog
 =========
 
 
+v2.1.0 (2021-10-19)
+-------------------
+
+Fix
+~~~
+
+Add Python 3.10 support:
+
+- Use Mapping from abstract classes (#259) [Daniel Wallace]
+
+  * Mapping was removed from collections in 3.10 and is only available in collections.abc now.
+
+  * update pytest for py3.10 support
+
+  * add py3.10 to pr workflow
+
+  * use setupactions v2
+
+
+
 v2.0.2 (2021-08-09)
 -------------------
 
