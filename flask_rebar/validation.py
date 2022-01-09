@@ -71,7 +71,8 @@ def filter_dump_only(schema, data):
             [item.loadable for item in processed_items],
             [item.dump_only for item in processed_items],
         )
-
+    elif data is None:
+        return FilterResult(loadable=dict(), dump_only=dict())
     else:
         # I am not aware of any case where we should get something other than a Mapping or list, but just in case
         # we can raise a hopefully helpful error if there's some weird Schema that can cause that, so we know
