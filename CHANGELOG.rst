@@ -2,6 +2,15 @@ Changelog
 =========
 
 
+v2.1.1 (2022-01-10)
+-------------------
+
+Fix
+~~~
+
+- Fix filter_dump_only for NoneType nested fields (#262) [mbierma]
+
+
 v2.1.0 (2021-10-19)
 -------------------
 
