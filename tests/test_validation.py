@@ -56,6 +56,10 @@ class OuterNested(Schema, RequireOnDumpMixin):
     nested_list = fields.List(fields.Nested(InnerNested))
 
 
+class OuterNestedNone(Schema, RequireOnDumpMixin):
+    nested = fields.Nested(InnerNested, allow_none=True)
+
+
 class RequireOutputMixinTest(TestCase):
     def setUp(self):
         super(RequireOutputMixinTest, self).setUp()
@@ -234,6 +238,13 @@ class TestComplexNesting(TestCase):
         data["nested"]["inner_nested_list"][2]["one_of_validation"] = "z"
         with self.assertRaises(ValidationError):
             compat.dump(OuterNested(), data)
+
+    def test_validation_nested_none(self):
+        """compat.dump validation works with allow_none nested schemas"""
+        data = self.base_valid_outer_wrapper
+        data["nested"] = None
+        result = compat.dump(OuterNestedNone(), data)
+        self.assertEqual(result["nested"], None)
 
 
 class StringList(Schema):
