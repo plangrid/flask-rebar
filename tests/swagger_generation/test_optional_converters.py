@@ -16,7 +16,10 @@ class TestOptionalConverters(TestCase):
         self.assertIsNotNone(_m_to_s.EnumField)
         self.assertTrue(
             any(
-                [type(conv) is _m_to_s.EnumConverter for conv in _m_to_s._common_converters()]
+                [
+                    type(conv) is _m_to_s.EnumConverter
+                    for conv in _m_to_s._common_converters()
+                ]
             )
         )
 
