@@ -7,7 +7,11 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from collections import Mapping, namedtuple
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
+from collections import namedtuple
 
 from marshmallow import Schema
 from marshmallow import ValidationError

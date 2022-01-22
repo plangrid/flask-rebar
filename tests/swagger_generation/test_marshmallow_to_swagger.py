@@ -8,9 +8,7 @@
     :license: MIT, see LICENSE for details.
 """
 import enum
-import mock
-import unittest
-from importlib import reload
+from unittest import TestCase
 from parametrize import parametrize
 
 
@@ -31,7 +29,7 @@ class StopLight(enum.Enum):
     red = 3
 
 
-class TestConverterRegistry(unittest.TestCase):
+class TestConverterRegistry(TestCase):
     def setUp(self):
         self.registry = ConverterRegistry()
         self.registry.register_types(ALL_CONVERTERS)
