@@ -8,8 +8,11 @@
     :license: MIT, see LICENSE for details.
 """
 import enum
+import mock
 import unittest
+from importlib import reload
 from parametrize import parametrize
+
 
 import marshmallow as m
 import marshmallow_enum as me
@@ -17,6 +20,7 @@ from marshmallow import validate as v
 
 from flask_rebar.swagger_generation.marshmallow_to_swagger import ALL_CONVERTERS
 from flask_rebar.swagger_generation.marshmallow_to_swagger import ConverterRegistry
+
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
 
@@ -53,6 +57,10 @@ class TestConverterRegistry(unittest.TestCase):
             (
                 me.EnumField(StopLight),
                 {"enum": ["green", "yellow", "red"], "type": "string"},
+            ),
+            (
+                me.EnumField(StopLight, by_value=True),
+                {"enum": [1, 2, 3], "type": "integer"},
             ),
             (
                 m.fields.Integer(allow_none=True),
