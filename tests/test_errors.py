@@ -15,8 +15,8 @@ import unittest
 from flask import Flask
 from marshmallow import fields
 from werkzeug.exceptions import BadRequest
-from mock import ANY
-from mock import patch
+from unittest.mock import ANY
+from unittest.mock import patch
 from tests.helpers import make_test_response
 
 from flask_rebar import messages, validation, response, Rebar

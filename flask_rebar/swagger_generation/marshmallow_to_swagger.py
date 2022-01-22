@@ -633,36 +633,30 @@ class ConverterRegistry(object):
         )
 
 
-if EnumField:
+class EnumConverter(FieldConverter):
+    MARSHMALLOW_TYPE = EnumField
 
-    class EnumConverter(FieldConverter):
-        MARSHMALLOW_TYPE = EnumField
-
-        @sets_swagger_attr(sw.type_)
-        def get_type(self, obj, context):
-            # Note: we don't (yet?) support mix-and-match between load_by and dump_by. Pick one.
-            if obj.by_value or (obj.load_by == obj.dump_by == LoadDumpOptions.value):
-                # I'm going out on a limb and assuming your enum uses same type for all vals, else caveat emptor:
-                value_type = type(next(iter(obj.enum)).value)
-                if value_type is int:
-                    return sw.integer
-                elif value_type is float:
-                    return sw.number
-                else:
-                    return sw.string
+    @sets_swagger_attr(sw.type_)
+    def get_type(self, obj, context):
+        # Note: we don't (yet?) support mix-and-match between load_by and dump_by. Pick one.
+        if obj.by_value or (obj.load_by == obj.dump_by == LoadDumpOptions.value):
+            # I'm going out on a limb and assuming your enum uses same type for all vals, else caveat emptor:
+            value_type = type(next(iter(obj.enum)).value)
+            if value_type is int:
+                return sw.integer
+            elif value_type is float:
+                return sw.number
             else:
                 return sw.string
+        else:
+            return sw.string
 
-        @sets_swagger_attr(sw.enum)
-        def get_enum(self, obj, context):
-            if obj.by_value or (obj.load_by == obj.dump_by == LoadDumpOptions.value):
-                return [entry.value for entry in obj.enum]
-            else:
-                return [entry.name for entry in obj.enum]
-
-
-else:
-    EnumConverter = None
+    @sets_swagger_attr(sw.enum)
+    def get_enum(self, obj, context):
+        if obj.by_value or (obj.load_by == obj.dump_by == LoadDumpOptions.value):
+            return [entry.value for entry in obj.enum]
+        else:
+            return [entry.name for entry in obj.enum]
 
 
 ALL_CONVERTERS = tuple(
@@ -693,7 +687,7 @@ def _common_converters():
         UUIDConverter(),
         ConstantConverter(),
     ]
-    if EnumConverter:
+    if EnumField:
         converters.append(EnumConverter())
 
     return converters
