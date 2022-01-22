@@ -12,7 +12,7 @@ development = [
     "mock==2.0.0",
     "parametrize==0.1.1",
     "pre-commit>=1.14.4",
-    "pytest==4.6.8",
+    "pytest==6.2.5",
     "pytest-order==1.0.1",
     "Sphinx==1.7.0",
     "sphinx_rtd_theme==0.2.4",
