@@ -11,8 +11,8 @@ development = [
     "marshmallow-objects~=2.3",
     "parametrize==0.1.1",
     "pre-commit>=1.14.4",
-    "pytest==6.2.5",
-    "pytest-order==1.0.1",
+    "pytest~=6.2",
+    "pytest-order~=1.0",
     "Sphinx==1.7.0",
     "sphinx_rtd_theme==0.2.4",
 ]
