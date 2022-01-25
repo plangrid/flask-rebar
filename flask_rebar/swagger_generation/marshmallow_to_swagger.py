@@ -687,7 +687,7 @@ def _common_converters():
         UUIDConverter(),
         ConstantConverter(),
     ]
-    if EnumField:
+    if EnumConverter.MARSHMALLOW_TYPE is not None:
         converters.append(EnumConverter())
 
     return converters
