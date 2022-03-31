@@ -27,7 +27,6 @@ if MARSHMALLOW_OBJECTS:
             super(NestedTitledModel, self).__init__(nested, **kwargs)
             self.schema.__swagger_title__ = title
 
-
 else:
 
     class NestedTitledModel(object):
