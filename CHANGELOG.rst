@@ -2,6 +2,17 @@ Changelog
 =========
 
 
+v2.1.2 (2022-03-31)
+-------------------
+- Pin werkzeug to avoid breaking change (#266) [Rick Riensche]
+- Don't block CI based on old versions of Flask/werkzeug or EOL Python versions
+- Use unittest.mock instead of mock. [Rick Riensche]
+- Update pytest for pytest-order support. [Rick Riensche]
+- Add pytest-order to dev extras. [Rick Riensche]
+- Only use EnumConverter if marshmallow-enum present. [Rick Riensche]
+- Add marshmallow-enum convertor to flask-rebar. [Daniel Wallace]
+
+
 v2.1.1 (2022-01-10)
 -------------------
 
