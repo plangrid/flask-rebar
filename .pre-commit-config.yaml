@@ -1,9 +1,8 @@
 repos:
   # NOTE: it is not recommended to use mutable revs e.g. "stable" - run pre-commit autoupdate instead
   # ref: https://github.com/ambv/black/issues/420
-  # Reminder:  Update .travis.yml to match the version referenced here
   - repo: https://github.com/ambv/black
-    rev: 19.3b0
+    rev: 22.3.0
     hooks:
     - id: black
       language_version: python3.7
