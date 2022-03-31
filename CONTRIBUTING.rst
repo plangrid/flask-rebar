@@ -19,10 +19,19 @@ If you feel that an issue or pull request may have fallen through the cracks, ta
 
 Process
 -------
-Flask-Rebar is developed both internally within PlanGrid and via open-source contributions.  To coordinate and avoid duplication of effort, we use two mechanisms:
+Flask-Rebar is developed both internally within Autodesk and via open-source contributions.  To coordinate and avoid duplication of effort, we use two mechanisms:
 
 1. We use the "triaged" label to mark issues as having been reviewed.  Unless there are outstanding questions that need to be ironed out, you can assume that if an issue is marked as "triaged," we have generated an internal ticket, meaning someone will *eventually* address it.  Timing of this will largely depend on whether there's a driving need within our own codebases that relies on Flask-Rebar.
 2. Because internal ticketing is a black-box to our open source contributors, we will also make use of the "assignee" feature.  If someone has picked up an internal ticket, there will be an assignee on the issue.  If you see an open issue that doesn't have an assignee and that you would like to tackle please tag a maintainer in a comment requesting assignment, and/or open an early "WIP" pull request so we'll know the issue is already being worked, and can coordinate development efforts as needed.
+
+Support for Extra Libraries
+---------------------------
+Flask-rebar is built to work with Flask and Marshmallow. We also seek to play nice with major "extensions" related to those core technologies by including optional features.
+If you are adding functionality that is defined outside of core versions of Flask or Marshmallow, there are three things that you as a developer are responsible for before submitting a Pull Request:
+1. Ensure that you are NOT introducing any code changes that would make an extension a requirement. An end-user must be able to `pip install flask-rebar` and use all basic features without requiring any additional libraries.
+2. Ensure that your extra requirements are broken out as a separate item within `extras_require` in `setup.py`.
+3. Update the `pip install` instructions below to add your newly included "extras."
+
 
 Developing
 ----------
