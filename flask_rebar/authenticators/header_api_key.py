@@ -8,7 +8,7 @@
     :license: MIT, see LICENSE for details.
 """
 from flask import request, g
-from werkzeug.security import safe_str_cmp
+from hmac import compare_digest
 
 from flask_rebar import errors, messages
 from flask_rebar.authenticators.base import Authenticator
@@ -67,7 +67,7 @@ class HeaderApiKeyAuthenticator(Authenticator):
         token = request.headers[self.header]
 
         for key, app_name in self.keys.items():
-            if safe_str_cmp(str(token), key):
+            if compare_digest(str(token), key):
                 g.authenticated_app_name = app_name
                 break
         else:
