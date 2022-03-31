@@ -4,9 +4,8 @@ from setuptools import setup, find_packages
 
 # packages required for local development and testing
 development = [
-    "black==19.10b0",
+    "black==22.3.0",
     "bumpversion==0.5.3",
-    "click<8.1.0",  # pinned only because black breaks with click 8.1.0 - will update black in a minor version bump
     "gitchangelog>=3.0.4,<4.0.0",
     "jsonschema==3.0.2",
     "marshmallow-objects~=2.3",
