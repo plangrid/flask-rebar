@@ -2,6 +2,17 @@ Changelog
 =========
 
 
+v2.2.0 (2022-03-31)
+-------------------
+- Unbreak with werkzeug 2.1 (#268) [Rick Riensche]
+
+  * Remove deprecated safe_str_cmp and remove werkzeug pin
+
+  * Update black
+
+  * Update CI test coverage for Flask+werkzeug 2.1
+
+
 v2.1.2 (2022-03-31)
 -------------------
 - Pin werkzeug to avoid breaking change (#266) [Rick Riensche]
