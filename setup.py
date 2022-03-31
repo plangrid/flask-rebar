@@ -35,7 +35,6 @@ if __name__ == "__main__":
             "Flask>=1.0,<3",
             "marshmallow>=3.0,<4",
             "werkzeug<2.1.0",
-            "itsdangerous<2.1.0",
         ],
         url="https://github.com/plangrid/flask-rebar",
         classifiers=[
