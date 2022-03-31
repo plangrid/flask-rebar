@@ -26,8 +26,8 @@ Flask-Rebar is developed both internally within Autodesk and via open-source con
 
 Support for Extra Libraries
 ---------------------------
-Flask-rebar is built to work with Flask and Marshmallow. We also seek to play nice with major "extensions" related to those core technologies by including optional features.
-If you are adding functionality that is defined outside of core versions of Flask or Marshmallow, there are three things that you as a developer are responsible for before submitting a Pull Request:
+Flask-rebar is built to work with Flask and Marshmallow. We also seek to play nice with major "extensions" related to those core technologies by including optional features. Examples include `marshmallow-objects` and `marshmallow-enum`.
+If you are adding functionality that relies on any extensions meant to augment core versions of Flask or Marshmallow, there are three things that you as a developer are responsible for before submitting a Pull Request:
 1. Ensure that you are NOT introducing any code changes that would make an extension a requirement. An end-user must be able to `pip install flask-rebar` and use all basic features without requiring any additional libraries.
 2. Ensure that your extra requirements are broken out as a separate item within `extras_require` in `setup.py`.
 3. Update the `pip install` instructions below to add your newly included "extras."
