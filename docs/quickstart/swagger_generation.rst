@@ -69,16 +69,18 @@ Flask-Rebar does its very best to free developers from having to think about how
 operationId
 ^^^^^^^^^^^
 
-All Swagger operations (i.e. a combination of a URL route and method) can have an "operationId", which is name that is unique to the specification. This operationId is very useful for code generation tools, e.g. swagger-codegen, that use the operationId to generate method names.
+All Swagger operations (i.e. a combination of a URL route and method) can have an "operationId", a name that is unique to the specification. This operationId is very useful for code generation tools, e.g. swagger-codegen, that use the operationId to generate method names.
 
 The generator first checks for the value of ``endpoint`` specified when declaring the handler with a handler registry. If this is not included, the generator defaults to the name of the function.
 
-In many cases, the name of the function will be good enough. If you need more control over the operationId, specific an ``endpoint`` value.
+In many cases, the name of the function will be good enough. If you need more control over the operationId, specify an ``endpoint`` value.
 
 description
 ^^^^^^^^^^^
 
 Swagger operations can have descriptions. If a handler function has a docstring, the generator will use this as a description.
+
+You can also set the `description` argument for a `marshmallow.Field` and the generator will add this to the swagger file.
 
 definition names
 ^^^^^^^^^^^^^^^^
@@ -92,7 +94,7 @@ Custom Marshmallow types
 
 The generator knows how to convert most built in Marshmallow types to their corresponding Swagger representations, and it checks for the appropriate converter by iterating through a schema/field/validator's method resolution order, so simple extensions of Marshmallow fields should work out of the box.
 
-If a field the extends Marshmallow's abstract field, or want to a particular Marshmallow type to have a more specific Swagger definition, you can add a customer converter.
+If a field extends Marshmallow's abstract field, or you want a particular Marshmallow type to have a more specific Swagger definition, you can add a custom converter.
 
 Here's an example of a custom converter for a custom Marshmallow converter:
 
@@ -130,16 +132,16 @@ First we've defined a ``Base64EncodedString`` that handles serializing/deseriali
 
 We extend the ``StringConverter``, which handles setting the "type".
 
-Methods on the new converter class can be decorated with ``sets_swagger_attr``, which accepts a single argument for which attribute on the JSON document to set with the result of the method.
+Methods on the new converter class can be decorated with ``sets_swagger_attr``, which accepts a single argument indicating which attribute on the JSON document to set with the result of the method.
 
 The method should take two arguments in addition to ``self``: ``obj`` and ``context``.
 ``obj`` is the current Marshmallow object being converted. In the above case, it will be an instance of ``Base64EncodedString``.
-``context`` is a namedtuple that holds some helpful information for more complex conversions:
+``context`` is a NamedTuple that holds some helpful information for more complex conversions:
 
-* ``convert`` - This will hold a reference to a convert method that can be used to make recursive calls
+* ``convert`` - This holds a reference to a convert method that can be used to make recursive calls
 * ``memo`` - This holds the JSONSchema object that's been converted so far. This helps convert Validators, which might depend on the type of the object they are validating.
 * ``schema`` - This is the full schema being converted (as opposed to ``obj``, which might be a specific field in the schema).
-* ``openapi_version`` - This is the major version of OpenAPI being converter for
+* ``openapi_version`` - This is the major version of OpenAPI the converter is written for
 
 We then add an instance of the new converter to the ``request_body_converter_registry``, meaning this field will only be valid for request bodies. We can add it to multiple converter registries or choose to omit it from some if we don't think a particular type of field should be valid in certain situations (e.g. the query_string_converter_registry doesn't support ``Nested`` fields).
 
