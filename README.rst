@@ -5,8 +5,8 @@ Flask-Rebar
    :target: http://flask-rebar.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://travis-ci.org/plangrid/flask-rebar.svg?branch=master
-   :target: https://travis-ci.org/plangrid/flask-rebar
+.. image:: https://github.com/plangrid/flask-rebar/actions/workflows/tag.yml/badge.svg
+   :target: https://github.com/plangrid/flask-rebar/actions/workflows/tag.yml
    :alt: CI Status
 
 .. image:: https://badge.fury.io/py/flask-rebar.svg
