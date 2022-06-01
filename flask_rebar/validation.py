@@ -35,13 +35,16 @@ def filter_dump_only(schema, data):
     """
     # Note as of marshmallow 3.13.0, Schema.dump_only is NOT populated if fields are declared as dump_only inline,
     # so we'll calculate "dump_only" ourselves.  ref: https://github.com/marshmallow-code/marshmallow/issues/1857
+    output_to_input_keys = {
+        field.data_key: key for key, field in schema.fields.items() if field.data_key
+    }
     dump_only_fields = schema.dump_fields.keys() - schema.load_fields.keys()
     if isinstance(data, Mapping):
         dump_only = dict()
         non_dump_only = dict()
         # get our dump_only fields directly, and candidates for loadable:
         for k, v in data.items():
-            if k in dump_only_fields:
+            if output_to_input_keys.get(k, k) in dump_only_fields:
                 dump_only[k] = v
             else:
                 non_dump_only[k] = v
@@ -49,7 +52,7 @@ def filter_dump_only(schema, data):
         # construct loadable (a subset of non_dump_only, with recursive filter of nested dump_only fields)
         loadable = dict()
         for k, v in non_dump_only.items():
-            field = schema.fields[k]
+            field = schema.fields[output_to_input_keys.get(k, k)]
             # see if we have a nested schema (using either Nested(many=True) or List(Nested())
             field_schema = None
             if isinstance(field, fields.Nested):
