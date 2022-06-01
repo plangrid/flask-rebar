@@ -331,3 +331,13 @@ class TestQueryParamList(TestCase):
         self.assertEqual(
             ctx.exception.messages, {"foos": {1: ["Not a valid integer."]}}
         )
+
+
+class DataKeySchema(RequireOnDumpMixin, Schema):
+    test_field = fields.String(data_key="testField")
+
+
+class TestDataKey(TestCase):
+    def test_dump_and_validate_with_data_key(self):
+        result = compat.dump(DataKeySchema(), {"test_field": "abc"})
+        self.assertEqual(result, {"testField": "abc"})
