@@ -617,7 +617,7 @@ class HandlerRegistry(object):
         blueprint_name = "swagger_ui"
 
         if self.prefix:
-            blueprint_name = self.prefix + blueprint_name
+            blueprint_name = self.prefix.replace(".", "_") + blueprint_name
 
         if self.spec_ui_path:
             blueprint = create_swagger_ui_blueprint(
