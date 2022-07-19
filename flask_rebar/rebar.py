@@ -14,9 +14,7 @@ import sys
 from collections import defaultdict
 from collections import namedtuple
 from copy import copy
-from distutils.version import LooseVersion
 from functools import wraps
-from flask import __version__ as flask_version
 from flask import current_app, g, jsonify, request
 from werkzeug.datastructures import Headers
 from werkzeug.routing import RequestRedirect
@@ -41,15 +39,9 @@ try:
 except ImportError:
     from collections import Mapping  # 2.7+
 
-# To catch redirection exceptions, app.errorhandler expects 301 in versions
-# below 0.11.0 but the exception itself in versions greater than 0.11.0.
-# NOTE: as of Flask 1.0.3, redirects are no longer bubbled up as exceptions
-if LooseVersion(flask_version) < LooseVersion("0.11.0"):
-    MOVED_PERMANENTLY_ERROR = 301
-    PERMANENT_REDIRECT_ERROR = 308
-else:
-    MOVED_PERMANENTLY_ERROR = RequestRedirect
-    PERMANENT_REDIRECT_ERROR = RequestRedirect
+
+MOVED_PERMANENTLY_ERROR = RequestRedirect
+PERMANENT_REDIRECT_ERROR = RequestRedirect
 
 
 def _convert_authenticator_to_authenticators(authenticator):
