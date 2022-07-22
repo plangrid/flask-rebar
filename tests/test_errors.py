@@ -11,18 +11,21 @@ from __future__ import unicode_literals
 
 import json
 import unittest
+from unittest.mock import ANY
+from unittest.mock import patch
 
 from flask import Flask
 from marshmallow import fields
 from werkzeug.exceptions import BadRequest
-from unittest.mock import ANY
-from unittest.mock import patch
-from tests.helpers import make_test_response
 
-from flask_rebar import messages, validation, response, Rebar
 from flask_rebar import errors
+from flask_rebar import messages
+from flask_rebar import Rebar
+from flask_rebar import response
+from flask_rebar import validation
 from flask_rebar.utils.request_utils import get_json_body_params_or_400
 from flask_rebar.utils.request_utils import get_query_string_params_or_400
+from tests.helpers import make_test_response
 
 
 class TestErrors(unittest.TestCase):

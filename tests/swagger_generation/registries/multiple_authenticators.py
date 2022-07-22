@@ -1,11 +1,19 @@
 import marshmallow as m
 
-from flask_rebar import Rebar, HeaderApiKeyAuthenticator, compat
-from flask_rebar.authenticators import Authenticator, USE_DEFAULT
-from flask_rebar.swagger_generation import SwaggerV2Generator, SwaggerV3Generator
+from flask_rebar import compat
+from flask_rebar import HeaderApiKeyAuthenticator
+from flask_rebar import Rebar
+from flask_rebar.authenticators import Authenticator
+from flask_rebar.authenticators import USE_DEFAULT
+from flask_rebar.swagger_generation import SwaggerV2Generator
+from flask_rebar.swagger_generation import SwaggerV3Generator
+from flask_rebar.swagger_generation.authenticator_to_swagger import (
+    AuthenticatorConverter,
+)
 from flask_rebar.swagger_generation.authenticator_to_swagger import (
     AuthenticatorConverterRegistry,
-    AuthenticatorConverter,
+)
+from flask_rebar.swagger_generation.authenticator_to_swagger import (
     HeaderApiKeyConverter,
 )
 

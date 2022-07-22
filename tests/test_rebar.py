@@ -12,18 +12,19 @@ import unittest
 
 import marshmallow as m
 import marshmallow_objects as mo
-from flask import Flask, make_response
-
+from flask import Flask
+from flask import make_response
 from parametrize import parametrize
 
+from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar import messages
-from flask_rebar import HeaderApiKeyAuthenticator, SwaggerV3Generator
+from flask_rebar import SwaggerV3Generator
 from flask_rebar.compat import set_data_key
-from flask_rebar.rebar import Rebar
 from flask_rebar.rebar import prefix_url
+from flask_rebar.rebar import Rebar
 from flask_rebar.testing import validate_swagger
-from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.testing.swagger_jsonschema import SWAGGER_V3_JSONSCHEMA
+from flask_rebar.utils.defaults import USE_DEFAULT
 
 DEFAULT_AUTH_HEADER = "x-default-auth"
 DEFAULT_AUTH_SECRET = "SECRET!"

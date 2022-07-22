@@ -17,15 +17,15 @@ import sys
 from collections import namedtuple
 
 import marshmallow as m
-from marshmallow.validate import Range
-from marshmallow.validate import OneOf
 from marshmallow.validate import Length
+from marshmallow.validate import OneOf
+from marshmallow.validate import Range
 from marshmallow.validate import Validator
 
 from flask_rebar import compat
-from flask_rebar.validation import QueryParamList
-from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.swagger_generation import swagger_words as sw
+from flask_rebar.validation import CommaSeparatedList
+from flask_rebar.validation import QueryParamList
 
 try:
     from marshmallow_enum import EnumField, LoadDumpOptions

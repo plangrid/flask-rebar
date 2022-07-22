@@ -8,12 +8,15 @@
     :license: MIT, see LICENSE for details.
 """
 import unittest
-from tests.helpers import make_test_response
 
 from flask import Flask
-from marshmallow import fields, ValidationError
+from marshmallow import fields
+from marshmallow import ValidationError
 
-from flask_rebar import validation, response, marshal
+from flask_rebar import marshal
+from flask_rebar import response
+from flask_rebar import validation
+from tests.helpers import make_test_response
 
 
 class TestResponseFormatting(unittest.TestCase):

@@ -1,11 +1,12 @@
 import marshmallow as m
 import marshmallow_objects as mo
 
-from flask_rebar import Rebar
-from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar import compat
+from flask_rebar import HeaderApiKeyAuthenticator
+from flask_rebar import Rebar
+from flask_rebar.swagger_generation import SwaggerV2Generator
+from flask_rebar.swagger_generation import SwaggerV3Generator
 from flask_rebar.utils.marshmallow_objects_helpers import NestedTitledModel
-from flask_rebar.swagger_generation import SwaggerV2Generator, SwaggerV3Generator
 
 rebar = Rebar()
 registry = rebar.create_handler_registry()

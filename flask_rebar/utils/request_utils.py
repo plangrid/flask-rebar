@@ -7,15 +7,13 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from __future__ import unicode_literals
-
 import collections
 import copy
 
 import marshmallow
-from flask import Response
 from flask import jsonify
 from flask import request
+from flask import Response
 from werkzeug.datastructures import Headers
 from werkzeug.exceptions import BadRequest as WerkzeugBadRequest
 
@@ -128,7 +126,6 @@ def raise_400_for_marshmallow_errors(errs, msg):
     _format_marshmallow_errors_for_response_in_place(copied)
 
     additional_data = {"errors": copied}
-    message, rebar_code = msg if isinstance(msg, tuple) else msg, None
 
     raise errors.BadRequest(msg=msg, additional_data=additional_data)
 

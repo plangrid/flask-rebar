@@ -15,23 +15,28 @@ from collections import defaultdict
 from collections import namedtuple
 from copy import copy
 from functools import wraps
-from flask import current_app, g, jsonify, request
+
+from flask import current_app
+from flask import g
+from flask import jsonify
+from flask import request
 from werkzeug.datastructures import Headers
 from werkzeug.routing import RequestRedirect
 
-from flask_rebar import messages
 from flask_rebar import errors
+from flask_rebar import messages
 from flask_rebar.authenticators import Authenticator
+from flask_rebar.swagger_generation import SwaggerV2Generator
+from flask_rebar.swagger_ui import create_swagger_ui_blueprint
 from flask_rebar.utils.defaults import USE_DEFAULT
-from flask_rebar.utils.request_utils import marshal
-from flask_rebar.utils.request_utils import response
+from flask_rebar.utils.deprecation import deprecated
+from flask_rebar.utils.deprecation import deprecated_parameters
 from flask_rebar.utils.request_utils import get_header_params_or_400
 from flask_rebar.utils.request_utils import get_json_body_params_or_400
 from flask_rebar.utils.request_utils import get_query_string_params_or_400
+from flask_rebar.utils.request_utils import marshal
 from flask_rebar.utils.request_utils import normalize_schema
-from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
-from flask_rebar.swagger_generation import SwaggerV2Generator
-from flask_rebar.swagger_ui import create_swagger_ui_blueprint
+from flask_rebar.utils.request_utils import response
 
 # Deal with maintaining (for now at least) support for 2.7+:
 try:

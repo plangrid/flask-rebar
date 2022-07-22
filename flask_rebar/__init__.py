@@ -1,24 +1,16 @@
-from __future__ import unicode_literals
-
-from flask_rebar.utils.request_utils import marshal, response
-
-from flask_rebar.rebar import (
-    Rebar,
-    HandlerRegistry,
-    get_validated_args,
-    get_validated_body,
-    get_validated_headers,
-)
-
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator
-
-from flask_rebar.validation import ResponseSchema, RequestSchema
-
-from flask_rebar.swagger_generation import (
-    ExternalDocumentation,
-    SwaggerV2Generator,
-    SwaggerV3Generator,
-    Tag,
-    Server,
-    ServerVariable,
-)
+from flask_rebar.rebar import get_validated_args
+from flask_rebar.rebar import get_validated_body
+from flask_rebar.rebar import get_validated_headers
+from flask_rebar.rebar import HandlerRegistry
+from flask_rebar.rebar import Rebar
+from flask_rebar.swagger_generation import ExternalDocumentation
+from flask_rebar.swagger_generation import Server
+from flask_rebar.swagger_generation import ServerVariable
+from flask_rebar.swagger_generation import SwaggerV2Generator
+from flask_rebar.swagger_generation import SwaggerV3Generator
+from flask_rebar.swagger_generation import Tag
+from flask_rebar.utils.request_utils import marshal
+from flask_rebar.utils.request_utils import response
+from flask_rebar.validation import RequestSchema
+from flask_rebar.validation import ResponseSchema

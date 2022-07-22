@@ -14,23 +14,18 @@ import pytest
 
 from flask_rebar.rebar import Rebar
 from flask_rebar.swagger_generation import ExternalDocumentation
-from flask_rebar.swagger_generation import SwaggerV2Generator
-from flask_rebar.swagger_generation import SwaggerV3Generator
 from flask_rebar.swagger_generation import Server
 from flask_rebar.swagger_generation import ServerVariable
+from flask_rebar.swagger_generation import SwaggerV2Generator
+from flask_rebar.swagger_generation import SwaggerV3Generator
 from flask_rebar.swagger_generation import Tag
 from flask_rebar.testing import validate_swagger
-from flask_rebar.testing.swagger_jsonschema import (
-    SWAGGER_V2_JSONSCHEMA,
-    SWAGGER_V3_JSONSCHEMA,
-)
-
-from tests.swagger_generation.registries import (
-    legacy,
-    exploded_query_string,
-    marshmallow_objects,
-    multiple_authenticators,
-)
+from flask_rebar.testing.swagger_jsonschema import SWAGGER_V2_JSONSCHEMA
+from flask_rebar.testing.swagger_jsonschema import SWAGGER_V3_JSONSCHEMA
+from tests.swagger_generation.registries import exploded_query_string
+from tests.swagger_generation.registries import legacy
+from tests.swagger_generation.registries import marshmallow_objects
+from tests.swagger_generation.registries import multiple_authenticators
 
 
 def _assert_dicts_equal(a, b):
@@ -141,7 +136,7 @@ def test_swagger_v3_generator_non_registry_parameters():
                 variables={
                     "username": ServerVariable(
                         default="demo",
-                        description="this value is assigned by the service provider, in this example `gigantic-server.com`",
+                        description="this value is assigned by the service provider: `gigantic-server.com`",
                     ),
                     "port": ServerVariable(default="8443", enum=["8443", "443"]),
                     "basePath": ServerVariable(default="v2"),
@@ -172,7 +167,7 @@ def test_swagger_v3_generator_non_registry_parameters():
                 "variables": {
                     "username": {
                         "default": "demo",
-                        "description": "this value is assigned by the service provider, in this example `gigantic-server.com`",
+                        "description": "this value is assigned by the service provider: `gigantic-server.com`",
                     },
                     "port": {"enum": ["8443", "443"], "default": "8443"},
                     "basePath": {"default": "v2"},

@@ -1,14 +1,15 @@
 from flask import Flask
-from marshmallow import fields, pre_dump, pre_load
+from marshmallow import fields
+from marshmallow import pre_dump
+from marshmallow import pre_load
 
-from flask_rebar import (
-    Rebar,
-    errors,
-    HeaderApiKeyAuthenticator,
-    Tag,
-    SwaggerV2Generator,
-)
-from flask_rebar.validation import RequestSchema, ResponseSchema
+from flask_rebar import errors
+from flask_rebar import HeaderApiKeyAuthenticator
+from flask_rebar import Rebar
+from flask_rebar import SwaggerV2Generator
+from flask_rebar import Tag
+from flask_rebar.validation import RequestSchema
+from flask_rebar.validation import ResponseSchema
 
 
 rebar = Rebar()

@@ -11,21 +11,23 @@ from __future__ import unicode_literals
 
 import copy
 
-from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.authenticators import USE_DEFAULT
+from flask_rebar.swagger_generation import swagger_words as sw
+from flask_rebar.swagger_generation.generator_utils import create_ref
+from flask_rebar.swagger_generation.generator_utils import format_path_for_swagger
+from flask_rebar.swagger_generation.generator_utils import get_ref_schema
+from flask_rebar.swagger_generation.generator_utils import get_response_description
+from flask_rebar.swagger_generation.generator_utils import get_unique_authenticators
+from flask_rebar.swagger_generation.generator_utils import get_unique_schema_definitions
 from flask_rebar.swagger_generation.generator_utils import (
-    format_path_for_swagger,
-    verify_parameters_are_the_same,
-    get_response_description,
-    create_ref,
     recursively_convert_dict_to_ordered_dict,
-    get_unique_schema_definitions,
-    get_ref_schema,
-    get_unique_authenticators,
+)
+from flask_rebar.swagger_generation.generator_utils import (
+    verify_parameters_are_the_same,
 )
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
-from flask_rebar.validation import Error
 from flask_rebar.swagger_generation.swagger_generator import SwaggerGenerator
+from flask_rebar.validation import Error
 
 
 class SwaggerV2Generator(SwaggerGenerator):

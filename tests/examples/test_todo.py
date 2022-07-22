@@ -8,7 +8,6 @@
     :license: MIT, see LICENSE for details.
 """
 import json
-
 import unittest
 
 from examples.todo.todo import create_app

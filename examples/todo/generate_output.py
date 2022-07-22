@@ -1,7 +1,7 @@
+import contextlib
+import json
 import os
 import subprocess
-import json
-import contextlib
 
 
 this_directory = os.path.dirname(os.path.realpath(__file__))

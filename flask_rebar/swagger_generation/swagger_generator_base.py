@@ -7,7 +7,6 @@
     :copyright: Copyright 2019 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-
 import abc
 import functools
 

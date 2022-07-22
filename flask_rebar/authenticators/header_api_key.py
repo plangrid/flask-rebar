@@ -7,10 +7,13 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from flask import request, g
 from hmac import compare_digest
 
-from flask_rebar import errors, messages
+from flask import g
+from flask import request
+
+from flask_rebar import errors
+from flask_rebar import messages
 from flask_rebar.authenticators.base import Authenticator
 
 

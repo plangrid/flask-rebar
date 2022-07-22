@@ -9,23 +9,22 @@
 """
 from datetime import datetime
 from unittest import TestCase
-from pytest import mark
-
-from flask import Flask
 
 from marshmallow import __version_info__ as MARSHMALLOW_VERSION
+from marshmallow import fields
 from marshmallow import Schema
 from marshmallow import ValidationError
-from marshmallow import fields
-from marshmallow.validate import OneOf, Range
+from marshmallow.validate import OneOf
+from marshmallow.validate import Range
+from pytest import mark
 from werkzeug.datastructures import MultiDict
 
 from flask_rebar import compat
 from flask_rebar import rebar
 from flask_rebar.utils.request_utils import normalize_schema
-from flask_rebar.validation import RequireOnDumpMixin
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
+from flask_rebar.validation import RequireOnDumpMixin
 from tests.test_rebar import create_rebar_app
 
 

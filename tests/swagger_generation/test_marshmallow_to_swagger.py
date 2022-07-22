@@ -8,17 +8,16 @@
     :license: MIT, see LICENSE for details.
 """
 import enum
+import unittest
 from unittest import TestCase
-from parametrize import parametrize
-
 
 import marshmallow as m
 import marshmallow_enum as me
 from marshmallow import validate as v
+from parametrize import parametrize
 
 from flask_rebar.swagger_generation.marshmallow_to_swagger import ALL_CONVERTERS
 from flask_rebar.swagger_generation.marshmallow_to_swagger import ConverterRegistry
-
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
 

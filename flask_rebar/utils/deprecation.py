@@ -7,7 +7,6 @@
     :copyright: Copyright 2019 Autodesk, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-
 import functools
 import warnings
 from collections import namedtuple

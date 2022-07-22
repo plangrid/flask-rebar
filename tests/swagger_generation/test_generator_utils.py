@@ -9,9 +9,9 @@
 """
 import unittest
 
-from flask_rebar.swagger_generation.generator_utils import PathArgument
 from flask_rebar.swagger_generation.generator_utils import flatten
 from flask_rebar.swagger_generation.generator_utils import format_path_for_swagger
+from flask_rebar.swagger_generation.generator_utils import PathArgument
 
 
 class TestFlatten(unittest.TestCase):

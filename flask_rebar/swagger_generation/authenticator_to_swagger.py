@@ -1,8 +1,9 @@
 from collections import namedtuple
 
-from flask_rebar.authenticators import HeaderApiKeyAuthenticator, Authenticator
-from .marshmallow_to_swagger import ConverterRegistry
 from . import swagger_words as sw
+from .marshmallow_to_swagger import ConverterRegistry
+from flask_rebar.authenticators import Authenticator
+from flask_rebar.authenticators import HeaderApiKeyAuthenticator
 
 
 _Context = namedtuple(

@@ -9,14 +9,12 @@
 """
 import copy
 import re
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
+from collections import OrderedDict
 
-from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
-from flask_rebar.swagger_generation.authenticator_to_swagger import (
-    AuthenticatorConverterRegistry,
-)
+from flask_rebar.utils.defaults import USE_DEFAULT
 
 
 def get_key(obj):

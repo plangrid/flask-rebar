@@ -7,7 +7,8 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from flask import Blueprint, render_template
+from flask import Blueprint
+from flask import render_template
 
 
 def create_swagger_ui_blueprint(

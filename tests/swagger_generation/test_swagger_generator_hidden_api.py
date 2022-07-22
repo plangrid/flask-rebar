@@ -8,13 +8,12 @@
     :license: MIT, see LICENSE for details.
 """
 import json
-import pytest
-from flask_rebar.testing import validate_swagger
-from flask_rebar.testing.swagger_jsonschema import (
-    SWAGGER_V2_JSONSCHEMA,
-    SWAGGER_V3_JSONSCHEMA,
-)
 
+import pytest
+
+from flask_rebar.testing import validate_swagger
+from flask_rebar.testing.swagger_jsonschema import SWAGGER_V2_JSONSCHEMA
+from flask_rebar.testing.swagger_jsonschema import SWAGGER_V3_JSONSCHEMA
 from tests.swagger_generation.registries import hidden_api
 
 

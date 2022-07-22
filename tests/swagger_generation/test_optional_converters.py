@@ -1,8 +1,12 @@
-import pytest
-from unittest import mock, TestCase
 from importlib import reload
+from unittest import mock
+from unittest import TestCase
 
-from flask_rebar.swagger_generation.marshmallow_to_swagger import _common_converters
+import pytest
+
+from flask_rebar.swagger_generation.marshmallow_to_swagger import (  # noqa: F401
+    _common_converters,
+)
 
 
 # HAAAAACKS - using importlib.reload will invalidate pre-existing imports in other test modules,

@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
+from setuptools import find_packages
+from setuptools import setup
 
 
 # packages required for local development and testing
 development = [
     "black==22.3.0",
     "bumpversion==0.5.3",
+    "flake8==4.0.1",
     "gitchangelog>=3.0.4,<4.0.0",
     "jsonschema==3.0.2",
     "marshmallow-objects~=2.3",
