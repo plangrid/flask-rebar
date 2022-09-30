@@ -9,7 +9,6 @@
 """
 import unittest
 from unittest.mock import MagicMock
-import pytest
 
 from flask_rebar.swagger_generation.generator_utils import PathArgument
 from flask_rebar.swagger_generation.generator_utils import flatten
@@ -17,7 +16,6 @@ from flask_rebar.swagger_generation.generator_utils import format_path_for_swagg
 from flask_rebar.swagger_generation.generator_utils import (
     add_docstring_to_path_definition,
 )
-from tests.helpers import docstring_parser_not_installed  # noqa
 
 
 class TestFlatten(unittest.TestCase):
@@ -244,18 +242,6 @@ class TestAddDocStringToPathDefinition(unittest.TestCase):
         mock_method = self._generate_mock_method_with_docstring(docstring)
         path_definition = {"get": {}}
         add_docstring_to_path_definition(path_definition, "get", mock_method, False)
-        expected = {"get": {"description": docstring}}
-        self.assertEqual(expected["get"], path_definition["get"])
-
-    @pytest.mark.usefixtures("docstring_parser_not_installed")
-    def test_when_parse_docstring_is_yes_but_docstring_parser_not_installed(self):
-        with self.assertRaises(ImportError):
-            import docstring_parser  # noqa
-
-        docstring = "\ntest summary\n\n    test description\n"
-        mock_method = self._generate_mock_method_with_docstring(docstring)
-        path_definition = {"get": {}}
-        add_docstring_to_path_definition(path_definition, "get", mock_method, True)
         expected = {"get": {"description": docstring}}
         self.assertEqual(expected["get"], path_definition["get"])
 
