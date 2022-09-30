@@ -117,7 +117,7 @@ EXPECTED_SWAGGER_V2 = {
             ],
             "get": {
                 "operationId": "get_foo",
-                "description": "helpful description",
+                "description": "\n    the summary\n\n    helpful description\n    ",
                 "responses": {
                     "200": {
                         "description": "Foo",
@@ -136,7 +136,6 @@ EXPECTED_SWAGGER_V2 = {
                         "type": "string",
                     }
                 ],
-                "summary": "the summary",
             },
             "patch": {
                 "operationId": "update_foo",
@@ -318,7 +317,7 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
             ],
             "get": {
                 "operationId": "get_foo",
-                "description": "helpful description",
+                "description": "\n    the summary\n\n    helpful description\n    ",
                 "responses": {
                     "200": {
                         "description": "Foo",
@@ -345,7 +344,6 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
                         "schema": {"type": "string"},
                     }
                 ],
-                "summary": "the summary",
             },
             "patch": {
                 "operationId": "update_foo",

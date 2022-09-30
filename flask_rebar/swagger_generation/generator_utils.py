@@ -282,3 +282,28 @@ def recursively_convert_dict_to_ordered_dict(obj):
         return [recursively_convert_dict_to_ordered_dict(item) for item in obj]
     else:
         return obj
+
+
+def get_parsed_method_docstring(method_definition, parse_docstring):
+    if method_definition.func.__doc__:
+        if parse_docstring:
+            try:
+                from docstring_parser import parse
+
+                parsed_docstring = parse(method_definition.func.__doc__)
+                return parsed_docstring.__dict__
+            except ImportError:
+                return {"long_description": method_definition.func.__doc__}
+        else:
+            return {"long_description": method_definition.func.__doc__}
+
+
+def add_docstring_to_path_definition(
+    path_definition, method, method_definition, parse_docstring
+):
+    docstring = get_parsed_method_docstring(method_definition, parse_docstring)
+    if docstring:
+        if docstring.get("short_description"):
+            path_definition[method][sw.summary] = docstring["short_description"]
+        if docstring.get("long_description"):
+            path_definition[method][sw.description] = docstring["long_description"]

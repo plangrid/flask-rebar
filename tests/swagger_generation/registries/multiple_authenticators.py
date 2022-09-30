@@ -310,7 +310,7 @@ EXPECTED_SWAGGER_V2 = {
             ],
             "get": {
                 "operationId": "get_foo",
-                "description": "P1 L1\nP1 L2\n\nP2 L1\nP2 L2",
+                "description": "\n    a summary\n\n    P1 L1\n    P1 L2\n\n    P2 L1\n    P2 L2\n    ",
                 "responses": {
                     "200": {
                         "description": "Foo",
@@ -329,7 +329,6 @@ EXPECTED_SWAGGER_V2 = {
                         "type": "string",
                     }
                 ],
-                "summary": "a summary",
             },
             "patch": {
                 "operationId": "update_foo",
@@ -535,7 +534,7 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
             ],
             "get": {
                 "operationId": "get_foo",
-                "description": "P1 L1\nP1 L2\n\nP2 L1\nP2 L2",
+                "description": "\n    a summary\n\n    P1 L1\n    P1 L2\n\n    P2 L1\n    P2 L2\n    ",
                 "responses": {
                     "200": {
                         "description": "Foo",
@@ -562,7 +561,6 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
                         "schema": {"type": "string"},
                     }
                 ],
-                "summary": "a summary",
             },
             "patch": {
                 "operationId": "update_foo",

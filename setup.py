@@ -29,7 +29,11 @@ if __name__ == "__main__":
         license="MIT",
         packages=find_packages(exclude=("test*", "examples")),
         include_package_data=True,
-        extras_require={"dev": development, "enum": ["marshmallow-enum~=1.5"]},
+        extras_require={
+            "dev": development,
+            "enum": ["marshmallow-enum~=1.5"],
+            "doc_parser": ["docstring_parser~=0.13"],
+        },
         install_requires=["Flask>=1.0,<3", "marshmallow>=3.0,<4"],
         url="https://github.com/plangrid/flask-rebar",
         classifiers=[

@@ -9,8 +9,6 @@
 """
 from __future__ import unicode_literals
 
-from docstring_parser import parse
-
 
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.swagger_generation import swagger_words as sw
@@ -24,6 +22,7 @@ from flask_rebar.swagger_generation.generator_utils import (
     recursively_convert_dict_to_ordered_dict,
     get_ref_schema,
     get_unique_authenticators,
+    add_docstring_to_path_definition,
 )
 from flask_rebar.swagger_generation.marshmallow_to_swagger import (
     get_swagger_title,
@@ -246,16 +245,12 @@ class SwaggerV3Generator(SwaggerGenerator):
                     sw.responses: responses_definition,
                 }
 
-                if d.func.__doc__:
-                    docstring = parse(d.func.__doc__)
-                    if docstring.short_description:
-                        path_definition[method_lower][
-                            sw.summary
-                        ] = docstring.short_description
-                    if docstring.long_description:
-                        path_definition[method_lower][
-                            sw.description
-                        ] = docstring.long_description
+                add_docstring_to_path_definition(
+                    path_definition,
+                    method_lower,
+                    d,
+                    self.parse_docstring_for_descriptions,
+                )
 
                 if parameters_definition:
                     path_definition[method_lower][sw.parameters] = parameters_definition

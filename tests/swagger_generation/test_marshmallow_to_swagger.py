@@ -217,6 +217,7 @@ class TestConverterRegistry(TestCase):
         self.assertEqual(
             json_schema,
             {
+                "additionalProperties": False,
                 "type": "object",
                 "title": "Foo",
                 "properties": {
