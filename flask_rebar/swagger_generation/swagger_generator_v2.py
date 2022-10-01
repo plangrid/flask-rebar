@@ -108,6 +108,7 @@ class SwaggerV2Generator(SwaggerGenerator):
         consumes=None,
         produces=None,
         sort_keys=True,
+        parse_docstrings=False,
     ):
         """Generate a swagger specification from the provided `registry`
 
@@ -120,6 +121,7 @@ class SwaggerV2Generator(SwaggerGenerator):
         :param Sequence[str] consumes: Overrides the initialized consumes
         :param Sequence[str] produces: Overrides the initialized produces
         :param bool sort_keys: Use OrderedDicts sorted by keys instead of dicts
+        :param bool parse_docstrings: Whether to try to parse method docstrings to summary and description
         :rtype: dict
         """
 
@@ -149,6 +151,7 @@ class SwaggerV2Generator(SwaggerGenerator):
             paths=registry.paths,
             default_headers_schema=registry.default_headers_schema,
             default_security=default_security,
+            parse_docstrings=parse_docstrings,
         )
 
         if host and "://" in host:
@@ -178,7 +181,13 @@ class SwaggerV2Generator(SwaggerGenerator):
 
         return swagger
 
-    def _get_paths(self, paths, default_headers_schema, default_security=None):
+    def _get_paths(
+        self,
+        paths,
+        default_headers_schema,
+        default_security=None,
+        parse_docstrings=False,
+    ):
         path_definitions = {}
 
         for path, methods in paths.items():
@@ -288,10 +297,7 @@ class SwaggerV2Generator(SwaggerGenerator):
                 }
 
                 add_docstring_to_path_definition(
-                    path_definition,
-                    method_lower,
-                    d,
-                    self.parse_docstring_for_descriptions,
+                    path_definition, method_lower, d, parse_docstrings,
                 )
 
                 if parameters_definition:

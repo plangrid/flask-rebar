@@ -48,11 +48,7 @@ class NameAndOtherSchema(m.Schema):
     headers_schema=HeaderSchema(),
 )
 def get_foo(foo_uid):
-    """
-    the summary
-
-    helpful description
-    """
+    """helpful description"""
     pass
 
 
@@ -117,7 +113,7 @@ EXPECTED_SWAGGER_V2 = {
             ],
             "get": {
                 "operationId": "get_foo",
-                "description": "\n    the summary\n\n    helpful description\n    ",
+                "description": "helpful description",
                 "responses": {
                     "200": {
                         "description": "Foo",
@@ -317,7 +313,7 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
             ],
             "get": {
                 "operationId": "get_foo",
-                "description": "\n    the summary\n\n    helpful description\n    ",
+                "description": "helpful description",
                 "responses": {
                     "200": {
                         "description": "Foo",

@@ -98,7 +98,6 @@ class SwaggerGenerator(SwaggerGeneratorI):
         default_response_schema=Error(),
         authenticator_converter_registry=None,
         include_hidden=False,
-        parse_docstring_for_descriptions=False,
     ):
         self.include_hidden = include_hidden
         self.title = title
@@ -141,7 +140,6 @@ class SwaggerGenerator(SwaggerGeneratorI):
         )
 
         self.default_response_schema = default_response_schema
-        self.parse_docstring_for_descriptions = parse_docstring_for_descriptions
 
     def _get_info(self):
         return {

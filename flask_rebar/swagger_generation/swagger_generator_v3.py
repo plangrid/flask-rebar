@@ -89,12 +89,13 @@ class SwaggerV3Generator(SwaggerGenerator):
     def generate_swagger(self, registry, host=None):
         return self.generate(registry=registry, host=host)
 
-    def generate(self, registry, host=None, sort_keys=True):
+    def generate(self, registry, host=None, sort_keys=True, parse_docstrings=False):
         """Generates a Swagger specification from a Rebar instance.
 
         :param flask_rebar.rebar.HandlerRegistry registry:
         :param str host: Adds this host as a Server Object for the service
         :param bool sort_keys: Use OrderedDicts sorted by keys instead of dicts
+        :param bool parse_docstrings: Whether to try to parse method docstrings to summary and description
         :rtype: dict
         """
 
@@ -110,6 +111,7 @@ class SwaggerV3Generator(SwaggerGenerator):
             paths=registry.paths,
             default_headers_schema=registry.default_headers_schema,
             default_security=default_security,
+            parse_docstrings=parse_docstrings,
         )
 
         swagger = {
@@ -138,7 +140,13 @@ class SwaggerV3Generator(SwaggerGenerator):
 
         return swagger
 
-    def _get_paths(self, paths, default_headers_schema, default_security=None):
+    def _get_paths(
+        self,
+        paths,
+        default_headers_schema,
+        default_security=None,
+        parse_docstrings=False,
+    ):
         path_definitions = {}
 
         for path, methods in paths.items():
@@ -246,10 +254,7 @@ class SwaggerV3Generator(SwaggerGenerator):
                 }
 
                 add_docstring_to_path_definition(
-                    path_definition,
-                    method_lower,
-                    d,
-                    self.parse_docstring_for_descriptions,
+                    path_definition, method_lower, d, parse_docstrings,
                 )
 
                 if parameters_definition:
