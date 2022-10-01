@@ -297,7 +297,10 @@ class SwaggerV2Generator(SwaggerGenerator):
                 }
 
                 add_docstring_to_path_definition(
-                    path_definition, method_lower, d, parse_docstrings,
+                    path_definition,
+                    method_lower,
+                    d,
+                    parse_docstrings,
                 )
 
                 if parameters_definition:
