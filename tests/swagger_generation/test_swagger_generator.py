@@ -219,18 +219,18 @@ def test_path_parameter_types_must_be_the_same_for_same_path(generator):
 @pytest.mark.parametrize(
     "registry, swagger_generator, expected_swagger",
     [
-        # (legacy.registry, legacy.swagger_v2_generator, legacy.EXPECTED_SWAGGER_V2),
-        # (legacy.registry, legacy.swagger_v3_generator, legacy.EXPECTED_SWAGGER_V3),
-        # (
-        #     exploded_query_string.registry,
-        #     exploded_query_string.swagger_v2_generator,
-        #     exploded_query_string.EXPECTED_SWAGGER_V2,
-        # ),
-        # (
-        #     exploded_query_string.registry,
-        #     exploded_query_string.swagger_v3_generator,
-        #     exploded_query_string.EXPECTED_SWAGGER_V3,
-        # ),
+        (legacy.registry, legacy.swagger_v2_generator, legacy.EXPECTED_SWAGGER_V2),
+        (legacy.registry, legacy.swagger_v3_generator, legacy.EXPECTED_SWAGGER_V3),
+        (
+            exploded_query_string.registry,
+            exploded_query_string.swagger_v2_generator,
+            exploded_query_string.EXPECTED_SWAGGER_V2,
+        ),
+        (
+            exploded_query_string.registry,
+            exploded_query_string.swagger_v3_generator,
+            exploded_query_string.EXPECTED_SWAGGER_V3,
+        ),
         (
             multiple_authenticators.registry,
             multiple_authenticators.swagger_v2_generator,

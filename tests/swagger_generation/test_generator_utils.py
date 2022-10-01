@@ -10,12 +10,15 @@
 import unittest
 from unittest.mock import MagicMock
 
+import pytest
+
 from flask_rebar.swagger_generation.generator_utils import PathArgument
 from flask_rebar.swagger_generation.generator_utils import flatten
 from flask_rebar.swagger_generation.generator_utils import format_path_for_swagger
 from flask_rebar.swagger_generation.generator_utils import (
     add_docstring_to_path_definition,
 )
+from tests.helpers import docstring_parser_not_installed  # noqa
 
 
 class TestFlatten(unittest.TestCase):
@@ -245,6 +248,15 @@ class TestAddDocStringToPathDefinition(unittest.TestCase):
         expected = {"get": {"description": docstring}}
         self.assertEqual(expected["get"], path_definition["get"])
 
+    @pytest.mark.usefixtures("docstring_parser_not_installed")
+    def test_when_parse_docstring_is_yes_and_pacakge_not_installed(self):
+        docstring = "\ntest summary\n\n    test description\n"
+        mock_method = self._generate_mock_method_with_docstring(docstring)
+        path_definition = {"get": {}}
+        add_docstring_to_path_definition(path_definition, "get", mock_method, True)
+        expected = {"get": {"description": docstring}}
+        self.assertEqual(expected["get"], path_definition["get"])
+
     def test_when_parse_docstring_is_yes_empty_docstring(self):
         mock_method = self._generate_mock_method_with_docstring("")
         path_definition = {"get": {}}
@@ -266,5 +278,18 @@ class TestAddDocStringToPathDefinition(unittest.TestCase):
         add_docstring_to_path_definition(path_definition, "get", mock_method, True)
         expected = {
             "get": {"description": "test description", "summary": "test summary"}
+        }
+        self.assertEqual(expected["get"], path_definition["get"])
+
+    def test_when_parse_docstring_is_yes_with_docstring_with_many_newlines_spaces(self):
+        docstring = "\n\nstuff \n\n more  stuff \n \n\n even more of the stuff\n\n\n   "
+        mock_method = self._generate_mock_method_with_docstring(docstring)
+        path_definition = {"get": {}}
+        add_docstring_to_path_definition(path_definition, "get", mock_method, True)
+        expected = {
+            "get": {
+                "summary": "stuff ",
+                "description": "more  stuff \n \n\n even more of the stuff",
+            }
         }
         self.assertEqual(expected["get"], path_definition["get"])
