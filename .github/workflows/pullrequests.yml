@@ -51,7 +51,7 @@ jobs:
     - name: "Test with ${{matrix.libraries}}"
       run: |
         python -m pip install -U pip
-        python -m pip install '.[dev,enum]' ${{matrix.libraries}}
+        python -m pip install '.[dev,enum,doc_parser]' ${{matrix.libraries}}
         python -m pip freeze
     - name: Run Tests
       run: |
