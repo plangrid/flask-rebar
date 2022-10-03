@@ -18,6 +18,11 @@ from flask_rebar.swagger_generation.authenticator_to_swagger import (
     AuthenticatorConverterRegistry,
 )
 
+try:
+    from docstring_parser import parser
+except ImportError:
+    parser = None
+
 
 def get_key(obj):
     """
@@ -286,14 +291,9 @@ def recursively_convert_dict_to_ordered_dict(obj):
 
 def get_parsed_method_docstring(method_definition, parse_docstring):
     if method_definition.func.__doc__:
-        if parse_docstring:
-            try:
-                from docstring_parser import parse
-
-                parsed_docstring = parse(method_definition.func.__doc__)
-                return parsed_docstring.__dict__
-            except ImportError:
-                return {"long_description": method_definition.func.__doc__}
+        if parse_docstring and parser is not None:
+            parsed_docstring = parser.parse(method_definition.func.__doc__)
+            return parsed_docstring.__dict__
         else:
             return {"long_description": method_definition.func.__doc__}
 
