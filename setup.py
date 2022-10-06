@@ -6,6 +6,7 @@ from setuptools import setup, find_packages
 development = [
     "black==22.3.0",
     "bumpversion==0.5.3",
+    "click>=8.1.3,<9.0.0",
     "flake8==4.0.1",
     "gitchangelog>=3.0.4,<4.0.0",
     "jsonschema==3.0.2",
