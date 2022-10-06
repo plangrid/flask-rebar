@@ -2,7 +2,7 @@
 # We can use this to quickly check if the swagger we are producing is valid
 
 LONG_DESCRIPTION = (
-    "A longer description of the API. Should be different from the title. "
+    "A longer description - should be different from the title. "
     + "GitHub Flavored Markdown is allowed."
 )
 

@@ -8,7 +8,6 @@
     :license: MIT, see LICENSE for details.
 """
 import enum
-import unittest
 from unittest import TestCase
 from parametrize import parametrize
 
@@ -535,7 +534,3 @@ class TestConverterRegistry(TestCase):
         schema = schema_cls()
         json_schema = self.registry.convert(schema)
         self.assertEqual(json_schema, expected)
-
-
-if __name__ == "__main__":
-    unittest.main()
