@@ -8,6 +8,7 @@
     :license: MIT, see LICENSE for details.
 """
 import enum
+import unittest
 from unittest import TestCase
 from parametrize import parametrize
 

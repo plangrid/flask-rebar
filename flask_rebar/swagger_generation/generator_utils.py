@@ -14,9 +14,6 @@ from collections import namedtuple, OrderedDict
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
-from flask_rebar.swagger_generation.authenticator_to_swagger import (
-    AuthenticatorConverterRegistry,
-)
 
 
 def get_key(obj):

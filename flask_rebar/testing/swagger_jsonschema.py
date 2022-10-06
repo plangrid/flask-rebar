@@ -1,6 +1,11 @@
 # This is a JSONSchema document that validates a Swagger spec
 # We can use this to quickly check if the swagger we are producing is valid
 
+LONG_DESCRIPTION = (
+    "A longer description of the API. Should be different from the title. "
+    + "GitHub Flavored Markdown is allowed."
+)
+
 SWAGGER_V2_JSONSCHEMA = {
     "title": "A JSON Schema for Swagger 2.0 API.",
     "id": "http://swagger.io/v2/schema.json#",
@@ -66,7 +71,7 @@ SWAGGER_V2_JSONSCHEMA = {
                 },
                 "description": {
                     "type": "string",
-                    "description": "A longer description of the API. Should be different from the title.  GitHub Flavored Markdown is allowed.",
+                    "description": LONG_DESCRIPTION,
                 },
                 "termsOfService": {
                     "type": "string",
@@ -293,7 +298,7 @@ SWAGGER_V2_JSONSCHEMA = {
             "properties": {
                 "description": {
                     "type": "string",
-                    "description": "A brief description of the parameter. This could contain examples of use.  GitHub Flavored Markdown is allowed.",
+                    "description": LONG_DESCRIPTION,
                 },
                 "name": {"type": "string", "description": "The name of the parameter."},
                 "in": {
@@ -326,7 +331,7 @@ SWAGGER_V2_JSONSCHEMA = {
                 },
                 "description": {
                     "type": "string",
-                    "description": "A brief description of the parameter. This could contain examples of use.  GitHub Flavored Markdown is allowed.",
+                    "description": LONG_DESCRIPTION,
                 },
                 "name": {"type": "string", "description": "The name of the parameter."},
                 "type": {
@@ -367,7 +372,7 @@ SWAGGER_V2_JSONSCHEMA = {
                 },
                 "description": {
                     "type": "string",
-                    "description": "A brief description of the parameter. This could contain examples of use.  GitHub Flavored Markdown is allowed.",
+                    "description": LONG_DESCRIPTION,
                 },
                 "name": {"type": "string", "description": "The name of the parameter."},
                 "allowEmptyValue": {
@@ -413,7 +418,7 @@ SWAGGER_V2_JSONSCHEMA = {
                 },
                 "description": {
                     "type": "string",
-                    "description": "A brief description of the parameter. This could contain examples of use.  GitHub Flavored Markdown is allowed.",
+                    "description": LONG_DESCRIPTION,
                 },
                 "name": {"type": "string", "description": "The name of the parameter."},
                 "allowEmptyValue": {
@@ -460,7 +465,7 @@ SWAGGER_V2_JSONSCHEMA = {
                 },
                 "description": {
                     "type": "string",
-                    "description": "A brief description of the parameter. This could contain examples of use.  GitHub Flavored Markdown is allowed.",
+                    "description": LONG_DESCRIPTION,
                 },
                 "name": {"type": "string", "description": "The name of the parameter."},
                 "type": {

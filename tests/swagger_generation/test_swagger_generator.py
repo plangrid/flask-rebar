@@ -141,7 +141,7 @@ def test_swagger_v3_generator_non_registry_parameters():
                 variables={
                     "username": ServerVariable(
                         default="demo",
-                        description="this value is assigned by the service provider, in this example `gigantic-server.com`",
+                        description="this value is assigned by the service provider: `gigantic-server.com`",
                     ),
                     "port": ServerVariable(default="8443", enum=["8443", "443"]),
                     "basePath": ServerVariable(default="v2"),
@@ -172,7 +172,7 @@ def test_swagger_v3_generator_non_registry_parameters():
                 "variables": {
                     "username": {
                         "default": "demo",
-                        "description": "this value is assigned by the service provider, in this example `gigantic-server.com`",
+                        "description": "this value is assigned by the service provider: `gigantic-server.com`",
                     },
                     "port": {"enum": ["8443", "443"], "default": "8443"},
                     "basePath": {"default": "v2"},

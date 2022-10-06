@@ -6,6 +6,7 @@ from setuptools import setup, find_packages
 development = [
     "black==22.3.0",
     "bumpversion==0.5.3",
+    "flake8==4.0.1",
     "gitchangelog>=3.0.4,<4.0.0",
     "jsonschema==3.0.2",
     "marshmallow-objects~=2.3",

@@ -2,8 +2,6 @@ import pytest
 from unittest import mock, TestCase
 from importlib import reload
 
-from flask_rebar.swagger_generation.marshmallow_to_swagger import _common_converters
-
 
 # HAAAAACKS - using importlib.reload will invalidate pre-existing imports in other test modules,
 # even when imported "as" something else..  so we'll just use pytest-order to ensure this test always runs LAST.
