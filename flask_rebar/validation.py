@@ -8,20 +8,11 @@
     :license: MIT, see LICENSE for details.
 """
 from collections import namedtuple
-
-try:
-    from collections.abc import Mapping
-except ImportError:
-    from collections import Mapping
+from collections.abc import Mapping
 
 from marshmallow import Schema
-from marshmallow import ValidationError
 from marshmallow import fields
-from marshmallow import post_dump
-from marshmallow import validates_schema
 from werkzeug.datastructures import MultiDict
-
-from flask_rebar import messages
 
 FilterResult = namedtuple("FilterResult", "loadable, dump_only")
 

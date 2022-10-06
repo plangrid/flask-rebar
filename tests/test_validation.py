@@ -11,8 +11,6 @@ from datetime import datetime
 from unittest import TestCase
 from pytest import mark
 
-from flask import Flask
-
 from marshmallow import __version_info__ as MARSHMALLOW_VERSION
 from marshmallow import Schema
 from marshmallow import ValidationError

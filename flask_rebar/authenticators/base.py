@@ -26,4 +26,4 @@ class Authenticator(object):
 
         :raises: :class:`flask_rebar.errors.Unauthorized`
         """
-        raise NotImplemented
+        raise NotImplementedError

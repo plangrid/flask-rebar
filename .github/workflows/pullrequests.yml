@@ -73,3 +73,6 @@ jobs:
     - name: Run black
       run: |
         python -m black --check --diff .
+    - name: Run flake8
+      run: |
+        python -m flake8 .
