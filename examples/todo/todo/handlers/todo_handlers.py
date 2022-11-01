@@ -1,6 +1,6 @@
 from todo.database import todo_id_sequence, todo_database
-from todo.rebar import rebar
-from todo.rebar import registry
+from todo.app import rebar
+from todo.app import registry
 from todo.schemas import (
     CreateTodoSchema,
     GetTodoListSchema,

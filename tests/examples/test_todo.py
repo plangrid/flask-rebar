@@ -29,7 +29,7 @@ class TestTodoApp(unittest.TestCase):
         sys.path = cls.old_path
 
     def setUp(self):
-        from todo.app_init import create_app
+        from todo.app import create_app
 
         self.app = create_app()
 
