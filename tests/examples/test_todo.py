@@ -22,7 +22,7 @@ class TestTodoApp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.old_path = sys.path.copy()
-        sys.path.insert(0, 'examples/todo')
+        sys.path.insert(0, "examples/todo")
 
     @classmethod
     def tearDownClass(cls):
@@ -30,8 +30,8 @@ class TestTodoApp(unittest.TestCase):
 
     def setUp(self):
         from todo.app_init import create_app
-        self.app = create_app()
 
+        self.app = create_app()
 
     def test_swagger(self):
         resp = self.app.test_client().get("/swagger")
