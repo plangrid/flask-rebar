@@ -8,10 +8,9 @@
     :license: MIT, see LICENSE for details.
 """
 import json
+import sys
 
 import unittest
-
-from examples.todo.todo import create_app
 
 
 class TestTodoApp(unittest.TestCase):
@@ -20,11 +19,19 @@ class TestTodoApp(unittest.TestCase):
     be working.
     """
 
-    def setUp(self):
-        self.app = self.create_app()
+    @classmethod
+    def setUpClass(cls):
+        cls.old_path = sys.path.copy()
+        sys.path.insert(0, 'examples/todo')
 
-    def create_app(self):
-        return create_app(__name__)
+    @classmethod
+    def tearDownClass(cls):
+        sys.path = cls.old_path
+
+    def setUp(self):
+        from todo.app_init import create_app
+        self.app = create_app()
+
 
     def test_swagger(self):
         resp = self.app.test_client().get("/swagger")

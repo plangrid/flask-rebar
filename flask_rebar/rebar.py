@@ -18,6 +18,8 @@ from functools import wraps
 from flask import current_app, g, jsonify, request
 from werkzeug.datastructures import Headers
 from werkzeug.routing import RequestRedirect
+from werkzeug.utils import find_modules
+from werkzeug.utils import import_string
 
 from flask_rebar import messages
 from flask_rebar import errors
@@ -292,6 +294,8 @@ class HandlerRegistry(object):
     :param str spec_ui_path:
         The HTML Swagger UI will be hosted at this URL.
         If set as None, no Swagger UI will be hosted.
+    :param list|str handlers:
+         packages to search for modules where handlers are added for this registry.
     """
 
     @deprecated_parameters(
@@ -312,6 +316,7 @@ class HandlerRegistry(object):
         swagger_generator=None,
         spec_path="/swagger",
         spec_ui_path="/swagger/ui",
+        handlers=None,
     ):
         # default_authenticators can be a single Authenticator, a list of Authenticators, or None.
         if isinstance(default_authenticators, Authenticator):
@@ -327,6 +332,7 @@ class HandlerRegistry(object):
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.spec_path = spec_path
         self.spec_ui_path = spec_ui_path
+        self.handlers = handlers
 
     @property
     @deprecated("default_authenticators", "3.0")
@@ -548,6 +554,12 @@ class HandlerRegistry(object):
         self._register_swagger_ui(app=app)
 
     def _register_routes(self, app):
+        if self.handlers is not None:
+            handlers = self.handlers if isinstance(self.handlers, list) else [self.handlers]
+            for handler in handlers:
+                for handler_mod in find_modules(handler, recursive=True):
+                    import_string(handler_mod)
+
         for path, methods in self.paths.items():
             for method, definition_ in methods.items():
                 if definition_.endpoint:
@@ -668,6 +680,7 @@ class Rebar(object):
         swagger_generator=None,
         spec_path="/swagger",
         swagger_ui_path="/swagger/ui",
+        handlers=None,
     ):
         """
         Create a new handler registry and add to this extension's set of
@@ -697,6 +710,7 @@ class Rebar(object):
         :param str swagger_ui_path:
             The HTML Swagger UI will be hosted at this URL.
             If set as None, no Swagger UI will be hosted.
+        :param list handlers: directories where handlers should be imported from.
         :rtype: HandlerRegistry
         """
         registry = HandlerRegistry(
@@ -707,6 +721,7 @@ class Rebar(object):
             swagger_generator=swagger_generator,
             spec_path=spec_path,
             spec_ui_path=swagger_ui_path,
+            handlers=handlers,
         )
         self.add_handler_registry(registry=registry)
         return registry
