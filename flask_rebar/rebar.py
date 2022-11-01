@@ -332,7 +332,10 @@ class HandlerRegistry(object):
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.spec_path = spec_path
         self.spec_ui_path = spec_ui_path
-        self.handlers = handlers
+        if handlers is None:
+            self.handlers = []
+        else:
+            self.handlers = handlers if isinstance(handlers, list) else [handlers]
 
     @property
     @deprecated("default_authenticators", "3.0")
@@ -554,11 +557,9 @@ class HandlerRegistry(object):
         self._register_swagger_ui(app=app)
 
     def _register_routes(self, app):
-        if self.handlers is not None:
-            handlers = self.handlers if isinstance(self.handlers, list) else [self.handlers]
-            for handler in handlers:
-                for handler_mod in find_modules(handler, recursive=True):
-                    import_string(handler_mod)
+        for handler in self.handlers:
+            for handler_mod in find_modules(handler, recursive=True):
+                import_string(handler_mod)
 
         for path, methods in self.paths.items():
             for method, definition_ in methods.items():
