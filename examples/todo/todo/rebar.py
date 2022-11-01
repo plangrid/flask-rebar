@@ -23,5 +23,5 @@ generator = SwaggerV2Generator(
 
 registry = rebar.create_handler_registry(
     swagger_generator=generator,
-    handlers='todo.handlers',
+    handlers="todo.handlers",
 )
