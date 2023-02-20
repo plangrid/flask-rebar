@@ -166,7 +166,12 @@ class TestConverterRegistry(TestCase):
             ),
             (
                 CommaSeparatedList(m.fields.Integer()),
-                {"type": "array", "items": {"type": "integer"}, "style": "simple"},
+                {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "style": "form",
+                    "explode": False,
+                },
             ),
         ]:
 

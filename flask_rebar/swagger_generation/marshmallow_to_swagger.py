@@ -472,7 +472,11 @@ class CsvArrayConverter(ListConverter):
 
     @sets_swagger_attr(sw.style)
     def get_style(self, obj, context):
-        return sw.simple if context.openapi_version == 3 else UNSET
+        return sw.form if context.openapi_version == 3 else UNSET
+
+    @sets_swagger_attr(sw.explode)
+    def get_explode(self, obj, context):
+        return False if context.openapi_version == 3 else UNSET
 
 
 class MultiArrayConverter(ListConverter):
