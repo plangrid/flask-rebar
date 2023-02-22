@@ -333,6 +333,7 @@ class SwaggerV3Generator(SwaggerGenerator):
             # We need the "explode" key to be at the parameters level, not at the schema level.
             explode = jsonschema.pop(sw.explode, None)
             description = jsonschema.pop(sw.description, None)
+            style = jsonschema.pop(sw.style, None)
 
             parameter = {
                 sw.name: prop,
@@ -345,6 +346,8 @@ class SwaggerV3Generator(SwaggerGenerator):
                 parameter[sw.explode] = explode
             if description is not None:
                 parameter[sw.description] = description
+            if style is not None:
+                parameter[sw.style] = style
 
             parameters.append(parameter)
 
