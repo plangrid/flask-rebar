@@ -30,7 +30,7 @@ from flask_rebar.validation import Error
 
 
 class SwaggerV3Generator(SwaggerGenerator):
-    """Generates a v3.0.2 Swagger specification from a Rebar object.
+    """Generates a v3.1.0 Swagger specification from a Rebar object.
 
     Not all things are retrievable from the Rebar object, so this
     guy also needs some additional information to complete the job.
