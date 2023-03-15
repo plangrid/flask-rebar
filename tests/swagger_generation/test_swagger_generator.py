@@ -156,7 +156,7 @@ def test_swagger_v3_generator_non_registry_parameters():
     swagger = generator.generate(registry)
 
     expected_swagger = {
-        "openapi": "3.0.2",
+        "openapi": "3.1.0",
         "info": {"title": title, "version": version, "description": description},
         "tags": [
             {

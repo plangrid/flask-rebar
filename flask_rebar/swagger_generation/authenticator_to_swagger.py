@@ -43,12 +43,12 @@ class AuthenticatorConverter(object):
 
         OpenAPI Specification for defining security schemes
         2.0: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-definitions-object
-        3.0.2: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#fixed-fields-6
+        3.1.0: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.1.0.md#fixed-fields-6
                 (see securitySchemes field)
 
         OpenAPI Specification for Security Scheme Object
         2.0: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-scheme-object
-        3.0.2: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#security-scheme-object
+        3.1.0: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.1.0.md#security-scheme-object
 
 
         Example: An authenticator that makes use of an api_key and an application_key scheme
@@ -81,7 +81,7 @@ class AuthenticatorConverter(object):
 
         OpenAPI Specification for Security Requirement Object
         2.0: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#security-requirement-object
-        3.0.2: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#security-requirement-object
+        3.1.0: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.1.0.md#security-requirement-object
 
         Example: Require oauth with scope "read:stuff" OR api_key AND application_key
         [

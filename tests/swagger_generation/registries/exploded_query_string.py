@@ -69,7 +69,7 @@ EXPECTED_SWAGGER_V2 = {
 }
 
 EXPECTED_SWAGGER_V3 = {
-    "openapi": "3.0.2",
+    "openapi": "3.1.0",
     "info": {"title": "My API", "version": "1.0.0", "description": ""},
     "components": {
         "schemas": {
