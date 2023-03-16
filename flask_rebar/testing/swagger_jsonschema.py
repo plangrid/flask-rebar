@@ -933,7 +933,7 @@ SWAGGER_V3_JSONSCHEMA = {
     }
   ],
   "$ref": "#/$defs/specification-extensions",
-  "unevaluatedProperties": false,
+  "unevaluatedProperties": False,
   "$defs": {
     "info": {
       "type": "object",
@@ -965,7 +965,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "version"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "contact": {
       "type": "object",
@@ -981,7 +981,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "license": {
       "type": "object",
@@ -1012,7 +1012,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "server": {
       "type": "object",
@@ -1034,7 +1034,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "url"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "server-variable": {
       "type": "object",
@@ -1057,7 +1057,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "default"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "components": {
       "type": "object",
@@ -1132,7 +1132,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "paths": {
       "type": "object",
@@ -1142,7 +1142,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "path-item": {
       "type": "object",
@@ -1172,7 +1172,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "path-item-or-reference": {
       "if": {
@@ -1227,7 +1227,7 @@ SWAGGER_V3_JSONSCHEMA = {
           }
         },
         "deprecated": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "security": {
@@ -1244,7 +1244,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "external-documentation": {
       "type": "object",
@@ -1260,7 +1260,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "url"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "parameter": {
       "type": "object",
@@ -1280,15 +1280,15 @@ SWAGGER_V3_JSONSCHEMA = {
           "type": "string"
         },
         "required": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "deprecated": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "allowEmptyValue": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "schema": {
@@ -1323,7 +1323,7 @@ SWAGGER_V3_JSONSCHEMA = {
               "type": "boolean"
             },
             "allowReserved": {
-              "default": false,
+              "default": False,
               "type": "boolean"
             }
           },
@@ -1370,7 +1370,7 @@ SWAGGER_V3_JSONSCHEMA = {
                     ]
                   },
                   "required": {
-                    "const": true
+                    "const": True
                   }
                 },
                 "required": [
@@ -1461,14 +1461,14 @@ SWAGGER_V3_JSONSCHEMA = {
               "then": {
                 "properties": {
                   "explode": {
-                    "default": true
+                    "default": True
                   }
                 }
               },
               "else": {
                 "properties": {
                   "explode": {
-                    "default": false
+                    "default": False
                   }
                 }
               }
@@ -1477,7 +1477,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "parameter-or-reference": {
       "if": {
@@ -1502,7 +1502,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "$ref": "#/$defs/content"
         },
         "required": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         }
       },
@@ -1510,7 +1510,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "content"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "request-body-or-reference": {
       "if": {
@@ -1555,7 +1555,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "$ref": "#/$defs/examples"
         }
       ],
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "encoding": {
       "type": "object",
@@ -1583,7 +1583,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "type": "boolean"
         },
         "allowReserved": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         }
       },
@@ -1595,7 +1595,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "$ref": "#/$defs/encoding/$defs/explode-default"
         }
       ],
-      "unevaluatedProperties": false,
+      "unevaluatedProperties": False,
       "$defs": {
         "explode-default": {
           "if": {
@@ -1611,14 +1611,14 @@ SWAGGER_V3_JSONSCHEMA = {
           "then": {
             "properties": {
               "explode": {
-                "default": true
+                "default": True
               }
             }
           },
           "else": {
             "properties": {
               "explode": {
-                "default": false
+                "default": False
               }
             }
           }
@@ -1638,7 +1638,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "response": {
       "type": "object",
@@ -1666,7 +1666,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "description"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "response-or-reference": {
       "if": {
@@ -1710,13 +1710,13 @@ SWAGGER_V3_JSONSCHEMA = {
         "description": {
           "type": "string"
         },
-        "value": true,
+        "value": True,
         "externalValue": {
           "$ref": "#/$defs/uri"
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "example-or-reference": {
       "if": {
@@ -1737,11 +1737,11 @@ SWAGGER_V3_JSONSCHEMA = {
         "operationRef": {
           "$ref": "#/$defs/uri"
         },
-        "operationId": true,
+        "operationId": True,
         "parameters": {
           "$ref": "#/$defs/map-of-strings"
         },
-        "requestBody": true,
+        "requestBody": True,
         "description": {
           "type": "string"
         },
@@ -1762,7 +1762,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "link-or-reference": {
       "if": {
@@ -1784,15 +1784,15 @@ SWAGGER_V3_JSONSCHEMA = {
           "type": "string"
         },
         "required": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "deprecated": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "allowEmptyValue": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         }
       },
@@ -1806,11 +1806,11 @@ SWAGGER_V3_JSONSCHEMA = {
               ]
             },
             "explode": {
-              "default": false,
+              "default": False,
               "type": "boolean"
             },
             "allowReserved": {
-              "default": false,
+              "default": False,
               "type": "boolean"
             },
             "schema": {
@@ -1828,7 +1828,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "header-or-reference": {
       "if": {
@@ -1860,7 +1860,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "name"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "reference": {
       "type": "object",
@@ -1875,7 +1875,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "type": "string"
         }
       },
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "schema": {
       "$dynamicAnchor": "meta",
@@ -1923,7 +1923,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "$ref": "#/$defs/security-scheme/$defs/type-oidc"
         }
       ],
-      "unevaluatedProperties": false,
+      "unevaluatedProperties": False,
       "$defs": {
         "type-apikey": {
           "if": {
@@ -2079,7 +2079,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false,
+      "unevaluatedProperties": False,
       "$defs": {
         "implicit": {
           "type": "object",
@@ -2099,7 +2099,7 @@ SWAGGER_V3_JSONSCHEMA = {
             "scopes"
           ],
           "$ref": "#/$defs/specification-extensions",
-          "unevaluatedProperties": false
+          "unevaluatedProperties": False
         },
         "password": {
           "type": "object",
@@ -2119,7 +2119,7 @@ SWAGGER_V3_JSONSCHEMA = {
             "scopes"
           ],
           "$ref": "#/$defs/specification-extensions",
-          "unevaluatedProperties": false
+          "unevaluatedProperties": False
         },
         "client-credentials": {
           "type": "object",
@@ -2139,7 +2139,7 @@ SWAGGER_V3_JSONSCHEMA = {
             "scopes"
           ],
           "$ref": "#/$defs/specification-extensions",
-          "unevaluatedProperties": false
+          "unevaluatedProperties": False
         },
         "authorization-code": {
           "type": "object",
@@ -2163,7 +2163,7 @@ SWAGGER_V3_JSONSCHEMA = {
             "scopes"
           ],
           "$ref": "#/$defs/specification-extensions",
-          "unevaluatedProperties": false
+          "unevaluatedProperties": False
         }
       }
     },
@@ -2178,12 +2178,12 @@ SWAGGER_V3_JSONSCHEMA = {
     },
     "specification-extensions": {
       "patternProperties": {
-        "^x-": true
+        "^x-": True
       }
     },
     "examples": {
       "properties": {
-        "example": true,
+        "example": True,
         "examples": {
           "type": "object",
           "additionalProperties": {
