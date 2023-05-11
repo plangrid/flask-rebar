@@ -646,7 +646,10 @@ class EnumConverter(FieldConverter):
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         # Note: we don't (yet?) support mix-and-match between load_by and dump_by. Pick one.
-        if obj.by_value or (LoadDumpOptions is not None and obj.load_by == obj.dump_by == LoadDumpOptions.value):
+        if obj.by_value or (
+            LoadDumpOptions is not None
+            and obj.load_by == obj.dump_by == LoadDumpOptions.value
+        ):
             # I'm going out on a limb and assuming your enum uses same type for all vals, else caveat emptor:
             value_type = type(next(iter(obj.enum)).value)
             if value_type is int:
@@ -660,7 +663,10 @@ class EnumConverter(FieldConverter):
 
     @sets_swagger_attr(sw.enum)
     def get_enum(self, obj, context):
-        if obj.by_value or (LoadDumpOptions is not None and obj.load_by == obj.dump_by == LoadDumpOptions.value):
+        if obj.by_value or (
+            LoadDumpOptions is not None
+            and obj.load_by == obj.dump_by == LoadDumpOptions.value
+        ):
             return [entry.value for entry in obj.enum]
         else:
             return [entry.name for entry in obj.enum]

@@ -24,7 +24,9 @@ class TestOptionalConverters(TestCase):
         )
 
         # simulate marshmallow_enum not installed:
-        marsh_version_tuple = tuple([int(digit) for digit in metadata.version('marshmallow').split('.')])
+        marsh_version_tuple = tuple(
+            [int(digit) for digit in metadata.version("marshmallow").split(".")]
+        )
         if marsh_version_tuple < (3, 18, 0):
             with mock.patch("marshmallow_enum.EnumField", new=None):
                 reload(_m_to_s)
