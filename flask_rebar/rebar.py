@@ -847,7 +847,9 @@ class Rebar(object):
             if isinstance(exception, SystemExit):
                 try:
                     run_unhandled_exception_handlers(exception)
-                except Exception:  # make sure the exception handlers dont prevent teardown
+                except (
+                    Exception
+                ):  # make sure the exception handlers dont prevent teardown
                     pass
 
     def _create_json_error_response(

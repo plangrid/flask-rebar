@@ -27,11 +27,14 @@ from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.swagger_generation import swagger_words as sw
 
+LoadDumpOptions = None
 try:
-    from marshmallow_enum import EnumField, LoadDumpOptions
-except ImportError:
-    EnumField = None
-    LoadDumpOptions = None
+    EnumField = m.fields.Enum
+except AttributeError:
+    try:
+        from marshmallow_enum import EnumField, LoadDumpOptions
+    except ImportError:
+        EnumField = None
 
 
 # Special value to signify that a JSONSchema field should be left unset
@@ -643,7 +646,7 @@ class EnumConverter(FieldConverter):
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         # Note: we don't (yet?) support mix-and-match between load_by and dump_by. Pick one.
-        if obj.by_value or (obj.load_by == obj.dump_by == LoadDumpOptions.value):
+        if obj.by_value or (LoadDumpOptions is not None and obj.load_by == obj.dump_by == LoadDumpOptions.value):
             # I'm going out on a limb and assuming your enum uses same type for all vals, else caveat emptor:
             value_type = type(next(iter(obj.enum)).value)
             if value_type is int:
@@ -657,7 +660,7 @@ class EnumConverter(FieldConverter):
 
     @sets_swagger_attr(sw.enum)
     def get_enum(self, obj, context):
-        if obj.by_value or (obj.load_by == obj.dump_by == LoadDumpOptions.value):
+        if obj.by_value or (LoadDumpOptions is not None and obj.load_by == obj.dump_by == LoadDumpOptions.value):
             return [entry.value for entry in obj.enum]
         else:
             return [entry.name for entry in obj.enum]

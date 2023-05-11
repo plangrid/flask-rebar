@@ -110,7 +110,6 @@ def make_class_from_method(authenticator_class, func):
 
 
 class HeaderApiKeyConverter(AuthenticatorConverter):
-
     AUTHENTICATOR_TYPE = HeaderApiKeyAuthenticator
 
     def get_security_requirements(self, obj, context):
