@@ -16,23 +16,15 @@ jobs:
         - 3.9
         - "3.10"
         - 3.11
-        libraries:
-        - marshmallow=='3.0.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.10.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.15.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.19.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.0.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.10.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.15.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.19.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.0.*' flask=='2.2.*' werkzeug=='2.2.*'
-        - marshmallow=='3.10.*' flask=='2.2.*' werkzeug=='2.2.*'
-        - marshmallow=='3.15.*' flask=='2.2.*' werkzeug=='2.2.*'
-        - marshmallow=='3.19.*' flask=='2.2.*' werkzeug=='2.2.*'
-        - marshmallow=='3.0.*' flask=='2.3.*' werkzeug=='2.3.*'
-        - marshmallow=='3.10.*' flask=='2.3.*' werkzeug=='2.3.*'
-        - marshmallow=='3.15.*' flask=='2.3.*' werkzeug=='2.3.*'
-        - marshmallow=='3.19.*' flask=='2.3.*' werkzeug=='2.3.*'
+        marshmallow:
+        - marshmallow==3.17.*
+        - marshmallow==3.18.*
+        - marshmallow>3.18.0
+        flask:
+        - flask=='2.0.*' werkzeug=='2.0.*'
+        - flask=='2.1.*' werkzeug=='2.1.*'
+        - flask=='2.2.*' werkzeug=='2.2.*'
+        - flask=='2.3.*' werkzeug=='2.3.*'
 
     steps:
     - uses: actions/checkout@v3
@@ -43,7 +35,7 @@ jobs:
     - name: "Test with ${{matrix.libraries}}"
       run: |
         python -m pip install -U pip
-        python -m pip install '.[dev,enum]' ${{matrix.libraries}}
+        python -m pip install '.[dev,enum]' ${{matrix.flask}} ${{matrix.marshmallow}}
         python -m pip freeze
     - name: Run Tests
       run: |
