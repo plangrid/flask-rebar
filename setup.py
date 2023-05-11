@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 # packages required for local development and testing
 development = [
-    "black==22.3.0",
+    "black==22.4.0",
     "bumpversion==0.5.3",
     "click>=8.1.3,<9.0.0",
     "flake8==4.0.1",
@@ -22,7 +22,7 @@ development = [
 if __name__ == "__main__":
     setup(
         name="flask-rebar",
-        version="2.3.0",
+        version="2.4.0",
         author="Barak Alon",
         author_email="barak.s.alon@gmail.com",
         description="Flask-Rebar combines flask, marshmallow, and swagger for robust REST services.",
