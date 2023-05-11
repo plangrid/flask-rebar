@@ -136,6 +136,7 @@ class TestConverterRegistry(TestCase):
             (m.fields.Integer(validate=lambda value: True), {"type": "integer"}),
         ]:
             with self.subTest(field=field):
+
                 class Foo(m.Schema):
                     a = field
 
