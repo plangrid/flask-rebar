@@ -45,6 +45,7 @@ jobs:
       if: always()
       with:
         report_paths: pytest.xml
+        check_name: "JUnit Report python${{matrix.python}} ${{matrix.marshmallow}} ${{matrix.flask}}"
 
   formatter:
     name: Format using Black
