@@ -12,60 +12,50 @@ jobs:
       fail-fast: false
       matrix:
         python:
-        - 3.7
         - 3.8
         - 3.9
         - "3.10"
         - 3.11
-        libraries:
-        - marshmallow=='3.0.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.1.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.2.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.3.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.4.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.5.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.10.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.11.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.12.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.13.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.14.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.15.*' flask=='2.0.*' werkzeug=='2.0.*'
-        - marshmallow=='3.0.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.1.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.2.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.3.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.4.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.5.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.10.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.11.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.12.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.13.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.14.*' flask=='2.1.*' werkzeug=='2.1.*'
-        - marshmallow=='3.15.*' flask=='2.1.*' werkzeug=='2.1.*'
+        marshmallow:
+        - marshmallow==3.17.*
+        - marshmallow==3.18.*
+        - marshmallow>3.18.0
+        flask:
+        - flask=='2.0.*' werkzeug=='2.0.*'
+        - flask=='2.1.*' werkzeug=='2.1.*'
+        - flask=='2.2.*' werkzeug=='2.2.*'
+        - flask=='2.3.*' werkzeug=='2.3.*'
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
     - name: Set up Python:${{ matrix.python }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
     - name: "Test with ${{matrix.libraries}}"
       run: |
         python -m pip install -U pip
-        python -m pip install '.[dev,enum]' ${{matrix.libraries}}
+        python -m pip install '.[dev,enum]' ${{matrix.flask}} ${{matrix.marshmallow}}
         python -m pip freeze
     - name: Run Tests
       run: |
-        python -m pytest
+        python -m pytest -v -ra --junitxml=pytest.xml
+    - name: Publish Test Report
+      uses: mikepenz/action-junit-report@v3
+      if: always()
+      with:
+        report_paths: pytest.xml
+        check_name: "JUnit Report python${{matrix.python}} ${{matrix.marshmallow}} ${{matrix.flask}}"
+
   formatter:
     name: Format using Black
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v1
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.7
+        python-version: 3.11
     - name: "Install dependencies"
       run: |
         python -m pip install -U pip

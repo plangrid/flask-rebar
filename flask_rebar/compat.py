@@ -28,7 +28,9 @@ def dump(schema, data):
     """
     try:
         force_validation = current_app.extensions["rebar"]["instance"].validate_on_dump
-    except RuntimeError:  # running outside app context (some unit test cases, potentially ad hoc scripts)
+    except (
+        RuntimeError
+    ):  # running outside app context (some unit test cases, potentially ad hoc scripts)
         force_validation = False
 
     if isinstance(schema, RequireOnDumpMixin) or force_validation:

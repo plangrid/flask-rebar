@@ -32,7 +32,6 @@ class FakeHTTPAuthorizationAuthenticator(Authenticator):
 
 
 class HTTPAuthorizationAuthenticatorConverter(AuthenticatorConverter):
-
     AUTHENTICATOR_TYPE = FakeHTTPAuthorizationAuthenticator
 
     def get_security_schemes(self, instance, context):
@@ -68,7 +67,6 @@ class FakeOAuth2Authenticator(Authenticator):
 
 
 class OAuth2AuthenticatorConverter(AuthenticatorConverter):
-
     AUTHENTICATOR_TYPE = FakeOAuth2Authenticator
 
     def get_security_schemes(self, instance, context):
@@ -124,7 +122,6 @@ class FakeComplexAuthenticator(Authenticator):
 
 
 class ComplexAuthenticatorConverter(AuthenticatorConverter):
-
     AUTHENTICATOR_TYPE = FakeComplexAuthenticator
 
     def get_security_schemes(self, instance, context):

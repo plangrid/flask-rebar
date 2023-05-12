@@ -13,11 +13,11 @@ from parametrize import parametrize
 
 
 import marshmallow as m
-import marshmallow_enum as me
 from marshmallow import validate as v
 
 from flask_rebar.swagger_generation.marshmallow_to_swagger import ALL_CONVERTERS
 from flask_rebar.swagger_generation.marshmallow_to_swagger import ConverterRegistry
+from flask_rebar.swagger_generation.marshmallow_to_swagger import EnumField
 
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
@@ -53,11 +53,11 @@ class TestConverterRegistry(TestCase):
             (m.fields.Integer(dump_only=True), {"type": "integer", "readOnly": True}),
             (m.fields.Integer(missing=lambda: 5), {"type": "integer"}),
             (
-                me.EnumField(StopLight),
+                EnumField(StopLight),
                 {"enum": ["green", "yellow", "red"], "type": "string"},
             ),
             (
-                me.EnumField(StopLight, by_value=True),
+                EnumField(StopLight, by_value=True),
                 {"enum": [1, 2, 3], "type": "integer"},
             ),
             (
@@ -135,27 +135,28 @@ class TestConverterRegistry(TestCase):
             ),
             (m.fields.Integer(validate=lambda value: True), {"type": "integer"}),
         ]:
+            with self.subTest(field=field):
 
-            class Foo(m.Schema):
-                a = field
+                class Foo(m.Schema):
+                    a = field
 
-                # in marshmallow >= 3.11.x, if the 'serialize' / 'deserialize' functions for
-                # a field.Method aren't defined, an exception will be raised.
-                x = self.do_nothing
-                y = self.do_nothing
+                    # in marshmallow >= 3.11.x, if the 'serialize' / 'deserialize' functions for
+                    # a field.Method aren't defined, an exception will be raised.
+                    x = self.do_nothing
+                    y = self.do_nothing
 
-            schema = Foo()
-            json_schema = self.registry.convert(schema)
+                schema = Foo()
+                json_schema = self.registry.convert(schema)
 
-            self.assertEqual(
-                json_schema,
-                {
-                    "additionalProperties": False,
-                    "type": "object",
-                    "title": "Foo",
-                    "properties": {"a": result},
-                },
-            )
+                self.assertEqual(
+                    json_schema,
+                    {
+                        "additionalProperties": False,
+                        "type": "object",
+                        "title": "Foo",
+                        "properties": {"a": result},
+                    },
+                )
 
     def test_primitive_types_openapi_v3(self):
         for field, result in [
