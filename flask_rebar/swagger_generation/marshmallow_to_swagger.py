@@ -292,10 +292,15 @@ class FieldConverter(MarshmallowConverter):
                         )
                     )
 
-        if context.openapi_version == 3 and obj.allow_none:
-            jsonschema_obj["nullable"] = True
-
         return jsonschema_obj
+
+    # With OpenApi 3.1 nullable has been removed entirely
+    # and allowing 'none' means we return an array of allowed types that includes sw.null
+    def null_type_determination(self, obj, context, sw_type):
+        if context.openapi_version == 3 and obj.allow_none:
+            return [sw_type, sw.null]
+        else:
+            return sw_type
 
     @sets_swagger_attr(sw.default)
     def get_default(self, obj, context):
@@ -346,7 +351,7 @@ class ListConverter(FieldConverter):
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        return sw.array
+        return self.null_type_determination(obj, context, sw.array)
 
     @sets_swagger_attr(sw.items)
     def get_items(self, obj, context):
@@ -358,15 +363,14 @@ class DictConverter(FieldConverter):
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        return sw.object_
-
+        return self.null_type_determination(obj, context, sw.object_)
 
 class IntegerConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Integer
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        return sw.integer
+        return self.null_type_determination(obj, context, sw.integer)
 
 
 class StringConverter(FieldConverter):
@@ -374,7 +378,7 @@ class StringConverter(FieldConverter):
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        return sw.string
+        return self.null_type_determination(obj, context, sw.string)
 
 
 class NumberConverter(FieldConverter):
@@ -382,7 +386,7 @@ class NumberConverter(FieldConverter):
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        return sw.number
+        return self.null_type_determination(obj, context, sw.number)
 
 
 class BooleanConverter(FieldConverter):
@@ -390,7 +394,7 @@ class BooleanConverter(FieldConverter):
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        return sw.boolean
+        return self.null_type_determination(obj, context, sw.boolean)
 
 
 class DateTimeConverter(FieldConverter):
@@ -398,7 +402,7 @@ class DateTimeConverter(FieldConverter):
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        return sw.string
+        return self.null_type_determination(obj, context, sw.string)
 
     @sets_swagger_attr(sw.format_)
     def get_format(self, obj, context):
@@ -410,7 +414,7 @@ class UUIDConverter(FieldConverter):
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        return sw.string
+        return self.null_type_determination(obj, context, sw.string)
 
     @sets_swagger_attr(sw.format_)
     def get_format(self, obj, context):
@@ -422,7 +426,7 @@ class DateConverter(FieldConverter):
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
-        return sw.string
+        return self.null_type_determination(obj, context, sw.string)
 
     @sets_swagger_attr(sw.format_)
     def get_format(self, obj, context):
@@ -435,7 +439,7 @@ class MethodConverter(FieldConverter):
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         if "swagger_type" in obj.metadata:
-            return obj.metadata["swagger_type"]
+            return self.null_type_determination(obj, context, obj.metadata["swagger_type"])
         else:
             raise ValueError(
                 'Must include "swagger_type" ' "keyword argument in Method field"
@@ -448,7 +452,7 @@ class FunctionConverter(FieldConverter):
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         if "swagger_type" in obj.metadata:
-            return obj.metadata["swagger_type"]
+            return self.null_type_determination(obj, context, obj.metadata["swagger_type"])
         else:
             raise ValueError(
                 'Must include "swagger_type" ' "keyword argument in Function field"
@@ -647,13 +651,13 @@ class EnumConverter(FieldConverter):
             # I'm going out on a limb and assuming your enum uses same type for all vals, else caveat emptor:
             value_type = type(next(iter(obj.enum)).value)
             if value_type is int:
-                return sw.integer
+                return self.null_type_determination(obj, context, sw.integer)
             elif value_type is float:
-                return sw.number
+                return self.null_type_determination(obj, context, sw.number)
             else:
-                return sw.string
+                return self.null_type_determination(obj, context, sw.string)
         else:
-            return sw.string
+            return self.null_type_determination(obj, context, sw.string)
 
     @sets_swagger_attr(sw.enum)
     def get_enum(self, obj, context):
