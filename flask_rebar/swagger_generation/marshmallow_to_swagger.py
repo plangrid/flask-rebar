@@ -368,6 +368,7 @@ class DictConverter(FieldConverter):
     def get_type(self, obj, context):
         return self.null_type_determination(obj, context, sw.object_)
 
+
 class IntegerConverter(FieldConverter):
     MARSHMALLOW_TYPE = m.fields.Integer
 
@@ -442,7 +443,9 @@ class MethodConverter(FieldConverter):
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         if "swagger_type" in obj.metadata:
-            return self.null_type_determination(obj, context, obj.metadata["swagger_type"])
+            return self.null_type_determination(
+                obj, context, obj.metadata["swagger_type"]
+            )
         else:
             raise ValueError(
                 'Must include "swagger_type" ' "keyword argument in Method field"
@@ -455,7 +458,9 @@ class FunctionConverter(FieldConverter):
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):
         if "swagger_type" in obj.metadata:
-            return self.null_type_determination(obj, context, obj.metadata["swagger_type"])
+            return self.null_type_determination(
+                obj, context, obj.metadata["swagger_type"]
+            )
         else:
             raise ValueError(
                 'Must include "swagger_type" ' "keyword argument in Function field"
