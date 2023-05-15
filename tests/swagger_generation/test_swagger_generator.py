@@ -113,7 +113,7 @@ def test_swagger_v2_generator_non_registry_parameters():
 
 def test_swagger_v3_generator_non_registry_parameters():
     title = "Test API"
-    version = "3.0.0"
+    version = "3.1.0"
     description = "testing testing 123"
 
     class Error(m.Schema):
