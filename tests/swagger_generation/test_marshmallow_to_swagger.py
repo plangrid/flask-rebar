@@ -10,6 +10,7 @@
 import enum
 from unittest import TestCase
 from parametrize import parametrize
+import pytest
 
 
 import marshmallow as m
@@ -361,16 +362,67 @@ class TestConverterRegistry(TestCase):
             },
         )
 
-    def test_self_referential_nested(self):
+    def test_self_referential_nested_pre_3_3(self):
         # Issue 90
         # note for Marshmallow >= 3.3, preferred format is e.g.,:
         # m.fields.Nested(lambda: Foo(only=("d", "b")))
         # and passing "self" as a string is deprecated
         # but that doesn't work in < 3.3, so until 4.x we'll keep supporting/testing with "self"
+        with pytest.deprecated_call():
+            class Foo(m.Schema):
+                a = m.fields.Nested("self", exclude=("a",))
+                b = m.fields.Integer()
+                c = m.fields.Nested("self", only=("d", "b"))
+                d = m.fields.Email()
+
+            schema = Foo()
+            json_schema = self.registry.convert(schema)
+
+        self.assertEqual(
+            json_schema,
+            {
+                "properties": {
+                    "a": {
+                        "additionalProperties": False,
+                        "properties": {
+                            "b": {"type": "integer"},
+                            "c": {
+                                "additionalProperties": False,
+                                "properties": {
+                                    "b": {"type": "integer"},
+                                    "d": {"type": "string"},
+                                },
+                                "title": "Foo",
+                                "type": "object",
+                            },
+                            "d": {"type": "string"},
+                        },
+                        "title": "Foo",
+                        "type": "object",
+                    },
+                    "b": {"type": "integer"},
+                    "c": {
+                        "additionalProperties": False,
+                        "properties": {
+                            "b": {"type": "integer"},
+                            "d": {"type": "string"},
+                        },
+                        "title": "Foo",
+                        "type": "object",
+                    },
+                    "d": {"type": "string"},
+                },
+                "title": "Foo",
+                "type": "object",
+                "additionalProperties": False,
+            },
+        )
+
+    def test_self_referential_nested(self):
         class Foo(m.Schema):
-            a = m.fields.Nested("self", exclude=("a",))
+            a = m.fields.Nested(lambda: Foo(), exclude=("a",))
             b = m.fields.Integer()
-            c = m.fields.Nested("self", only=("d", "b"))
+            c = m.fields.Nested(lambda: Foo(), only=("d", "b"))
             d = m.fields.Email()
 
         schema = Foo()
