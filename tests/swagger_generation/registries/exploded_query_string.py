@@ -14,7 +14,7 @@ swagger_v3_generator = SwaggerV3Generator()
 
 class ExplodedQueryStringSchema(RequestSchema):
     foos = QueryParamList(
-        marshmallow.fields.String(), required=True, description="foo string"
+        marshmallow.fields.String(), required=True, metadata={"description": "foo string"}
     )
 
 

@@ -73,7 +73,7 @@ class TestConverterRegistry(TestCase):
                 {"type": "array", "items": {"type": "integer"}},
             ),
             (
-                m.fields.Integer(description="blam!"),
+                m.fields.Integer(metadata={"description": "blam!"}),
                 {"type": "integer", "description": "blam!"},
             ),
             (
@@ -122,14 +122,17 @@ class TestConverterRegistry(TestCase):
             ),
             (m.fields.Dict(), {"type": "object"}),
             (
-                m.fields.Method(serialize="x", deserialize="y", swagger_type="integer"),
+                m.fields.Method(
+                    serialize="x", deserialize="y",
+                    metadata={"swagger_type": "integer"}
+                ),
                 {"type": "integer"},
             ),
             (
                 m.fields.Function(
                     serialize=lambda _: _,
                     deserialize=lambda _: _,
-                    swagger_type="string",
+                    metadata={"swagger_type": "string"},
                 ),
                 {"type": "string"},
             ),
