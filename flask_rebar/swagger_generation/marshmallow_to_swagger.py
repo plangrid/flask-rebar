@@ -303,12 +303,12 @@ class FieldConverter(MarshmallowConverter):
     @sets_swagger_attr(sw.default)
     def get_default(self, obj, context):
         if (
-            obj.missing is not m.missing
+            obj.load_default is not m.missing
             # Marshmallow accepts a callable for the default. This is tricky
             # to handle, so let's just ignore this for now.
-            and not callable(obj.missing)
+            and not callable(obj.load_default)
         ):
-            return obj.missing
+            return obj.load_default
         else:
             return UNSET
 

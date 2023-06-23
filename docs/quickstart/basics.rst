@@ -93,7 +93,7 @@ Query String Validation
 .. code-block:: python
 
    class GetTodosSchema(RequestSchema):
-       exclude_completed = fields.String(missing=False)
+       exclude_completed = fields.String(load_default="")
 
 
    @registry.handles(
