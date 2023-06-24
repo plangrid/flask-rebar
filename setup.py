@@ -4,10 +4,10 @@ from setuptools import setup, find_packages
 
 # packages required for local development and testing
 development = [
-    "black==22.3.0",
+    "black==23.3.0",
     "bumpversion==0.5.3",
     "click>=8.1.3,<9.0.0",
-    "flake8==4.0.1",
+    "flake8==6.0.0",
     "gitchangelog>=3.0.4,<4.0.0",
     "jsonschema==3.0.2",
     "marshmallow-objects~=2.3",
