@@ -54,6 +54,7 @@ def get_foo(foo_uid):
 
 
 with pytest.warns(FutureWarning):  # authenticator kwarg is deprecating
+
     @registry.handles(
         rule="/foos/<foo_uid>",
         method="PATCH",
@@ -63,7 +64,6 @@ with pytest.warns(FutureWarning):  # authenticator kwarg is deprecating
     )
     def update_foo(foo_uid):
         pass
-
 
     # Test using Schema(many=True) without using a nested Field.
     # https://github.com/plangrid/flask-rebar/issues/41
@@ -75,7 +75,6 @@ with pytest.warns(FutureWarning):  # authenticator kwarg is deprecating
     )
     def list_foos():
         pass
-
 
     @registry.handles(
         rule="/foos",

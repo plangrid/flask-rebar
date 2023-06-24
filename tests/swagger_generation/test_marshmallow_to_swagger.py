@@ -124,8 +124,7 @@ class TestConverterRegistry(TestCase):
             (m.fields.Dict(), {"type": "object"}),
             (
                 m.fields.Method(
-                    serialize="x", deserialize="y",
-                    metadata={"swagger_type": "integer"}
+                    serialize="x", deserialize="y", metadata={"swagger_type": "integer"}
                 ),
                 {"type": "integer"},
             ),
@@ -369,6 +368,7 @@ class TestConverterRegistry(TestCase):
         # and passing "self" as a string is deprecated
         # but that doesn't work in < 3.3, so until 4.x we'll keep supporting/testing with "self"
         with pytest.deprecated_call():
+
             class Foo(m.Schema):
                 a = m.fields.Nested("self", exclude=("a",))
                 b = m.fields.Integer()

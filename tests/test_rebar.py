@@ -70,15 +70,11 @@ class FooListModel(mo.Model):
 
 
 class HeadersSchema(m.Schema):
-    name = set_data_key(
-        field=m.fields.String(required=True), key="x-name"
-    )
+    name = set_data_key(field=m.fields.String(required=True), key="x-name")
 
 
 class HeadersModel(mo.Model):
-    name = set_data_key(
-        field=mo.fields.String(required=True), key="x-name"
-    )
+    name = set_data_key(field=mo.fields.String(required=True), key="x-name")
 
 
 class MeSchema(m.Schema):
