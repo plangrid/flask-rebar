@@ -2,6 +2,64 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+
+Changes
+~~~~~~~
+- Update deprecated Marshmallow calls [ACSBP-4025] [Andrew Standley]
+
+
+
+v2.4.0 (2023-05-16)
+-------------------
+
+Changes
+~~~~~~~
+- Update to use Enum in 3.18.0. [Daniel Wallace]
+
+  Enum is basically a drop in replacement for EnumField from
+  marshmallow_enum. But it does not have the same load_by or dump_by
+  options.
+
+Fix
+~~~
+- Resolve a minor bug in swagger v3 generator [PJL-7600] [Eugene Kim]
+
+
+v2.3.0 (2022-11-29)
+-------------------
+
+New
+~~~
+- Add the ability to auto import handlers. [Daniel Wallace]
+
+  Users can now configure Rebar to import all modules in a directory
+  to load all registered handlers. This avoids tedium where previously
+  users had to explicitly import modules so that their handlers were
+  registered with the Rebar registry.
+
+Fix
+~~~
+- Remove periods from blueprint name prefixes. [Rishi Mukhopadhyay]
+
+- Registry.handlers should always be a list. [Daniel Wallace]
+
+Other
+~~~~~
+- Use flask standards for files. [Daniel Wallace]
+- Python 3.11 support. [Daniel Wallace]
+- Remove a deprecated version check (#276) [Eugene Kim]
+
+
+v2.2.1 (2022-06-03)
+-------------------
+
+Fix
+~~~
+- Try to fix dumping with data_key. [Jon Lund Steffensen]
+
+
 v2.2.0 (2022-03-31)
 -------------------
 - Unbreak with werkzeug 2.1 (#268) [Rick Riensche]
