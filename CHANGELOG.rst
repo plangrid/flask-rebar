@@ -2,13 +2,12 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+v2.4.1 (2023-06-30)
+-------------------
 
 Changes
 ~~~~~~~
-- Update deprecated Marshmallow calls [ACSBP-4025] [Andrew Standley]
-
+- Update deprecated Marshmallow calls [Andrew Standley]
 
 
 v2.4.0 (2023-05-16)
