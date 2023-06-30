@@ -58,7 +58,7 @@ def get_foo(foo_uid):
     method="PATCH",
     response_body_schema={200: FooSchema()},
     request_body_schema=FooUpdateSchema(),
-    authenticator=authenticator,
+    authenticators=[authenticator],
 )
 def update_foo(foo_uid):
     pass
@@ -70,7 +70,7 @@ def update_foo(foo_uid):
     rule="/foo_list",
     method="GET",
     response_body_schema={200: FooSchema(many=True)},
-    authenticator=None,  # Override the default!
+    authenticators=None,  # Override the default!
     hidden=True,
 )
 def list_foos():
@@ -82,7 +82,7 @@ def list_foos():
     method="GET",
     response_body_schema={200: NestedFoosSchema()},
     query_string_schema=NameAndOtherSchema(),
-    authenticator=None,  # Override the default!
+    authenticators=None,  # Override the default!
 )
 def nested_foos():
     pass

@@ -41,7 +41,7 @@ class RequireOnDumpMixinSchema(NoRequireOnDumpMixinSchema, RequireOnDumpMixin):
 
 
 class InnerNested(Schema, RequireOnDumpMixin):
-    inner_dump_only = fields.String(default="Inner dump-only", dump_only=True)
+    inner_dump_only = fields.String(dump_default="Inner dump-only", dump_only=True)
     inner_nested = fields.Nested(RequireOnDumpMixinSchema)
     inner_nested_dump_only = fields.Nested(RequireOnDumpMixinSchema, dump_only=True)
     inner_nested_list = fields.List(fields.Nested(RequireOnDumpMixinSchema))
@@ -49,7 +49,7 @@ class InnerNested(Schema, RequireOnDumpMixin):
 
 
 class OuterNested(Schema, RequireOnDumpMixin):
-    outer_dump_only = fields.String(default="Outer dump-only", dump_only=True)
+    outer_dump_only = fields.String(dump_default="Outer dump-only", dump_only=True)
     nested = fields.Nested(InnerNested)
     nested_list = fields.List(fields.Nested(InnerNested))
 

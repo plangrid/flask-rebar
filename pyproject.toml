@@ -7,6 +7,11 @@ exclude = '''
 )/
 '''
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error"
+]
+
 [build-system]
 requires = [
     "setuptools >= 35.0.2",
