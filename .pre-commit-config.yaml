@@ -2,7 +2,7 @@ repos:
   # NOTE: it is not recommended to use mutable revs e.g. "stable" - run pre-commit autoupdate instead
   # ref: https://github.com/ambv/black/issues/420
   - repo: https://github.com/ambv/black
-    rev: 23.3.0
+    rev: 23.7.0
     hooks:
     - id: black
   - repo: https://github.com/pycqa/flake8

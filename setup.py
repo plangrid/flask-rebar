@@ -4,19 +4,19 @@ from setuptools import setup, find_packages
 
 # packages required for local development and testing
 development = [
-    "black==23.3.0",
-    "bumpversion==0.5.3",
+    "black==23.7.0",
+    "bumpversion==0.6.0",
     "click>=8.1.3,<9.0.0",
     "flake8==6.0.0",
     "gitchangelog>=3.0.4,<4.0.0",
-    "jsonschema==3.0.2",
+    "jsonschema==4.18.4",
     "marshmallow-objects~=2.3",
     "parametrize==0.1.1",
     "pre-commit>=1.14.4",
-    "pytest~=6.2",
+    "pytest~=7.4",
     "pytest-order~=1.0",
-    "Sphinx==1.7.0",
-    "sphinx_rtd_theme==0.2.4",
+    "Sphinx>=6.0.0,<7.0.0",
+    "sphinx_rtd_theme==1.2.2",
 ]
 
 if __name__ == "__main__":
