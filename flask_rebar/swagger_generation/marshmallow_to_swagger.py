@@ -13,7 +13,7 @@ import inspect
 import logging
 import sys
 from collections import namedtuple
-from typing import Any, Optional, Type
+from typing import Any, Optional, Type, Union
 
 import marshmallow as m
 from marshmallow.validate import Range
@@ -333,7 +333,7 @@ class ValidatorConverter(MarshmallowConverter):
     This should be extended for specific Validator types.
     """
 
-    MARSHMALLOW_TYPE: Type[Validator] | Type[OneOf] = Validator
+    MARSHMALLOW_TYPE: Union[Type[Validator], Type[OneOf]] = Validator
 
 
 class NestedConverter(FieldConverter):
