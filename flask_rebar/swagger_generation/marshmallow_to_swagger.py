@@ -147,7 +147,7 @@ class MarshmallowConverter(object):
     JSONSchema dictionaries.
     """
 
-    MARSHMALLOW_TYPE: Any
+    MARSHMALLOW_TYPE: Any = None
 
     def convert(self, obj, context):
         """
@@ -263,7 +263,7 @@ class FieldConverter(MarshmallowConverter):
     This should be extended for specific Field types.
     """
 
-    MARSHMALLOW_TYPE: type[m.fields.Field]
+    MARSHMALLOW_TYPE: type[m.fields.Field] = m.fields.Field
 
     def convert(self, obj, context):
         jsonschema_obj = super(FieldConverter, self).convert(obj, context)
