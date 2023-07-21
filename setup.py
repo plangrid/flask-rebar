@@ -11,12 +11,15 @@ development = [
     "gitchangelog>=3.0.4,<4.0.0",
     "jsonschema==4.18.4",
     "marshmallow-objects~=2.3",
+    "mypy==1.4.1",
     "parametrize==0.1.1",
     "pre-commit>=1.14.4",
     "pytest~=7.4",
     "pytest-order~=1.0",
     "Sphinx>=6.0.0,<7.0.0",
     "sphinx_rtd_theme==1.2.2",
+    "types-jsonschema==4.17.0.10",
+    "types-setuptools==68.0.0.3",
 ]
 
 if __name__ == "__main__":

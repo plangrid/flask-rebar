@@ -33,7 +33,7 @@ class NoRequireOnDumpMixinSchema(Schema):
     value_required = fields.Str(required=True, allow_none=False)
     validation_required = fields.DateTime(required=True, allow_none=False)
     one_of_validation = fields.String(required=True, validate=OneOf(["a", "b"]))
-    dump_only = fields.Integer(dump_only=True)
+    custom_dump_only = fields.Integer(load_from="dump_only", dump_only=True)
 
 
 class RequireOnDumpMixinSchema(NoRequireOnDumpMixinSchema, RequireOnDumpMixin):

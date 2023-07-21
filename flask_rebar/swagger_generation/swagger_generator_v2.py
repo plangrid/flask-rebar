@@ -7,8 +7,6 @@
     :copyright: Copyright 2019 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from __future__ import unicode_literals
-
 import copy
 
 from flask_rebar.swagger_generation import swagger_words as sw

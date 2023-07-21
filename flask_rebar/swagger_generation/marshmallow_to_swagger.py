@@ -8,13 +8,12 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from __future__ import unicode_literals
-
 import copy
 import inspect
 import logging
 import sys
 from collections import namedtuple
+from typing import Any, Optional
 
 import marshmallow as m
 from marshmallow.validate import Range
@@ -29,10 +28,10 @@ from flask_rebar.swagger_generation import swagger_words as sw
 
 LoadDumpOptions = None
 try:
-    EnumField = m.fields.Enum
+    EnumField: Optional[type[m.fields.Field]] = m.fields.Enum
 except AttributeError:
     try:
-        from marshmallow_enum import EnumField, LoadDumpOptions
+        from marshmallow_enum import EnumField, LoadDumpOptions  # type: ignore
     except ImportError:
         EnumField = None
 
@@ -148,7 +147,7 @@ class MarshmallowConverter(object):
     JSONSchema dictionaries.
     """
 
-    MARSHMALLOW_TYPE = None
+    MARSHMALLOW_TYPE: Any
 
     def convert(self, obj, context):
         """
@@ -264,7 +263,7 @@ class FieldConverter(MarshmallowConverter):
     This should be extended for specific Field types.
     """
 
-    MARSHMALLOW_TYPE = m.fields.Field
+    MARSHMALLOW_TYPE: type[m.fields.Field]
 
     def convert(self, obj, context):
         jsonschema_obj = super(FieldConverter, self).convert(obj, context)
@@ -334,7 +333,7 @@ class ValidatorConverter(MarshmallowConverter):
     This should be extended for specific Validator types.
     """
 
-    MARSHMALLOW_TYPE = Validator
+    MARSHMALLOW_TYPE: type[Validator] | type[OneOf] = Validator
 
 
 class NestedConverter(FieldConverter):
@@ -641,7 +640,7 @@ class ConverterRegistry(object):
 
 
 class EnumConverter(FieldConverter):
-    MARSHMALLOW_TYPE = EnumField
+    MARSHMALLOW_TYPE = EnumField  # type: ignore
 
     @sets_swagger_attr(sw.type_)
     def get_type(self, obj, context):

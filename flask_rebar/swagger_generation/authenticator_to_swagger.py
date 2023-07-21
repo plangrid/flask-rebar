@@ -35,7 +35,7 @@ class AuthenticatorConverter(object):
 
     """
 
-    AUTHENTICATOR_TYPE = None
+    AUTHENTICATOR_TYPE: type[Authenticator]
 
     def get_security_schemes(self, obj, context):
         """

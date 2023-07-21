@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from flask_rebar.utils.request_utils import marshal, response
 
 from flask_rebar.rebar import (
