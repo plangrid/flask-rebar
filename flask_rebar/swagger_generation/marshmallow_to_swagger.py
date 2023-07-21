@@ -13,7 +13,7 @@ import inspect
 import logging
 import sys
 from collections import namedtuple
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 import marshmallow as m
 from marshmallow.validate import Range
@@ -28,7 +28,7 @@ from flask_rebar.swagger_generation import swagger_words as sw
 
 LoadDumpOptions = None
 try:
-    EnumField: Optional[type[m.fields.Field]] = m.fields.Enum
+    EnumField: Optional[Type[m.fields.Field]] = m.fields.Enum
 except AttributeError:
     try:
         from marshmallow_enum import EnumField, LoadDumpOptions  # type: ignore
@@ -263,7 +263,7 @@ class FieldConverter(MarshmallowConverter):
     This should be extended for specific Field types.
     """
 
-    MARSHMALLOW_TYPE: type[m.fields.Field] = m.fields.Field
+    MARSHMALLOW_TYPE: Type[m.fields.Field] = m.fields.Field
 
     def convert(self, obj, context):
         jsonschema_obj = super(FieldConverter, self).convert(obj, context)
@@ -333,7 +333,7 @@ class ValidatorConverter(MarshmallowConverter):
     This should be extended for specific Validator types.
     """
 
-    MARSHMALLOW_TYPE: type[Validator] | type[OneOf] = Validator
+    MARSHMALLOW_TYPE: Type[Validator] | Type[OneOf] = Validator
 
 
 class NestedConverter(FieldConverter):

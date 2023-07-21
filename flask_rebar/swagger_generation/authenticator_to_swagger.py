@@ -1,4 +1,5 @@
 from collections import namedtuple
+from typing import Type
 
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator, Authenticator
 from .marshmallow_to_swagger import ConverterRegistry
@@ -35,7 +36,7 @@ class AuthenticatorConverter(object):
 
     """
 
-    AUTHENTICATOR_TYPE: type[Authenticator]
+    AUTHENTICATOR_TYPE: Type[Authenticator]
 
     def get_security_schemes(self, obj, context):
         """
