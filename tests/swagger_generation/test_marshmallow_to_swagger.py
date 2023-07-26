@@ -10,6 +10,7 @@
 import enum
 from unittest import TestCase
 from parametrize import parametrize
+import pytest
 
 
 import marshmallow as m
@@ -49,9 +50,9 @@ class TestConverterRegistry(TestCase):
             (m.fields.URL(), {"type": "string"}),
             (m.fields.Email(), {"type": "string"}),
             (m.fields.Constant("foo"), {"enum": ["foo"], "default": "foo"}),
-            (m.fields.Integer(missing=5), {"type": "integer", "default": 5}),
+            (m.fields.Integer(load_default=5), {"type": "integer", "default": 5}),
             (m.fields.Integer(dump_only=True), {"type": "integer", "readOnly": True}),
-            (m.fields.Integer(missing=lambda: 5), {"type": "integer"}),
+            (m.fields.Integer(load_default=lambda: 5), {"type": "integer"}),
             (
                 EnumField(StopLight),
                 {"enum": ["green", "yellow", "red"], "type": "string"},
@@ -73,7 +74,7 @@ class TestConverterRegistry(TestCase):
                 {"type": "array", "items": {"type": "integer"}},
             ),
             (
-                m.fields.Integer(description="blam!"),
+                m.fields.Integer(metadata={"description": "blam!"}),
                 {"type": "integer", "description": "blam!"},
             ),
             (
@@ -122,14 +123,16 @@ class TestConverterRegistry(TestCase):
             ),
             (m.fields.Dict(), {"type": "object"}),
             (
-                m.fields.Method(serialize="x", deserialize="y", swagger_type="integer"),
+                m.fields.Method(
+                    serialize="x", deserialize="y", metadata={"swagger_type": "integer"}
+                ),
                 {"type": "integer"},
             ),
             (
                 m.fields.Function(
                     serialize=lambda _: _,
                     deserialize=lambda _: _,
-                    swagger_type="string",
+                    metadata={"swagger_type": "string"},
                 ),
                 {"type": "string"},
             ),
@@ -358,16 +361,68 @@ class TestConverterRegistry(TestCase):
             },
         )
 
-    def test_self_referential_nested(self):
+    def test_self_referential_nested_pre_3_3(self):
         # Issue 90
         # note for Marshmallow >= 3.3, preferred format is e.g.,:
         # m.fields.Nested(lambda: Foo(only=("d", "b")))
         # and passing "self" as a string is deprecated
         # but that doesn't work in < 3.3, so until 4.x we'll keep supporting/testing with "self"
+        with pytest.deprecated_call():
+
+            class Foo(m.Schema):
+                a = m.fields.Nested("self", exclude=("a",))
+                b = m.fields.Integer()
+                c = m.fields.Nested("self", only=("d", "b"))
+                d = m.fields.Email()
+
+            schema = Foo()
+            json_schema = self.registry.convert(schema)
+
+        self.assertEqual(
+            json_schema,
+            {
+                "properties": {
+                    "a": {
+                        "additionalProperties": False,
+                        "properties": {
+                            "b": {"type": "integer"},
+                            "c": {
+                                "additionalProperties": False,
+                                "properties": {
+                                    "b": {"type": "integer"},
+                                    "d": {"type": "string"},
+                                },
+                                "title": "Foo",
+                                "type": "object",
+                            },
+                            "d": {"type": "string"},
+                        },
+                        "title": "Foo",
+                        "type": "object",
+                    },
+                    "b": {"type": "integer"},
+                    "c": {
+                        "additionalProperties": False,
+                        "properties": {
+                            "b": {"type": "integer"},
+                            "d": {"type": "string"},
+                        },
+                        "title": "Foo",
+                        "type": "object",
+                    },
+                    "d": {"type": "string"},
+                },
+                "title": "Foo",
+                "type": "object",
+                "additionalProperties": False,
+            },
+        )
+
+    def test_self_referential_nested(self):
         class Foo(m.Schema):
-            a = m.fields.Nested("self", exclude=("a",))
+            a = m.fields.Nested(lambda: Foo(), exclude=("a",))
             b = m.fields.Integer()
-            c = m.fields.Nested("self", only=("d", "b"))
+            c = m.fields.Nested(lambda: Foo(), only=("d", "b"))
             d = m.fields.Email()
 
         schema = Foo()

@@ -59,7 +59,7 @@ def get_foo(foo_uid):
     method="PATCH",
     response_body_schema={200: FooModel},
     request_body_schema=FooUpdateModel,
-    authenticator=authenticator,
+    authenticators=[authenticator],
 )
 def update_foo(foo_uid):
     pass
@@ -70,7 +70,7 @@ def update_foo(foo_uid):
     method="GET",
     response_body_schema={200: NestedFoosModel},
     query_string_schema=NameAndOtherModel,
-    authenticator=None,  # Override the default!
+    authenticators=None,  # Override the default!
 )
 def nested_foos():
     pass

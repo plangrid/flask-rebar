@@ -1,4 +1,5 @@
 import marshmallow as m
+import pytest
 
 from flask_rebar import Rebar
 from flask_rebar import HeaderApiKeyAuthenticator
@@ -52,38 +53,38 @@ def get_foo(foo_uid):
     pass
 
 
-@registry.handles(
-    rule="/foos/<foo_uid>",
-    method="PATCH",
-    response_body_schema={200: FooSchema()},
-    request_body_schema=FooUpdateSchema(),
-    authenticator=authenticator,
-)
-def update_foo(foo_uid):
-    pass
+with pytest.warns(FutureWarning):  # authenticator kwarg is deprecating
 
+    @registry.handles(
+        rule="/foos/<foo_uid>",
+        method="PATCH",
+        response_body_schema={200: FooSchema()},
+        request_body_schema=FooUpdateSchema(),
+        authenticator=authenticator,
+    )
+    def update_foo(foo_uid):
+        pass
 
-# Test using Schema(many=True) without using a nested Field.
-# https://github.com/plangrid/flask-rebar/issues/41
-@registry.handles(
-    rule="/foo_list",
-    method="GET",
-    response_body_schema={200: FooSchema(many=True)},
-    authenticator=None,  # Override the default!
-)
-def list_foos():
-    pass
+    # Test using Schema(many=True) without using a nested Field.
+    # https://github.com/plangrid/flask-rebar/issues/41
+    @registry.handles(
+        rule="/foo_list",
+        method="GET",
+        response_body_schema={200: FooSchema(many=True)},
+        authenticator=None,  # Override the default!
+    )
+    def list_foos():
+        pass
 
-
-@registry.handles(
-    rule="/foos",
-    method="GET",
-    response_body_schema={200: NestedFoosSchema()},
-    query_string_schema=NameAndOtherSchema(),
-    authenticator=None,  # Override the default!
-)
-def nested_foos():
-    pass
+    @registry.handles(
+        rule="/foos",
+        method="GET",
+        response_body_schema={200: NestedFoosSchema()},
+        query_string_schema=NameAndOtherSchema(),
+        authenticator=None,  # Override the default!
+    )
+    def nested_foos():
+        pass
 
 
 @registry.handles(rule="/tagged_foos", tags=["bar", "baz"])

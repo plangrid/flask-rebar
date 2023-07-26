@@ -249,7 +249,7 @@ def list_foos():
     method="GET",
     response_body_schema={200: NestedFoosSchema()},
     query_string_schema=NameAndOtherSchema(),
-    authenticator=None,  # Override the default!
+    authenticators=None,  # Override the default!
 )
 def nested_foos():
     pass
