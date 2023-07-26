@@ -1430,7 +1430,7 @@ SWAGGER_V3_JSONSCHEMA = {
                     ]
                   },
                   "required": {
-                    "const": true
+                    "const": True
                   }
                 },
                 "required": [
@@ -1521,7 +1521,7 @@ SWAGGER_V3_JSONSCHEMA = {
               "then": {
                 "properties": {
                   "explode": {
-                    "default": true
+                    "default": True
                   }
                 }
               },
@@ -1677,7 +1677,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "then": {
             "properties": {
               "explode": {
-                "default": true
+                "default": True
               }
             }
           },
@@ -1792,7 +1792,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "description": {
           "type": "string"
         },
-        "value": true,
+        "value": True,
         "externalValue": {
           "type": "string",
           "format": "uri"
@@ -1835,7 +1835,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "parameters": {
           "$ref": "#/$defs/map-of-strings"
         },
-        "requestBody": true,
+        "requestBody": True,
         "description": {
           "type": "string"
         },
@@ -2291,12 +2291,12 @@ SWAGGER_V3_JSONSCHEMA = {
     "specification-extensions": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#specification-extensions",
       "patternProperties": {
-        "^x-": true
+        "^x-": True
       }
     },
     "examples": {
       "properties": {
-        "example": true,
+        "example": True,
         "examples": {
           "type": "object",
           "additionalProperties": {
