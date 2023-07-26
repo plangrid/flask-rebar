@@ -943,7 +943,7 @@ SWAGGER_V3_JSONSCHEMA = {
     }
   ],
   "$ref": "#/$defs/specification-extensions",
-  "unevaluatedProperties": false,
+  "unevaluatedProperties": False,
   "$defs": {
     "info": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#info-object",
@@ -977,7 +977,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "version"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "contact": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#contact-object",
@@ -996,7 +996,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "license": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#license-object",
@@ -1026,7 +1026,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "server": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#server-object",
@@ -1050,7 +1050,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "url"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "server-variable": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#server-variable-object",
@@ -1074,7 +1074,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "default"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "components": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#components-object",
@@ -1150,7 +1150,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "paths": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#paths-object",
@@ -1161,7 +1161,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "path-item": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#path-item-object",
@@ -1211,7 +1211,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "path-item-or-reference": {
       "if": {
@@ -1268,7 +1268,7 @@ SWAGGER_V3_JSONSCHEMA = {
           }
         },
         "deprecated": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "security": {
@@ -1285,7 +1285,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "external-documentation": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#external-documentation-object",
@@ -1303,7 +1303,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "url"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "parameter": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#parameter-object",
@@ -1324,11 +1324,11 @@ SWAGGER_V3_JSONSCHEMA = {
           "type": "string"
         },
         "required": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "deprecated": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "schema": {
@@ -1369,7 +1369,7 @@ SWAGGER_V3_JSONSCHEMA = {
       "then": {
         "properties": {
           "allowEmptyValue": {
-            "default": false,
+            "default": False,
             "type": "boolean"
           }
         }
@@ -1481,7 +1481,7 @@ SWAGGER_V3_JSONSCHEMA = {
                     ]
                   },
                   "allowReserved": {
-                    "default": false,
+                    "default": False,
                     "type": "boolean"
                   }
                 }
@@ -1528,7 +1528,7 @@ SWAGGER_V3_JSONSCHEMA = {
               "else": {
                 "properties": {
                   "explode": {
-                    "default": false
+                    "default": False
                   }
                 }
               }
@@ -1537,7 +1537,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "parameter-or-reference": {
       "if": {
@@ -1564,7 +1564,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "$ref": "#/$defs/content"
         },
         "required": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         }
       },
@@ -1572,7 +1572,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "content"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "request-body-or-reference": {
       "if": {
@@ -1620,7 +1620,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "$ref": "#/$defs/examples"
         }
       ],
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "encoding": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#encoding-object",
@@ -1649,7 +1649,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "type": "boolean"
         },
         "allowReserved": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         }
       },
@@ -1661,7 +1661,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "$ref": "#/$defs/encoding/$defs/explode-default"
         }
       ],
-      "unevaluatedProperties": false,
+      "unevaluatedProperties": False,
       "$defs": {
         "explode-default": {
           "if": {
@@ -1684,7 +1684,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "else": {
             "properties": {
               "explode": {
-                "default": false
+                "default": False
               }
             }
           }
@@ -1706,11 +1706,11 @@ SWAGGER_V3_JSONSCHEMA = {
       },
       "minProperties": 1,
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false,
+      "unevaluatedProperties": False,
       "if": {
         "$comment": "either default, or at least one response code property must exist",
         "patternProperties": {
-          "^[1-5](?:[0-9]{2}|XX)$": false
+          "^[1-5](?:[0-9]{2}|XX)$": False
         }
       },
       "then" : {
@@ -1744,7 +1744,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "description"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "response-or-reference": {
       "if": {
@@ -1805,7 +1805,7 @@ SWAGGER_V3_JSONSCHEMA = {
         ]
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "example-or-reference": {
       "if": {
@@ -1856,7 +1856,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "link-or-reference": {
       "if": {
@@ -1880,11 +1880,11 @@ SWAGGER_V3_JSONSCHEMA = {
           "type": "string"
         },
         "required": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "deprecated": {
-          "default": false,
+          "default": False,
           "type": "boolean"
         },
         "schema": {
@@ -1916,7 +1916,7 @@ SWAGGER_V3_JSONSCHEMA = {
               "const": "simple"
             },
             "explode": {
-              "default": false,
+              "default": False,
               "type": "boolean"
             }
           },
@@ -1924,7 +1924,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "header-or-reference": {
       "if": {
@@ -1958,7 +1958,7 @@ SWAGGER_V3_JSONSCHEMA = {
         "name"
       ],
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "reference": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#reference-object",
@@ -1975,7 +1975,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "type": "string"
         }
       },
-      "unevaluatedProperties": false
+      "unevaluatedProperties": False
     },
     "schema": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#schema-object",
@@ -2025,7 +2025,7 @@ SWAGGER_V3_JSONSCHEMA = {
           "$ref": "#/$defs/security-scheme/$defs/type-oidc"
         }
       ],
-      "unevaluatedProperties": false,
+      "unevaluatedProperties": False,
       "$defs": {
         "type-apikey": {
           "if": {
@@ -2181,7 +2181,7 @@ SWAGGER_V3_JSONSCHEMA = {
         }
       },
       "$ref": "#/$defs/specification-extensions",
-      "unevaluatedProperties": false,
+      "unevaluatedProperties": False,
       "$defs": {
         "implicit": {
           "type": "object",
@@ -2203,7 +2203,7 @@ SWAGGER_V3_JSONSCHEMA = {
             "scopes"
           ],
           "$ref": "#/$defs/specification-extensions",
-          "unevaluatedProperties": false
+          "unevaluatedProperties": False
         },
         "password": {
           "type": "object",
@@ -2225,7 +2225,7 @@ SWAGGER_V3_JSONSCHEMA = {
             "scopes"
           ],
           "$ref": "#/$defs/specification-extensions",
-          "unevaluatedProperties": false
+          "unevaluatedProperties": False
         },
         "client-credentials": {
           "type": "object",
@@ -2247,7 +2247,7 @@ SWAGGER_V3_JSONSCHEMA = {
             "scopes"
           ],
           "$ref": "#/$defs/specification-extensions",
-          "unevaluatedProperties": false
+          "unevaluatedProperties": False
         },
         "authorization-code": {
           "type": "object",
@@ -2274,7 +2274,7 @@ SWAGGER_V3_JSONSCHEMA = {
             "scopes"
           ],
           "$ref": "#/$defs/specification-extensions",
-          "unevaluatedProperties": false
+          "unevaluatedProperties": False
         }
       }
     },
