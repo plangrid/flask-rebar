@@ -84,10 +84,10 @@ class CommaSeparatedList(fields.List):
     def _deserialize(self, value, attr, data, **kwargs):
         if not isinstance(value, list):
             value = value.split(",")
-        return super(CommaSeparatedList, self)._deserialize(value, attr, data)
+        return super()._deserialize(value, attr, data)
 
     def _serialize(self, value, attr, obj, **kwargs):
-        items = super(CommaSeparatedList, self)._serialize(value, attr, obj)
+        items = super()._serialize(value, attr, obj)
         return ",".join([str(i) for i in items])
 
 
@@ -109,10 +109,10 @@ class QueryParamList(fields.List):
                 )
             )
         items = data.getlist(attr)
-        return super(QueryParamList, self)._deserialize(items, attr, data)
+        return super()._deserialize(items, attr, data)
 
 
-class RequireOnDumpMixin(object):
+class RequireOnDumpMixin:
     """
     DEPRECATED AND MAY BE REMOVED IN VERSION 3.0
     In previous versions, this mixin was used to force validation on dump. As of 2.0.1, that

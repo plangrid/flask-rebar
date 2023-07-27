@@ -60,7 +60,7 @@ class OuterNestedNone(Schema, RequireOnDumpMixin):
 
 class RequireOutputMixinTest(TestCase):
     def setUp(self):
-        super(RequireOutputMixinTest, self).setUp()
+        super().setUp()
         self.validated_schema = normalize_schema(RequireOnDumpMixinSchema)
         self.unvalidated_schema = normalize_schema(NoRequireOnDumpMixinSchema)
         self.data = {

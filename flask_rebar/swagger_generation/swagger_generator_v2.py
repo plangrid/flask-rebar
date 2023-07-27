@@ -75,7 +75,7 @@ class SwaggerV2Generator(SwaggerGenerator):
         default_response_schema=Error(),
         authenticator_converter_registry=None,
     ):
-        super(SwaggerV2Generator, self).__init__(
+        super().__init__(
             openapi_major_version=2,
             version=version,
             title=title,

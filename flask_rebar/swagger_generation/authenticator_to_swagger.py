@@ -15,7 +15,7 @@ _Context = namedtuple(
 )
 
 
-class AuthenticatorConverter(object):
+class AuthenticatorConverter:
     """
     Abstract class for objects that convert Authenticator objects to
     security JSONSchema.
@@ -153,7 +153,7 @@ class AuthenticatorConverterRegistry(ConverterRegistry):
 
         :param iterable[AuthenticatorConverter] converters:
         """
-        super(AuthenticatorConverterRegistry, self).register_types(converters)
+        super().register_types(converters)
 
     def get_security_schemes(self, authenticator, openapi_version=2):
         """

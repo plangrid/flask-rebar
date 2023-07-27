@@ -211,7 +211,7 @@ def prefix_url(prefix, url):
     """
     prefix = normalize_prefix(prefix)
     url = url[1:] if url.startswith("/") else url
-    return "/{}/{}".format(prefix, url)
+    return f"/{prefix}/{url}"
 
 
 # Metadata about a declared handler function. This can be used to both
@@ -245,7 +245,7 @@ class PathDefinition(
         )
     )
     def __new__(cls, *args, **kwargs):
-        return super(PathDefinition, cls).__new__(cls, *args, **kwargs)
+        return super().__new__(cls, *args, **kwargs)
 
     @property
     @deprecated("authenticator", "3.0")
@@ -253,7 +253,7 @@ class PathDefinition(
         return self.authenticators[0] if self.authenticators else None
 
 
-class HandlerRegistry(object):
+class HandlerRegistry:
     """
     Registry for request handlers.
 
@@ -628,7 +628,7 @@ class HandlerRegistry(object):
             )
 
 
-class Rebar(object):
+class Rebar:
     """
     The main entry point for the Flask-Rebar extension.
 

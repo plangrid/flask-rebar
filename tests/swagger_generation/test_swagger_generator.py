@@ -260,7 +260,7 @@ def test_swagger_generators(registry, swagger_generator, expected_swagger):
     elif open_api_version == "3.0.2":
         swagger_jsonschema = SWAGGER_V3_JSONSCHEMA
     else:
-        raise ValueError("Unknown swagger_version: {}".format(open_api_version))
+        raise ValueError(f"Unknown swagger_version: {open_api_version}")
 
     validate_swagger(expected_swagger, schema=swagger_jsonschema)
 

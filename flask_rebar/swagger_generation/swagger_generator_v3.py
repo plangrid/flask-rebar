@@ -64,7 +64,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         authenticator_converter_registry=None,
         include_hidden=False,
     ):
-        super(SwaggerV3Generator, self).__init__(
+        super().__init__(
             openapi_major_version=3,
             version=version,
             title=title,

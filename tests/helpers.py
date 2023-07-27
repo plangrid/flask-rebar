@@ -2,7 +2,7 @@ from flask import json
 from werkzeug.utils import cached_property
 
 
-class JsonResponseMixin(object):
+class JsonResponseMixin:
     """
     Mixin with testing helper methods
     """

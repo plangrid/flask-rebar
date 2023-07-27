@@ -9,7 +9,7 @@
 """
 
 
-class Authenticator(object):
+class Authenticator:
     """
     Abstract authenticator class. Custom authentication methods should
     extend this class.

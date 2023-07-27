@@ -243,12 +243,12 @@ def get_unique_schema_definitions(
 
 
 def get_unique_authenticators(registry):
-    authenticators = set(
+    authenticators = {
         authenticator
         for d in iterate_path_definitions(paths=registry.paths)
         for authenticator in d.authenticators
         if authenticator is not None and authenticator is not USE_DEFAULT
-    )
+    }
 
     for authenticator in registry.default_authenticators:
         if authenticator is not None:
@@ -264,8 +264,7 @@ def iterate_path_definitions(paths):
     :return Iterator[PathDefinition]
     """
     for methods in paths.values():
-        for definition in methods.values():
-            yield definition
+        yield from methods.values()
 
 
 def recursively_convert_dict_to_ordered_dict(obj):

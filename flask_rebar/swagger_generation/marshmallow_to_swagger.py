@@ -37,7 +37,7 @@ except AttributeError:
 
 
 # Special value to signify that a JSONSchema field should be left unset
-class UNSET(object):
+class UNSET:
     pass
 
 
@@ -141,7 +141,7 @@ def get_schema_fields(schema):
     return sorted(fields)
 
 
-class MarshmallowConverter(object):
+class MarshmallowConverter:
     """
     Abstract class for objects that convert Marshmallow objects to
     JSONSchema dictionaries.
@@ -266,7 +266,7 @@ class FieldConverter(MarshmallowConverter):
     MARSHMALLOW_TYPE: Type[m.fields.Field] = m.fields.Field
 
     def convert(self, obj, context):
-        jsonschema_obj = super(FieldConverter, self).convert(obj, context)
+        jsonschema_obj = super().convert(obj, context)
 
         if obj.dump_only:
             jsonschema_obj["readOnly"] = True
@@ -551,7 +551,7 @@ class LengthConverter(ValidatorConverter):
         return UNSET
 
 
-class ConverterRegistry(object):
+class ConverterRegistry:
     """
     Registry for MarshmallowConverters.
 

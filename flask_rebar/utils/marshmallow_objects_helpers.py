@@ -24,12 +24,12 @@ if MARSHMALLOW_OBJECTS:
         """
 
         def __init__(self, nested, title, **kwargs):
-            super(NestedTitledModel, self).__init__(nested, **kwargs)
+            super().__init__(nested, **kwargs)
             self.schema.__swagger_title__ = title
 
 else:
 
-    class NestedTitledModel(object):  # type: ignore
+    class NestedTitledModel:  # type: ignore
         """
         This version of NestedTitledModel will exist if marshmallow-objects is not present
         """
