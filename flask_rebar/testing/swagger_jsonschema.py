@@ -8,7 +8,7 @@ LONG_DESCRIPTION = (
 
 SWAGGER_V2_JSONSCHEMA = {
     "title": "A JSON Schema for Swagger 2.0 API.",
-    "id": "http://json-schema.org/draft-04/schema#",
+    "id": "http://swagger.io/v2/schema.json#",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
     "required": ["swagger", "info", "paths"],
@@ -865,7 +865,7 @@ SWAGGER_V2_JSONSCHEMA = {
 }
 
 SWAGGER_V3_JSONSCHEMA = {
-  "$id": "https://json-schema.org/draft/2020-12/output/schema",
+  "$id": "https://spec.openapis.org/oas/3.1/schema/2022-10-07",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0",
   "type": "object",
