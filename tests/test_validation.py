@@ -33,7 +33,7 @@ class NoRequireOnDumpMixinSchema(Schema):
     value_required = fields.Str(required=True, allow_none=False)
     validation_required = fields.DateTime(required=True, allow_none=False)
     one_of_validation = fields.String(required=True, validate=OneOf(["a", "b"]))
-    dump_only = fields.Integer(dump_only=True)
+    dump_only = fields.Integer(dump_only=True)  # type: ignore
 
 
 class RequireOnDumpMixinSchema(NoRequireOnDumpMixinSchema, RequireOnDumpMixin):
@@ -60,7 +60,7 @@ class OuterNestedNone(Schema, RequireOnDumpMixin):
 
 class RequireOutputMixinTest(TestCase):
     def setUp(self):
-        super(RequireOutputMixinTest, self).setUp()
+        super().setUp()
         self.validated_schema = normalize_schema(RequireOnDumpMixinSchema)
         self.unvalidated_schema = normalize_schema(NoRequireOnDumpMixinSchema)
         self.data = {

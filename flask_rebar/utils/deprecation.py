@@ -134,9 +134,7 @@ def _remap_kwargs(func_name, kwargs, aliases):
         if alias in remapped_args:
             new, eol_version, coerce_func = _validated_deprecation_spec(new_spec)
             if new in remapped_args:
-                raise TypeError(
-                    "{} received both {} and {}".format(func_name, alias, new)
-                )
+                raise TypeError(f"{func_name} received both {alias} and {new}")
             else:
                 _deprecation_warning(alias, new, eol_version, stacklevel=4)
                 if new:
@@ -148,9 +146,7 @@ def _remap_kwargs(func_name, kwargs, aliases):
 
 
 def _deprecation_warning(old_name, new_name, eol_version, stacklevel=1):
-    eol_clause = (
-        " and may be removed in version {}".format(eol_version) if eol_version else ""
-    )
-    replacement_clause = "; use {}".format(new_name) if new_name else ""
-    msg = "{} is deprecated{}{}".format(old_name, eol_clause, replacement_clause)
+    eol_clause = f" and may be removed in version {eol_version}" if eol_version else ""
+    replacement_clause = f"; use {new_name}" if new_name else ""
+    msg = f"{old_name} is deprecated{eol_clause}{replacement_clause}"
     warnings.warn(message=msg, category=config.warning_type, stacklevel=stacklevel)

@@ -7,8 +7,6 @@
     :copyright: Copyright 2019 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from __future__ import unicode_literals
-
 import copy
 
 from flask_rebar.swagger_generation import swagger_words as sw
@@ -77,7 +75,7 @@ class SwaggerV2Generator(SwaggerGenerator):
         default_response_schema=Error(),
         authenticator_converter_registry=None,
     ):
-        super(SwaggerV2Generator, self).__init__(
+        super().__init__(
             openapi_major_version=2,
             version=version,
             title=title,

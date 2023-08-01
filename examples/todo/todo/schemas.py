@@ -19,7 +19,7 @@ class UpdateTodoSchema(CreateTodoSchema):
         partial_arg = super_kwargs.pop("partial", True)
         # Note: if you only want to mark some fields as partial, pass partial= a collection of field names, e.g.,:
         # partial_arg = super_kwargs.pop('partial', ('description', ))
-        super(UpdateTodoSchema, self).__init__(partial=partial_arg, **super_kwargs)
+        super().__init__(partial=partial_arg, **super_kwargs)
 
 
 class GetTodoListSchema(RequestSchema):

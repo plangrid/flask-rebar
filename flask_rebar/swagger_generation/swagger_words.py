@@ -7,8 +7,6 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from __future__ import unicode_literals
-
 additional_properties = "additionalProperties"
 all_of = "allOf"
 allow_empty_value = "allowEmptyValue"

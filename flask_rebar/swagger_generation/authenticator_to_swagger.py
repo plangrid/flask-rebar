@@ -1,4 +1,5 @@
 from collections import namedtuple
+from typing import Type
 
 from flask_rebar.authenticators import HeaderApiKeyAuthenticator, Authenticator
 from .marshmallow_to_swagger import ConverterRegistry
@@ -14,7 +15,7 @@ _Context = namedtuple(
 )
 
 
-class AuthenticatorConverter(object):
+class AuthenticatorConverter:
     """
     Abstract class for objects that convert Authenticator objects to
     security JSONSchema.
@@ -35,7 +36,7 @@ class AuthenticatorConverter(object):
 
     """
 
-    AUTHENTICATOR_TYPE = None
+    AUTHENTICATOR_TYPE: Type[Authenticator]
 
     def get_security_schemes(self, obj, context):
         """
@@ -152,7 +153,7 @@ class AuthenticatorConverterRegistry(ConverterRegistry):
 
         :param iterable[AuthenticatorConverter] converters:
         """
-        super(AuthenticatorConverterRegistry, self).register_types(converters)
+        super().register_types(converters)
 
     def get_security_schemes(self, authenticator, openapi_version=2):
         """

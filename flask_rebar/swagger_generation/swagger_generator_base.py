@@ -83,7 +83,7 @@ class SwaggerGenerator(SwaggerGeneratorI):
     :param marshmallow.Schema default_response_schema: Schema to use as the default of all responses
     """
 
-    _open_api_version = None
+    _open_api_version: str
 
     def __init__(
         self,

@@ -1,2 +1,2 @@
-class USE_DEFAULT(object):
+class USE_DEFAULT:
     pass

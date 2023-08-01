@@ -8,11 +8,10 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from __future__ import unicode_literals
-
 import sys
 from collections import defaultdict
 from collections import namedtuple
+from collections.abc import Mapping
 from copy import copy
 from functools import wraps
 from flask import current_app, g, jsonify, request
@@ -34,12 +33,6 @@ from flask_rebar.utils.request_utils import normalize_schema
 from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
 from flask_rebar.swagger_generation import SwaggerV2Generator
 from flask_rebar.swagger_ui import create_swagger_ui_blueprint
-
-# Deal with maintaining (for now at least) support for 2.7+:
-try:
-    from collections.abc import Mapping  # 3.3+
-except ImportError:
-    from collections import Mapping  # 2.7+
 
 
 MOVED_PERMANENTLY_ERROR = RequestRedirect
@@ -218,7 +211,7 @@ def prefix_url(prefix, url):
     """
     prefix = normalize_prefix(prefix)
     url = url[1:] if url.startswith("/") else url
-    return "/{}/{}".format(prefix, url)
+    return f"/{prefix}/{url}"
 
 
 # Metadata about a declared handler function. This can be used to both
@@ -252,7 +245,7 @@ class PathDefinition(
         )
     )
     def __new__(cls, *args, **kwargs):
-        return super(PathDefinition, cls).__new__(cls, *args, **kwargs)
+        return super().__new__(cls, *args, **kwargs)
 
     @property
     @deprecated("authenticator", "3.0")
@@ -260,7 +253,7 @@ class PathDefinition(
         return self.authenticators[0] if self.authenticators else None
 
 
-class HandlerRegistry(object):
+class HandlerRegistry:
     """
     Registry for request handlers.
 
@@ -635,7 +628,7 @@ class HandlerRegistry(object):
             )
 
 
-class Rebar(object):
+class Rebar:
     """
     The main entry point for the Flask-Rebar extension.
 

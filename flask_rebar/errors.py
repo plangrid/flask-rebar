@@ -7,7 +7,6 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-from __future__ import unicode_literals
 
 
 class HttpJsonError(Exception):
@@ -28,13 +27,13 @@ class HttpJsonError(Exception):
         response, not nested under "additional_data".
     """
 
-    default_message = None
-    http_status_code = None
+    default_message: str
+    http_status_code: int
 
     def __init__(self, msg=None, additional_data=None):
         self.error_message = msg or self.default_message
         self.additional_data = additional_data
-        super(HttpJsonError, self).__init__(self.error_message)
+        super().__init__(self.error_message)
 
 
 class BadRequest(HttpJsonError):

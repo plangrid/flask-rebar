@@ -80,3 +80,6 @@ man/
 #vscode
 .vscode/
 pip-wheel-metadata
+
+#mypy
+.mypy_cache

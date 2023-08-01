@@ -7,6 +7,17 @@ exclude = '''
 )/
 '''
 
+[tool.mypy]
+exclude = ['build', 'docs', 'examples']
+
+[[tool.mypy.overrides]]
+module = [
+    "marshmallow_enum",
+    "marshmallow_objects",
+    "parametrize"
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 filterwarnings = [
     "error"

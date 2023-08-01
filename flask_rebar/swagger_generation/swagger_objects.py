@@ -13,7 +13,7 @@
 from flask_rebar.swagger_generation import swagger_words as sw
 
 
-class ExternalDocumentation(object):
+class ExternalDocumentation:
     """Represents a Swagger "External Documentation Object"
 
     :param str url: The URL for the target documentation. Value MUST be in the format of a URL
@@ -35,7 +35,7 @@ class ExternalDocumentation(object):
         return doc
 
 
-class Tag(object):
+class Tag:
     """Represents a Swagger "Tag Object"
 
     :param str name: The name of the tag
@@ -61,7 +61,7 @@ class Tag(object):
         return doc
 
 
-class ServerVariable(object):
+class ServerVariable:
     """Represents a Swagger "Server Variable Object"
 
     :param str default:
@@ -87,7 +87,7 @@ class ServerVariable(object):
         return doc
 
 
-class Server(object):
+class Server:
     """Represents a Swagger "Server Object"
 
     :param str url:

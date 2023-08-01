@@ -16,7 +16,7 @@ from flask_rebar.swagger_generation.generator_utils import format_path_for_swagg
 
 class TestFlatten(unittest.TestCase):
     def setUp(self):
-        super(TestFlatten, self).setUp()
+        super().setUp()
         self.maxDiff = None
 
     def test_flatten(self):

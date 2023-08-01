@@ -67,14 +67,14 @@ header_validation_failed = ErrorMessage(
 
 def required_field_missing(field_name):
     return ErrorMessage(
-        "Required field missing: {}".format(field_name),
+        f"Required field missing: {field_name}",
         ErrorCode.REQUIRED_FIELD_MISSING,
     )
 
 
 def required_field_empty(field_name):
     return ErrorMessage(
-        "Value for required field cannot be None: {}".format(field_name),
+        f"Value for required field cannot be None: {field_name}",
         ErrorCode.REQUIRED_FIELD_EMPTY,
     )
 

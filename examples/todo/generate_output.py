@@ -88,7 +88,7 @@ def main():
 
             output.extend(["```", ""])
 
-    print("Writing output to {}".format(todo_output_filepath))
+    print(f"Writing output to {todo_output_filepath}")
 
     with open(todo_output_filepath, "w") as f:
         f.write("\n".join(output))
