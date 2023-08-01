@@ -28,7 +28,7 @@ from flask_rebar.validation import Error
 
 
 class SwaggerV3Generator(SwaggerGenerator):
-    """Generates a v3.0.2 Swagger specification from a Rebar object.
+    """Generates a v3.1.0 Swagger specification from a Rebar object.
 
     Not all things are retrievable from the Rebar object, so this
     guy also needs some additional information to complete the job.
@@ -47,7 +47,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         A list of Server Objects to set as the server metadata for the specification.
     """
 
-    _open_api_version = "3.0.2"
+    _open_api_version = "3.1.0"
 
     def __init__(
         self,
