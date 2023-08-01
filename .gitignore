@@ -83,6 +83,3 @@ pip-wheel-metadata
 
 #mypy
 .mypy_cache
-
-#swagger_ui
-flask_rebar/swagger_ui
