@@ -113,7 +113,7 @@ def test_swagger_v2_generator_non_registry_parameters():
 
 def test_swagger_v3_generator_non_registry_parameters():
     title = "Test API"
-    version = "3.0.0"
+    version = "3.1.0"
     description = "testing testing 123"
 
     class Error(m.Schema):
@@ -156,7 +156,7 @@ def test_swagger_v3_generator_non_registry_parameters():
     swagger = generator.generate(registry)
 
     expected_swagger = {
-        "openapi": "3.0.2",
+        "openapi": "3.1.0",
         "info": {"title": title, "version": version, "description": description},
         "tags": [
             {
@@ -257,7 +257,7 @@ def test_swagger_generators(registry, swagger_generator, expected_swagger):
     open_api_version = swagger_generator.get_open_api_version()
     if open_api_version == "2.0":
         swagger_jsonschema = SWAGGER_V2_JSONSCHEMA
-    elif open_api_version == "3.0.2":
+    elif open_api_version == "3.1.0":
         swagger_jsonschema = SWAGGER_V3_JSONSCHEMA
     else:
         raise ValueError("Unknown swagger_version: {}".format(open_api_version))

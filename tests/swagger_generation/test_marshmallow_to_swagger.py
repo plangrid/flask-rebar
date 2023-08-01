@@ -163,7 +163,7 @@ class TestConverterRegistry(TestCase):
 
     def test_primitive_types_openapi_v3(self):
         for field, result in [
-            (m.fields.Integer(allow_none=True), {"type": "integer", "nullable": True}),
+            (m.fields.Integer(allow_none=True), {"type": ["integer", "null"]}),
             (
                 QueryParamList(m.fields.Integer()),
                 {"type": "array", "items": {"type": "integer"}, "explode": True},

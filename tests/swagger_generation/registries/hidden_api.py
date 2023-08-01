@@ -257,7 +257,7 @@ EXPECTED_SWAGGER_V2 = {
 
 
 SWAGGER_V3_WITHOUT_HIDDEN = expected_swagger = {
-    "openapi": "3.0.2",
+    "openapi": "3.1.0",
     "info": {"title": "My API", "version": "1.0.0", "description": ""},
     "security": [{"default": []}],
     "components": {
@@ -435,7 +435,7 @@ SWAGGER_V3_WITHOUT_HIDDEN = expected_swagger = {
 
 
 SWAGGER_V3_WITH_HIDDEN = expected_swagger = {
-    "openapi": "3.0.2",
+    "openapi": "3.1.0",
     "info": {"title": "My API", "version": "1.0.0", "description": ""},
     "security": [{"default": []}],
     "components": {
