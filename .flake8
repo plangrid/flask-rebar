@@ -3,5 +3,4 @@ max-line-length = 120
 exclude = .git/*, build/*, examples/*, venv/*, setup.py
 per-file-ignores =
     flask_rebar/__init__.py: F401 flask_rebar/*/__init__.py: F401
-select = B950
 extend-ignore = E501
