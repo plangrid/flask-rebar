@@ -118,6 +118,7 @@ If you'd like to replace swagger-ui's static files (`flask_rebar/swagger_ui/stat
 run the following from the root of the project.
 
 .. code-block::
+    
     curl -L https://api.github.com/repos/swagger-api/swagger-ui/tarball | tar -xv --directory=flask_rebar/swagger_ui/static --strip-components=2 "*/dist/"
 
 Documentation
