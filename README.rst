@@ -112,7 +112,7 @@ Installation
 
 
 Replacing static swagger-ui files
--------------
+---------------------------------
 
 If you'd like to replace swagger-ui's static files (`flask_rebar/swagger_ui/static`) with those of the latest release,
 run the following from the root of the project.
