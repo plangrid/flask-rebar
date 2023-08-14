@@ -197,7 +197,12 @@ class SwaggerV2Generator(SwaggerGenerator):
                         sw.required: True,
                         sw.in_: sw.path,
                     }
-                    if isinstance(converter := self.flask_converters_to_swagger_types[path_arg.type], str):
+                    if isinstance(
+                        converter := self.flask_converters_to_swagger_types[
+                            path_arg.type
+                        ],
+                        str,
+                    ):
                         next_param[sw.type_] = converter
                     else:
                         next_param.update(converter.to_swagger())
