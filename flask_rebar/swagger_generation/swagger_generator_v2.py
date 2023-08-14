@@ -190,15 +190,18 @@ class SwaggerV2Generator(SwaggerGenerator):
                 path_definitions[spec_path] = path_definition = {}
 
             if path_args:
-                path_params = [
-                    {
+                path_params = []
+                for path_arg in path_args:
+                    next_param = {
                         sw.name: path_arg.name,
                         sw.required: True,
                         sw.in_: sw.path,
-                        sw.type_: self.flask_converters_to_swagger_types[path_arg.type],
                     }
-                    for path_arg in path_args
-                ]
+                    if isinstance(converter := self.flask_converters_to_swagger_types[path_arg.type], str):
+                        next_param[sw.type_] = converter
+                    else:
+                        next_param.update(converter.to_swagger())
+                    path_params.append(next_param)
 
                 # We have to check for an ugly case here. If different Flask
                 # paths that map to the same Swagger path use different URL
