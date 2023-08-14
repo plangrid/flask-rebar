@@ -160,9 +160,14 @@ class SwaggerV3Generator(SwaggerGenerator):
                         sw.required: True,
                         sw.in_: sw.path,
                         sw.style: sw.simple,
-                        sw.schema: {}
+                        sw.schema: {},
                     }
-                    if isinstance(converter := self.flask_converters_to_swagger_types[path_arg.type], str):
+                    if isinstance(
+                        converter := self.flask_converters_to_swagger_types[
+                            path_arg.type
+                        ],
+                        str,
+                    ):
                         next_param[sw.schema][sw.type_] = converter
                     else:
                         next_param[sw.schema].update(converter.to_swagger())
