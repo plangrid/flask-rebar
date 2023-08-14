@@ -162,15 +162,15 @@ class SwaggerV3Generator(SwaggerGenerator):
                         sw.style: sw.simple,
                         sw.schema: {},
                     }
-                    if isinstance(
+                    if hasattr(
                         converter := self.flask_converters_to_swagger_types[
                             path_arg.type
                         ],
-                        str,
+                        "to_swagger",
                     ):
-                        next_param[sw.schema][sw.type_] = converter
-                    else:
                         next_param[sw.schema].update(converter.to_swagger())
+                    else:
+                        next_param[sw.schema][sw.type_] = converter
                     path_params.append(next_param)
 
                 # We have to check for an ugly case here. If different Flask
