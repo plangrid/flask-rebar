@@ -180,6 +180,9 @@ class SwaggerV3Generator(SwaggerGenerator):
                 path_definition[sw.parameters] = path_params
 
             for method, d in methods.items():
+                if d.hidden:
+                    continue
+
                 responses_definition = {
                     sw.default: self._get_response_definition(
                         self.default_response_schema
