@@ -180,7 +180,7 @@ class SwaggerV3Generator(SwaggerGenerator):
                 path_definition[sw.parameters] = path_params
 
             for method, d in methods.items():
-                if d.hidden:
+                if not self.include_hidden and d.hidden:
                     continue
 
                 responses_definition = {
