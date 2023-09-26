@@ -270,6 +270,9 @@ class SwaggerV3Generator(SwaggerGenerator):
                 if d.tags:
                     path_definition[method_lower][sw.tags] = d.tags
 
+                if d.summary:
+                    path_definition[method_lower][sw.summary] = d.summary
+
         return path_definitions
 
     def _get_response_definition(self, schema):
