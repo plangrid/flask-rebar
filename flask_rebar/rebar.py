@@ -232,6 +232,7 @@ class PathDefinition(
             "tags",
             "mimetype",
             "hidden",
+            "summary",
         ],
     )
 ):
@@ -407,6 +408,7 @@ class HandlerRegistry:
                     tags=definition_.tags,
                     mimetype=definition_.mimetype,
                     hidden=definition_.hidden,
+                    summary=definition_.summary,
                 )
 
         return paths
@@ -432,6 +434,7 @@ class HandlerRegistry:
         tags=None,
         mimetype=USE_DEFAULT,
         hidden=False,
+        summary=None,
     ):
         """
         Registers a function as a request handler.
@@ -463,6 +466,7 @@ class HandlerRegistry:
             Content-Type header to add to the response schema
         :param bool hidden:
             if hidden, documentation is not created for this request handler by default
+        :param str summary:
         """
         # Fix #115: if we were passed bare classes we'll go ahead and instantiate
         headers_schema = normalize_schema(headers_schema)
@@ -497,6 +501,7 @@ class HandlerRegistry:
             tags=tags,
             mimetype=mimetype,
             hidden=hidden,
+            summary=summary,
         )
 
     @deprecated_parameters(
@@ -519,6 +524,7 @@ class HandlerRegistry:
         tags=None,
         mimetype=USE_DEFAULT,
         hidden=False,
+        summary=None,
     ):
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
@@ -539,6 +545,7 @@ class HandlerRegistry:
                 tags=tags,
                 mimetype=mimetype,
                 hidden=hidden,
+                summary=summary,
             )
             return f
 

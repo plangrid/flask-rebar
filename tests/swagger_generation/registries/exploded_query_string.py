@@ -21,7 +21,7 @@ class ExplodedQueryStringSchema(RequestSchema):
 
 
 @registry.handles(
-    rule="/foos", method="GET", query_string_schema=ExplodedQueryStringSchema()
+    rule="/foos", method="GET", query_string_schema=ExplodedQueryStringSchema(), summary="Foos"
 )
 def get_foos():
     pass
@@ -91,6 +91,7 @@ EXPECTED_SWAGGER_V3 = {
         "/foos": {
             "get": {
                 "operationId": "get_foos",
+                "summary": "Foos",
                 "responses": {
                     "default": {
                         "description": "Error",
