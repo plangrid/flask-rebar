@@ -64,6 +64,17 @@ def update_foo(foo_uid):
     pass
 
 
+@registry.handles(
+    rule="/foos/<foo_uid>",
+    method="DELETE",
+    response_body_schema={200: FooSchema()},
+    authenticators=[authenticator],
+    hidden=True,
+)
+def delete_foo(foo_uid):
+    pass
+
+
 # Test using Schema(many=True) without using a nested Field.
 # https://github.com/plangrid/flask-rebar/issues/41
 @registry.handles(
@@ -113,6 +124,20 @@ EXPECTED_SWAGGER_V2 = {
             "parameters": [
                 {"name": "foo_uid", "in": "path", "required": True, "type": "string"}
             ],
+            "delete": {
+                "operationId": "delete_foo",
+                "responses": {
+                    "200": {
+                        "description": "Foo",
+                        "schema": {"$ref": "#/definitions/Foo"},
+                    },
+                    "default": {
+                        "description": "Error",
+                        "schema": {"$ref": "#/definitions/Error"},
+                    },
+                },
+                "security": [{"sharedSecret": []}],
+            },
             "get": {
                 "operationId": "get_foo",
                 "description": "helpful description",
@@ -491,6 +516,28 @@ SWAGGER_V3_WITH_HIDDEN = expected_swagger = {
                     "schema": {"type": "string"},
                 }
             ],
+            "delete": {
+                "operationId": "delete_foo",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Foo"}
+                            }
+                        },
+                        "description": "Foo",
+                    },
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Error"}
+                            }
+                        },
+                        "description": "Error",
+                    },
+                },
+                "security": [{"sharedSecret": []}],
+            },
             "get": {
                 "operationId": "get_foo",
                 "description": "helpful description",
