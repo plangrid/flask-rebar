@@ -21,7 +21,10 @@ class ExplodedQueryStringSchema(RequestSchema):
 
 
 @registry.handles(
-    rule="/foos", method="GET", query_string_schema=ExplodedQueryStringSchema(), summary="Foos"
+    rule="/foos",
+    method="GET",
+    query_string_schema=ExplodedQueryStringSchema(),
+    summary="Foos",
 )
 def get_foos():
     pass
