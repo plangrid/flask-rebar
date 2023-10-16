@@ -518,8 +518,10 @@ class HandlerRegistry:
             }
 
         # authenticators can be a list of Authenticators, a single Authenticator, USE_DEFAULT, or None
-        authenticators_list = []
-        if isinstance(authenticators, Authenticator) or authenticators is USE_DEFAULT:
+        authenticators_list: Sequence[Union[type[USE_DEFAULT], Authenticator]] = []
+        if isinstance(authenticators, list):
+            authenticators_list = authenticators
+        elif isinstance(authenticators, Authenticator) or authenticators is USE_DEFAULT:
             authenticators_list = [authenticators]
         elif authenticators is None:
             authenticators_list = []
@@ -549,7 +551,6 @@ class HandlerRegistry:
     )
     def handles(
         self,
-        func: Callable,
         rule: str,
         method: str = "GET",
         endpoint: Optional[str] = None,
