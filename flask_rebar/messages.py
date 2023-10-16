@@ -65,21 +65,21 @@ header_validation_failed = ErrorMessage(
 )
 
 
-def required_field_missing(field_name):
+def required_field_missing(field_name: str) -> ErrorMessage:
     return ErrorMessage(
         f"Required field missing: {field_name}",
         ErrorCode.REQUIRED_FIELD_MISSING,
     )
 
 
-def required_field_empty(field_name):
+def required_field_empty(field_name: str) -> ErrorMessage:
     return ErrorMessage(
         f"Value for required field cannot be None: {field_name}",
         ErrorCode.REQUIRED_FIELD_EMPTY,
     )
 
 
-def unsupported_fields(field_names):
+def unsupported_fields(field_names: str) -> ErrorMessage:
     return ErrorMessage(
         "Unexpected field: {}".format(",".join(field_names)),
         ErrorCode.UNSUPPORTED_FIELDS,
