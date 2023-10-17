@@ -1,6 +1,5 @@
 from typing import Any
 from typing import Dict
-from typing import Optional
 
 import marshmallow
 from marshmallow.fields import Field
@@ -15,9 +14,11 @@ def set_data_key(field: Field, key: str) -> Field:
     return field
 
 
-def get_data_key(field: Field) -> Optional[str]:
+def get_data_key(field: Field) -> str:
     if field.data_key:
         return field.data_key
+    if field.name is None:
+        raise ValueError("Field name cannot be None")
     return field.name
 
 

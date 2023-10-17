@@ -2,7 +2,7 @@ from collections import namedtuple
 from typing import Type
 
 from flask_rebar.authenticators import Authenticator, HeaderApiKeyAuthenticator
-from .marshmallow_to_swagger import ConverterRegistry
+from .marshmallow_to_swagger import UnregisteredType
 from . import swagger_words as sw
 from typing import Any, Callable, Dict, Iterable, List
 
@@ -147,11 +147,14 @@ class HeaderApiKeyConverter(AuthenticatorConverter):
         }
 
 
-class AuthenticatorConverterRegistry(ConverterRegistry):
+class AuthenticatorConverterRegistry:
+    def __init__(self) -> None:
+        self._type_map: Dict[type[Authenticator], AuthenticatorConverter] = {}
+
     def _convert(self, obj: Authenticator, context: _Context) -> None:
         pass
 
-    def convert(self, obj: Authenticator, openapi_version: int = 2) -> None:
+    def convert(self, obj: Authenticator, openapi_version: int = 2) -> Dict[str, Any]:
         raise RuntimeWarning("Use get_security_schemes or get_security_requirements")
 
     def register_type(self, converter: AuthenticatorConverter) -> None:
@@ -168,7 +171,27 @@ class AuthenticatorConverterRegistry(ConverterRegistry):
 
         :param iterable[AuthenticatorConverter] converters:
         """
-        super().register_types(converters)
+        for converter in converters:
+            self.register_type(converter)
+
+    def _get_converter_for_type(self, obj: Authenticator) -> AuthenticatorConverter:
+        """
+        Locates the registered converter for a given type.
+        :param obj: instance to convert
+        :return: converter for type of instance
+        """
+        method_resolution_order = obj.__class__.__mro__
+
+        for cls in method_resolution_order:
+            if cls in self._type_map:
+                return self._type_map[cls]
+        else:
+            raise UnregisteredType(
+                "No registered type found in method resolution order: {mro}\n"
+                "Registered types: {types}".format(
+                    mro=method_resolution_order, types=list(self._type_map.keys())
+                )
+            )
 
     def get_security_schemes(
         self, authenticator: Authenticator, openapi_version: int = 2
