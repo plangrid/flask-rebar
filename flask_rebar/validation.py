@@ -8,8 +8,7 @@
     :license: MIT, see LICENSE for details.
 """
 from collections import namedtuple
-from collections.abc import Mapping
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Mapping, Union
 
 from marshmallow import Schema
 from marshmallow import fields

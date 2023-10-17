@@ -12,7 +12,6 @@ from __future__ import annotations
 import sys
 from collections import defaultdict
 from collections import namedtuple
-from collections.abc import Mapping
 from copy import copy
 from functools import wraps
 from flask import current_app, g, jsonify, request, Response
@@ -24,6 +23,7 @@ from typing import (
     Callable,
     Dict,
     List,
+    Mapping,
     Optional,
     Sequence,
     Set,
