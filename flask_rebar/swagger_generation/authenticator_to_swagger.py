@@ -103,8 +103,8 @@ class AuthenticatorConverter:
 
 
 def make_class_from_method(
-    authenticator_class: type[Authenticator], func: Callable
-) -> type[AuthenticatorConverter]:
+    authenticator_class: Type[Authenticator], func: Callable
+) -> Type[AuthenticatorConverter]:
     """
     Utility to handle converting old-style method converters into new-style AuthenticatorConverters.
     """
@@ -149,7 +149,7 @@ class HeaderApiKeyConverter(AuthenticatorConverter):
 
 class AuthenticatorConverterRegistry:
     def __init__(self) -> None:
-        self._type_map: Dict[type[Authenticator], AuthenticatorConverter] = {}
+        self._type_map: Dict[Type[Authenticator], AuthenticatorConverter] = {}
 
     def _convert(self, obj: Authenticator, context: _Context) -> None:
         pass

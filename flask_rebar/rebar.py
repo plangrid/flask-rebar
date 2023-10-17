@@ -28,6 +28,7 @@ from typing import (
     Sequence,
     Set,
     Tuple,
+    Type,
     Union,
 )
 from werkzeug.datastructures import Headers
@@ -59,8 +60,8 @@ PERMANENT_REDIRECT_ERROR = RequestRedirect
 
 
 def _convert_authenticator_to_authenticators(
-    authenticator: Optional[Union[Authenticator, type[USE_DEFAULT]]]
-) -> list[Union[Authenticator, type[USE_DEFAULT]]]:
+    authenticator: Optional[Union[Authenticator, Type[USE_DEFAULT]]]
+) -> list[Union[Authenticator, Type[USE_DEFAULT]]]:
     if authenticator is None:
         return []
     elif isinstance(authenticator, Authenticator) or authenticator is USE_DEFAULT:
@@ -462,12 +463,12 @@ class HandlerRegistry:
         response_body_schema: Optional[Dict[int, Schema]] = None,
         query_string_schema: Optional[Schema] = None,
         request_body_schema: Optional[Schema] = None,
-        headers_schema: Union[type[USE_DEFAULT], Schema] = USE_DEFAULT,
+        headers_schema: Union[Type[USE_DEFAULT], Schema] = USE_DEFAULT,
         authenticators: Union[
-            type[USE_DEFAULT], List[Authenticator], Authenticator
+            Type[USE_DEFAULT], List[Authenticator], Authenticator
         ] = USE_DEFAULT,
         tags: Optional[Sequence[str]] = None,
-        mimetype: Union[type[USE_DEFAULT], str] = USE_DEFAULT,
+        mimetype: Union[Type[USE_DEFAULT], str] = USE_DEFAULT,
         hidden: bool = False,
         summary: Optional[str] = None,
     ) -> None:
@@ -518,7 +519,7 @@ class HandlerRegistry:
             }
 
         # authenticators can be a list of Authenticators, a single Authenticator, USE_DEFAULT, or None
-        authenticators_list: Sequence[Union[type[USE_DEFAULT], Authenticator]] = []
+        authenticators_list: Sequence[Union[Type[USE_DEFAULT], Authenticator]] = []
         if isinstance(authenticators, list):
             authenticators_list = authenticators
         elif isinstance(authenticators, Authenticator) or authenticators is USE_DEFAULT:
@@ -557,12 +558,12 @@ class HandlerRegistry:
         response_body_schema: Optional[Dict[int, Schema]] = None,
         query_string_schema: Optional[Schema] = None,
         request_body_schema: Optional[Schema] = None,
-        headers_schema: Union[type[USE_DEFAULT], Schema] = USE_DEFAULT,
+        headers_schema: Union[Type[USE_DEFAULT], Schema] = USE_DEFAULT,
         authenticators: Union[
-            type[USE_DEFAULT], List[Authenticator], Authenticator
+            Type[USE_DEFAULT], List[Authenticator], Authenticator
         ] = USE_DEFAULT,
         tags: Optional[Sequence[str]] = None,
-        mimetype: Union[type[USE_DEFAULT], str] = USE_DEFAULT,
+        mimetype: Union[Type[USE_DEFAULT], str] = USE_DEFAULT,
         hidden: bool = False,
         summary: Optional[str] = None,
     ):

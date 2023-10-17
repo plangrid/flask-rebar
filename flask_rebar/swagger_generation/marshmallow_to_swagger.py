@@ -224,7 +224,7 @@ class SchemaConverter(MarshmallowConverter[Schema]):
     @sets_swagger_attr(sw.items)
     def get_items(
         self, obj: Schema, context: _Context
-    ) -> Union[type[UNSET], MarshmallowObject]:
+    ) -> Union[Type[UNSET], MarshmallowObject]:
         if not obj.many:
             return UNSET
 
@@ -236,7 +236,7 @@ class SchemaConverter(MarshmallowConverter[Schema]):
     @sets_swagger_attr(sw.properties)
     def get_properties(
         self, obj: Schema, context: _Context
-    ) -> Union[type[UNSET], Dict[str, Any]]:
+    ) -> Union[Type[UNSET], Dict[str, Any]]:
         if obj.many:
             return UNSET
 
@@ -250,7 +250,7 @@ class SchemaConverter(MarshmallowConverter[Schema]):
     @sets_swagger_attr(sw.required)
     def get_required(
         self, obj: Schema, context: _Context
-    ) -> Union[type[UNSET], List[str]]:
+    ) -> Union[Type[UNSET], List[str]]:
         if obj.many or obj.partial is True:
             return UNSET
 
@@ -271,7 +271,7 @@ class SchemaConverter(MarshmallowConverter[Schema]):
     @sets_swagger_attr(sw.description)
     def get_description(
         self, obj: Schema, context: _Context
-    ) -> Union[type[UNSET], str]:
+    ) -> Union[Type[UNSET], str]:
         if obj.many:
             return UNSET
         elif obj.__doc__:
@@ -280,7 +280,7 @@ class SchemaConverter(MarshmallowConverter[Schema]):
             return UNSET
 
     @sets_swagger_attr(sw.title)
-    def get_title(self, obj: Schema, context: _Context) -> Union[type[UNSET], str]:
+    def get_title(self, obj: Schema, context: _Context) -> Union[Type[UNSET], str]:
         if not obj.many:
             return get_swagger_title(obj)
         else:
@@ -360,7 +360,7 @@ class FieldConverter(MarshmallowConverter, Generic[TField]):
             return UNSET
 
     @sets_swagger_attr(sw.nullable)
-    def get_nullable(self, obj: TField, context: _Context) -> Union[type[UNSET], bool]:
+    def get_nullable(self, obj: TField, context: _Context) -> Union[Type[UNSET], bool]:
         if context.openapi_version == 2 and obj.allow_none is not False:
             return True
         else:
@@ -369,7 +369,7 @@ class FieldConverter(MarshmallowConverter, Generic[TField]):
     @sets_swagger_attr(sw.description)
     def get_description(
         self, obj: TField, context: _Context
-    ) -> Union[type[UNSET], str]:
+    ) -> Union[Type[UNSET], str]:
         if "description" in obj.metadata:
             return obj.metadata["description"]
         else:
@@ -403,7 +403,7 @@ class ListConverter(FieldConverter[m.fields.List]):
     @sets_swagger_attr(sw.items)
     def get_items(
         self, obj: m.fields.List, context: _Context
-    ) -> Union[type[UNSET], m.fields.List]:
+    ) -> Union[Type[UNSET], m.fields.List]:
         return context.convert(obj.inner, context)
 
 
@@ -541,19 +541,19 @@ class CsvArrayConverter(ListConverter):
     @sets_swagger_attr(sw.collection_format)
     def get_collection_format(
         self, obj: CommaSeparatedList, context: _Context
-    ) -> Union[type[UNSET], str]:
+    ) -> Union[Type[UNSET], str]:
         return sw.csv if context.openapi_version == 2 else UNSET
 
     @sets_swagger_attr(sw.style)
     def get_style(
         self, obj: CommaSeparatedList, context: _Context
-    ) -> Union[type[UNSET], str]:
+    ) -> Union[Type[UNSET], str]:
         return sw.form if context.openapi_version == 3 else UNSET
 
     @sets_swagger_attr(sw.explode)
     def get_explode(
         self, obj: CommaSeparatedList, context: _Context
-    ) -> Union[type[UNSET], bool]:
+    ) -> Union[Type[UNSET], bool]:
         return False if context.openapi_version == 3 else UNSET
 
 
@@ -563,13 +563,13 @@ class MultiArrayConverter(ListConverter):
     @sets_swagger_attr(sw.collection_format)
     def get_collection_format(
         self, obj: QueryParamList, context: _Context
-    ) -> Union[type[UNSET], str]:
+    ) -> Union[Type[UNSET], str]:
         return sw.multi if context.openapi_version == 2 else UNSET
 
     @sets_swagger_attr(sw.explode)
     def get_explode(
         self, obj: QueryParamList, context: _Context
-    ) -> Union[type[UNSET], bool]:
+    ) -> Union[Type[UNSET], bool]:
         return True if context.openapi_version == 3 else UNSET
 
 
@@ -579,7 +579,7 @@ class RangeConverter(ValidatorConverter):
     @sets_swagger_attr(sw.minimum)
     def get_minimum(
         self, obj: Range, context: _Context
-    ) -> Union[type[UNSET], int, float]:
+    ) -> Union[Type[UNSET], int, float]:
         if obj.min is not None:
             return obj.min
         else:
@@ -588,7 +588,7 @@ class RangeConverter(ValidatorConverter):
     @sets_swagger_attr(sw.maximum)
     def get_maximum(
         self, obj: Range, context: _Context
-    ) -> Union[type[UNSET], int, float]:
+    ) -> Union[Type[UNSET], int, float]:
         if obj.max is not None:
             return obj.max
         else:
@@ -609,7 +609,7 @@ class LengthConverter(ValidatorConverter):
     @sets_swagger_attr(sw.min_items)
     def get_minimum_items(
         self, obj: Length, context: _Context
-    ) -> Union[type[UNSET], int]:
+    ) -> Union[Type[UNSET], int]:
         if context.memo[sw.type_] == sw.array:
             if obj.min is not None:
                 return obj.min
@@ -618,7 +618,7 @@ class LengthConverter(ValidatorConverter):
     @sets_swagger_attr(sw.max_items)
     def get_maximum_items(
         self, obj: Length, context: _Context
-    ) -> Union[type[UNSET], int]:
+    ) -> Union[Type[UNSET], int]:
         if context.memo[sw.type_] == sw.array:
             if obj.max is not None:
                 return obj.max
@@ -627,7 +627,7 @@ class LengthConverter(ValidatorConverter):
     @sets_swagger_attr(sw.min_length)
     def get_minimum_length(
         self, obj: Length, context: _Context
-    ) -> Union[type[UNSET], int]:
+    ) -> Union[Type[UNSET], int]:
         if context.memo[sw.type_] == sw.string:
             if obj.min is not None:
                 return obj.min
@@ -636,7 +636,7 @@ class LengthConverter(ValidatorConverter):
     @sets_swagger_attr(sw.max_length)
     def get_maximum_length(
         self, obj: Length, context: _Context
-    ) -> Union[type[UNSET], int]:
+    ) -> Union[Type[UNSET], int]:
         if context.memo[sw.type_] == sw.string:
             if obj.max is not None:
                 return obj.max
@@ -658,7 +658,7 @@ class ConverterRegistry:
 
     def __init__(self) -> None:
         self._type_map: Dict[
-            Union[type[MarshmallowObject], type[Authenticator]], MarshmallowConverter
+            Union[Type[MarshmallowObject], Type[Authenticator]], MarshmallowConverter
         ] = {}
         # self._validator_map = {}
 
