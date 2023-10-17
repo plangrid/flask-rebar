@@ -48,7 +48,7 @@ TField = TypeVar("TField", bound=m.fields.Field)
 
 LoadDumpOptions = None
 try:
-    EnumField: Optional[Type[m.fields.Field]] = m.fields.Enum
+    EnumField: Any = m.fields.Enum
 except AttributeError:
     try:
         from marshmallow_enum import EnumField, LoadDumpOptions  # type: ignore
@@ -737,11 +737,14 @@ class ConverterRegistry:
         )
 
 
-class EnumConverter(FieldConverter[m.fields.Enum]):
+class EnumConverter(FieldConverter):
     MARSHMALLOW_TYPE = EnumField  # type: ignore
+    # Note that `obj` is typed as Any in this converter because mypy has great difficulty
+    # trying to sort out type hints for EnumField, since it could be either m.fields.Enum
+    # (marshmallow >= 3.18) or marshmallow_enum.EnumField
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj: m.fields.Enum, context: _Context) -> Union[str, List[str]]:
+    def get_type(self, obj: Any, context: _Context) -> Union[str, List[str]]:
         # Note: we don't (yet?) support mix-and-match between load_by and dump_by. Pick one.
         if obj.by_value or (
             LoadDumpOptions is not None
@@ -759,7 +762,7 @@ class EnumConverter(FieldConverter[m.fields.Enum]):
             return self.null_type_determination(obj, context, sw.string)
 
     @sets_swagger_attr(sw.enum)
-    def get_enum(self, obj: m.fields.Enum, context: _Context) -> List[str]:
+    def get_enum(self, obj: Any, context: _Context) -> List[str]:
         if obj.by_value or (
             LoadDumpOptions is not None
             and obj.load_by == obj.dump_by == LoadDumpOptions.value
