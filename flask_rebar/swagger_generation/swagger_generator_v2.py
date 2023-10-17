@@ -23,7 +23,7 @@ from flask_rebar.swagger_generation.generator_utils import (
 )
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
 from flask_rebar.validation import Error
-from flask_rebar.swagger_generation.swagger_generator import SwaggerGenerator
+from flask_rebar.swagger_generation.swagger_generator_base import SwaggerGenerator
 
 
 class SwaggerV2Generator(SwaggerGenerator):

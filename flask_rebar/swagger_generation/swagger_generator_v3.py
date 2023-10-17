@@ -9,7 +9,7 @@
 """
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.swagger_generation import swagger_words as sw
-from flask_rebar.swagger_generation.swagger_generator import SwaggerGenerator
+from flask_rebar.swagger_generation.swagger_generator_base import SwaggerGenerator
 from flask_rebar.swagger_generation.swagger_objects import Server
 from flask_rebar.swagger_generation.generator_utils import (
     format_path_for_swagger,

@@ -49,8 +49,8 @@ from flask_rebar.utils.request_utils import get_json_body_params_or_400
 from flask_rebar.utils.request_utils import get_query_string_params_or_400
 from flask_rebar.utils.request_utils import normalize_schema
 from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
-from flask_rebar.swagger_generation import SwaggerV2Generator
-from flask_rebar.swagger_generation.swagger_generator import SwaggerGenerator
+from flask_rebar.swagger_generation.swagger_generator_base import SwaggerGenerator
+from flask_rebar.swagger_generation.swagger_generator_v2 import SwaggerV2Generator
 from flask_rebar.swagger_ui import create_swagger_ui_blueprint
 
 

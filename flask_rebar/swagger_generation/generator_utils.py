@@ -21,15 +21,18 @@ from typing import (
     Tuple,
     Set,
     Union,
+    TYPE_CHECKING,
 )
 
 from flask_rebar.authenticators import Authenticator
-from flask_rebar.rebar import HandlerRegistry
-from flask_rebar.rebar import PathDefinition
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
 from marshmallow import Schema
+
+if TYPE_CHECKING:
+    from flask_rebar.rebar import HandlerRegistry
+    from flask_rebar.rebar import PathDefinition
 
 
 def get_key(obj: Dict[str, Any]) -> str:
@@ -216,7 +219,7 @@ def verify_parameters_are_the_same(
 
 
 def get_unique_schema_definitions(
-    registry: HandlerRegistry,
+    registry: "HandlerRegistry",
     base: str,
     default_response_schema: Schema,
     response_converter: Callable[[Schema], Dict[str, Any]],
@@ -267,7 +270,7 @@ def get_unique_schema_definitions(
     return flattened
 
 
-def get_unique_authenticators(registry: HandlerRegistry) -> Set[Authenticator]:
+def get_unique_authenticators(registry: "HandlerRegistry") -> Set[Authenticator]:
     authenticators = {
         authenticator
         for d in iterate_path_definitions(paths=registry.paths)
@@ -283,8 +286,8 @@ def get_unique_authenticators(registry: HandlerRegistry) -> Set[Authenticator]:
 
 
 def iterate_path_definitions(
-    paths: Dict[str, Dict[str, PathDefinition]]
-) -> Iterator[PathDefinition]:
+    paths: Dict[str, Dict[str, "PathDefinition"]]
+) -> Iterator["PathDefinition"]:
     """Iterate over all `PathDefinition` instances in `paths`
 
     :param dict[str, dict[str, flask_rebar.rebar.PathDefinition]] paths:
