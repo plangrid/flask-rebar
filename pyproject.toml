@@ -14,8 +14,7 @@ exclude = ['build', 'docs', 'examples']
 module = [
     "marshmallow_enum",
     "marshmallow_objects",
-    "parametrize",
-    "pyannotate_runtime"
+    "parametrize"
 ]
 ignore_missing_imports = true
 
