@@ -9,6 +9,7 @@
 """
 from collections import namedtuple
 from collections.abc import Mapping
+from typing import Any, List, Optional, Union
 
 from marshmallow import Schema
 from marshmallow import fields
@@ -17,12 +18,14 @@ from werkzeug.datastructures import MultiDict
 FilterResult = namedtuple("FilterResult", "loadable, dump_only")
 
 
-def filter_dump_only(schema, data):
+def filter_dump_only(
+    schema: Schema, data: Union[Mapping[str, Any], List[Mapping[str, Any]]]
+) -> FilterResult:
     """
     Return a filtered copy of data in which any items matching a "dump_only" field are separated
     :param schema: Instance of a Schema class
-    :param data: Dict or collection of dicts with data
-    :return: Union[FilterResult, list[FilterResult]]
+    :param data: Mapping or List of Mappings with data
+    :return: FilterResult
     """
     # Note as of marshmallow 3.13.0, Schema.dump_only is NOT populated if fields are declared as dump_only inline,
     # so we'll calculate "dump_only" ourselves.  ref: https://github.com/marshmallow-code/marshmallow/issues/1857
@@ -81,13 +84,29 @@ class CommaSeparatedList(fields.List):
     e.g. ?foo=bar,baz -> {'foo': ['bar', 'baz']}
     """
 
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs: Any,
+    ) -> List[Any]:
         if not isinstance(value, list):
             value = value.split(",")
         return super()._deserialize(value, attr, data)
 
-    def _serialize(self, value, attr, obj, **kwargs):
+    def _serialize(
+        self,
+        value: List[Any],
+        attr: Optional[str],
+        obj: Mapping[str, Any],
+        **kwargs: Any,
+    ) -> Any:
+        # this function clearly returns a str but the superclass fields.List returns the type
+        # list[Any] | None which is not compatible. should we subclass a generic Field instead?
         items = super()._serialize(value, attr, obj)
+        if items is None:
+            return None
         return ",".join([str(i) for i in items])
 
 
@@ -99,7 +118,13 @@ class QueryParamList(fields.List):
     e.g. ?foo=bar&foo=baz -> {'foo': ['bar', 'baz']}
     """
 
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs: Any,
+    ) -> List[Any]:
         # data is a MultiDict of query params, so pull out all of the items
         # with getlist instead of just the first
         if not isinstance(data, MultiDict):
