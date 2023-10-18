@@ -279,7 +279,7 @@ class PathDefinition(
             _convert_authenticator_to_authenticators,
         )
     )
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs: Any) -> "PathDefinition":
         return super().__new__(cls, *args, **kwargs)
 
     @property
@@ -566,7 +566,7 @@ class HandlerRegistry:
         mimetype: Union[Type[USE_DEFAULT], str] = USE_DEFAULT,
         hidden: bool = False,
         summary: Optional[str] = None,
-    ):
+    ) -> Callable:
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
         be used as a decorator.

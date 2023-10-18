@@ -154,7 +154,7 @@ def sets_swagger_attr(attr: str) -> Callable:
     :param str attr: The attribute to set
     """
 
-    def wrapper(f):
+    def wrapper(f: Callable) -> Callable:
         setattr(f, _method_marker, attr)
         return f
 
