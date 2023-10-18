@@ -7,8 +7,15 @@
     :copyright: Copyright 2019 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence
+
+from marshmallow import Schema
+
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.swagger_generation import swagger_words as sw
+from flask_rebar.swagger_generation.authenticator_to_swagger import (
+    AuthenticatorConverterRegistry,
+)
 from flask_rebar.swagger_generation.swagger_generator_base import SwaggerGenerator
 from flask_rebar.swagger_generation.swagger_objects import Server
 from flask_rebar.swagger_generation.generator_utils import (
@@ -23,8 +30,13 @@ from flask_rebar.swagger_generation.generator_utils import (
 from flask_rebar.swagger_generation.marshmallow_to_swagger import (
     get_swagger_title,
     get_schema_fields,
+    ConverterRegistry,
 )
 from flask_rebar.validation import Error
+
+if TYPE_CHECKING:
+    from flask_rebar import Tag
+    from flask_rebar.rebar import HandlerRegistry, PathDefinition
 
 
 class SwaggerV3Generator(SwaggerGenerator):
@@ -51,18 +63,20 @@ class SwaggerV3Generator(SwaggerGenerator):
 
     def __init__(
         self,
-        version="1.0.0",
-        title="My API",
-        description="",
-        query_string_converter_registry=None,
-        request_body_converter_registry=None,
-        headers_converter_registry=None,
-        response_converter_registry=None,
-        tags=None,
-        servers=None,
-        default_response_schema=Error(),
-        authenticator_converter_registry=None,
-        include_hidden=False,
+        version: str = "1.0.0",
+        title: str = "My API",
+        description: str = "",
+        query_string_converter_registry: Optional[ConverterRegistry] = None,
+        request_body_converter_registry: Optional[ConverterRegistry] = None,
+        headers_converter_registry: Optional[ConverterRegistry] = None,
+        response_converter_registry: Optional[ConverterRegistry] = None,
+        tags: Optional[Sequence["Tag"]] = None,
+        servers: Optional[Sequence[Server]] = None,
+        default_response_schema: Schema = Error(),
+        authenticator_converter_registry: Optional[
+            AuthenticatorConverterRegistry
+        ] = None,
+        include_hidden: bool = False,
     ):
         super().__init__(
             openapi_major_version=3,
@@ -81,10 +95,17 @@ class SwaggerV3Generator(SwaggerGenerator):
         self.servers = servers
         self._ref_base = "#/components/schemas"
 
-    def generate_swagger(self, registry, host=None):
+    def generate_swagger(
+        self, registry: "HandlerRegistry", host: Optional[str] = None
+    ) -> Dict[str, Any]:
         return self.generate(registry=registry, host=host)
 
-    def generate(self, registry, host=None, sort_keys=True):
+    def generate(
+        self,
+        registry: "HandlerRegistry",
+        host: Optional[str] = None,
+        sort_keys: bool = True,
+    ) -> Dict[str, Any]:
         """Generates a Swagger specification from a Rebar instance.
 
         :param flask_rebar.rebar.HandlerRegistry registry:
@@ -119,7 +140,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         if self.tags:
             swagger[sw.tags] = [tag.as_swagger() for tag in self.tags]
 
-        servers = self.servers or []
+        servers = list(self.servers or [])
 
         if host:
             servers.append(Server(url=host))
@@ -133,8 +154,13 @@ class SwaggerV3Generator(SwaggerGenerator):
 
         return swagger
 
-    def _get_paths(self, paths, default_headers_schema, default_security=None):
-        path_definitions = {}
+    def _get_paths(
+        self,
+        paths: Dict[str, Dict[str, "PathDefinition"]],
+        default_headers_schema: Optional[Schema],
+        default_security: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        path_definitions: Dict[str, Any] = {}
 
         for path, methods in paths.items():
             spec_path, path_args = format_path_for_swagger(path)
@@ -278,7 +304,7 @@ class SwaggerV3Generator(SwaggerGenerator):
 
         return path_definitions
 
-    def _get_response_definition(self, schema):
+    def _get_response_definition(self, schema: Schema) -> Dict[str, Any]:
         return {
             sw.description: get_response_description(schema),
             sw.content: {
@@ -286,7 +312,7 @@ class SwaggerV3Generator(SwaggerGenerator):
             },
         }
 
-    def _get_components(self, registry):
+    def _get_components(self, registry: "HandlerRegistry") -> Dict[str, Any]:
         """
 
         :param flask_rebar.rebar.HandlerRegistry registry:
@@ -317,7 +343,9 @@ class SwaggerV3Generator(SwaggerGenerator):
 
         return components
 
-    def _convert_schema_to_list_of_parameters(self, schema, converter, in_):
+    def _convert_schema_to_list_of_parameters(
+        self, schema: Schema, converter: Callable, in_: str
+    ) -> List[Dict[str, Any]]:
         """Swagger is only _based_ on JSONSchema. Query string and header parameters
         are represented as list, not as an object. This converts a JSONSchema
         object (as return by the converters) to a list of parameters suitable for
