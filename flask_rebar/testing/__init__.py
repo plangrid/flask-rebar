@@ -1,9 +1,12 @@
 import jsonschema
+from typing import Any, Dict
 
 from flask_rebar.testing.swagger_jsonschema import SWAGGER_V2_JSONSCHEMA
 
 
-def validate_swagger(swagger, schema=SWAGGER_V2_JSONSCHEMA):
+def validate_swagger(
+    swagger: Dict[str, Any], schema: Dict[str, Any] = SWAGGER_V2_JSONSCHEMA
+) -> None:
     """
     Validates that a dictionary is a valid Swagger spec.
 

@@ -7,10 +7,10 @@
     :copyright: Copyright 2019 Autodesk, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
-
+from __future__ import annotations
 import functools
 import warnings
-from collections import namedtuple
+from typing import Any, Callable, Dict, NamedTuple, Optional, Tuple, Union
 
 from werkzeug.local import LocalProxy as module_property  # noqa
 
@@ -30,13 +30,13 @@ class DeprecationConfig:
     __instance = None
 
     @staticmethod
-    def getInstance():
+    def getInstance() -> DeprecationConfig:
         """Static access method."""
         if DeprecationConfig.__instance is None:
-            DeprecationConfig()
+            return DeprecationConfig()
         return DeprecationConfig.__instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Virtually private constructor."""
         if DeprecationConfig.__instance is not None:
             raise Exception("This class is a singleton!")
@@ -46,11 +46,14 @@ class DeprecationConfig:
 
 
 @module_property
-def config():
+def config() -> DeprecationConfig:
     return DeprecationConfig.getInstance()
 
 
-def deprecated(new_func=None, eol_version=None):
+def deprecated(
+    new_func: Optional[Union[str, Tuple[str, str]]] = None,
+    eol_version: Optional[str] = None,
+) -> Callable:
     """
     :param Union[str, (str, str)] new_func: Name (or name and end-of-life version) of replacement
     :param str eol_version: Version in which this function may no longer work
@@ -62,9 +65,9 @@ def deprecated(new_func=None, eol_version=None):
     found in the tuple; caveat emptor
     """
 
-    def decorator(f):
+    def decorator(f: Callable) -> Callable:
         @functools.wraps(f)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> int:
             new, eol, _ = _validated_deprecation_spec(new_func)
             eol = eol_version or eol
             _deprecation_warning(f.__name__, new, eol, stacklevel=3)
@@ -75,7 +78,7 @@ def deprecated(new_func=None, eol_version=None):
     return decorator
 
 
-def deprecated_parameters(**aliases):
+def deprecated_parameters(**aliases: Any) -> Callable:
     """
     Adapted from https://stackoverflow.com/a/49802489/977046
     :param aliases: Keyword args in the form {old_param_name = Union[new_param_name, (new_param_name, eol_version),
@@ -85,9 +88,9 @@ def deprecated_parameters(**aliases):
     :return: function decorator that will apply aliases to param names and raise DeprecationWarning
     """
 
-    def decorator(f):
+    def decorator(f: Callable) -> Callable:
         @functools.wraps(f)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             new_kwargs = _remap_kwargs(f.__name__, kwargs, aliases)
             return f(*args, **new_kwargs)
 
@@ -96,7 +99,15 @@ def deprecated_parameters(**aliases):
     return decorator
 
 
-def _validated_deprecation_spec(spec):
+class DeprecationSpec(NamedTuple):
+    new_name: Optional[str]
+    eol_version: Optional[str]
+    coerce_func: Optional[Callable]
+
+
+def _validated_deprecation_spec(
+    spec: Optional[Union[str, Tuple[Any, ...]]]
+) -> DeprecationSpec:
     """
     :param Union[new_name, (new_name, eol_version), (new_name, eol_version, coerce_func)] spec:
         new name and/or expected end-of-life version
@@ -119,13 +130,13 @@ def _validated_deprecation_spec(spec):
             coerce_func = spec[2]
     elif spec:
         new_name = str(spec)
-    validated = namedtuple(
-        "deprecation_spec", ["new_name", "eol_version", "coerce_func"]
-    )(new_name, eol_version, coerce_func)
+    validated = DeprecationSpec(new_name, eol_version, coerce_func)
     return validated
 
 
-def _remap_kwargs(func_name, kwargs, aliases):
+def _remap_kwargs(
+    func_name: str, kwargs: Dict[str, Any], aliases: Dict[str, str]
+) -> Dict[str, Any]:
     """
     Adapted from https://stackoverflow.com/a/49802489/977046
     """
@@ -145,8 +156,13 @@ def _remap_kwargs(func_name, kwargs, aliases):
     return remapped_args
 
 
-def _deprecation_warning(old_name, new_name, eol_version, stacklevel=1):
+def _deprecation_warning(
+    old_name: str,
+    new_name: Optional[str],
+    eol_version: Optional[str],
+    stacklevel: int = 1,
+) -> None:
     eol_clause = f" and may be removed in version {eol_version}" if eol_version else ""
     replacement_clause = f"; use {new_name}" if new_name else ""
     msg = f"{old_name} is deprecated{eol_clause}{replacement_clause}"
-    warnings.warn(message=msg, category=config.warning_type, stacklevel=stacklevel)
+    warnings.warn(message=msg, category=config.warning_type, stacklevel=stacklevel)  # type: ignore
