@@ -33,7 +33,7 @@ if __name__ == "__main__":
         keywords=["flask", "rest", "marshmallow", "openapi", "swagger"],
         license="MIT",
         packages=find_packages(exclude=("test*", "examples")),
-        package_data={"flask-rebar": ["py.typed"]},
+        package_data={"flask_rebar": ["py.typed"]},
         include_package_data=True,
         extras_require={"dev": development, "enum": ["marshmallow-enum~=1.5"]},
         install_requires=["Flask>=1.0,<3", "marshmallow>=3.0,<4"],

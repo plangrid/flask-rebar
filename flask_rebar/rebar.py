@@ -190,7 +190,7 @@ def get_validated_body() -> Dict[str, Any]:
     return g.validated_body
 
 
-def get_validated_args() -> Dict[str, str]:
+def get_validated_args() -> Dict[str, Any]:
     """
     Retrieve the result of validating/transforming an incoming request's query
     string with the `query_string_schema` a handler was registered with.
@@ -790,7 +790,7 @@ class Rebar:
         return get_validated_body()
 
     @property
-    def validated_args(self) -> Dict[str, str]:
+    def validated_args(self) -> Dict[str, Any]:
         """
         Proxy to the result of validating/transforming an incoming request's query
         string with the `query_string_schema` a handler was registered with.

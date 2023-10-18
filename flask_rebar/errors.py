@@ -8,7 +8,7 @@
     :license: MIT, see LICENSE for details.
 """
 from flask_rebar.messages import ErrorMessage
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 
 class HttpJsonError(Exception):
@@ -34,7 +34,7 @@ class HttpJsonError(Exception):
 
     def __init__(
         self,
-        msg: Optional[ErrorMessage] = None,
+        msg: Optional[Union[str, ErrorMessage]] = None,
         additional_data: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.error_message = msg or self.default_message
