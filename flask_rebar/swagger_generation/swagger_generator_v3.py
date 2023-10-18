@@ -128,7 +128,7 @@ class SwaggerV3Generator(SwaggerGenerator):
             default_security=default_security,
         )
 
-        swagger = {
+        swagger: Dict[str, Any] = {
             sw.openapi: self.get_open_api_version(),
             sw.info: self._get_info(),
             sw.paths: paths,

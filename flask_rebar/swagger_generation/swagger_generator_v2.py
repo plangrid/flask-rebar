@@ -166,7 +166,7 @@ class SwaggerV2Generator(SwaggerGenerator):
         if host and "://" in host:
             _, _, host = host.partition("://")
 
-        swagger = {
+        swagger: Dict[str, Any] = {
             sw.swagger: self.get_open_api_version(),
             sw.info: self._get_info(),
             sw.host: host or self.host,
