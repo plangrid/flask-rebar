@@ -4,7 +4,7 @@ from typing import Type
 from flask_rebar.authenticators import Authenticator, HeaderApiKeyAuthenticator
 from .marshmallow_to_swagger import UnregisteredType
 from . import swagger_words as sw
-from typing import Any, Callable, Dict, Iterable, List
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 
 _Context = namedtuple(
@@ -40,7 +40,7 @@ class AuthenticatorConverter:
     AUTHENTICATOR_TYPE: Type[Authenticator]
 
     def get_security_schemes(
-        self, obj: Authenticator, context: _Context
+        self, obj: Authenticator, context: Optional[_Context] = None
     ) -> Dict[str, Any]:
         """
         Get the security schemes for the provided Authenticator object.
@@ -80,7 +80,7 @@ class AuthenticatorConverter:
         raise NotImplementedError()
 
     def get_security_requirements(
-        self, obj: Authenticator, context: _Context
+        self, obj: Authenticator, context: Optional[_Context] = None
     ) -> List[Any]:
         """
         Get the security requirements for the provided Authenticator object
@@ -121,7 +121,7 @@ class HeaderApiKeyConverter(AuthenticatorConverter):
     AUTHENTICATOR_TYPE = HeaderApiKeyAuthenticator
 
     def get_security_requirements(
-        self, obj: Authenticator, context: _Context
+        self, obj: Authenticator, context: Optional[_Context] = None
     ) -> List[Dict[str, List]]:
         """
         :param HeaderApiKeyAuthenticator obj:
@@ -133,7 +133,7 @@ class HeaderApiKeyConverter(AuthenticatorConverter):
         return [{obj.name: []}]
 
     def get_security_schemes(
-        self, obj: Authenticator, context: _Context
+        self, obj: Authenticator, context: Optional[_Context] = None
     ) -> Dict[str, Dict[str, str]]:
         """
         :param HeaderApiKeyAuthenticator obj:
