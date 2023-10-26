@@ -3,6 +3,7 @@
 # data, and to automatically generate a Swagger specification.
 
 from flask_rebar.validation import RequestSchema, ResponseSchema
+from flask_rebar.swagger_generation.marshmallow_to_swagger import EnumField
 from marshmallow import fields, pre_dump, pre_load
 
 from .converters import TodoType
@@ -11,7 +12,7 @@ from .converters import TodoType
 class CreateTodoSchema(RequestSchema):
     complete = fields.Boolean(required=True)
     description = fields.String(required=True)
-    type = fields.Enum(TodoType, load_default=TodoType.user)
+    type = EnumField(TodoType, load_default=TodoType.user)
 
 
 class UpdateTodoSchema(CreateTodoSchema):
