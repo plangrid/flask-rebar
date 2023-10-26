@@ -11,6 +11,8 @@ from flask_rebar import (
 )
 from flask_rebar.validation import RequestSchema, ResponseSchema
 
+from .converters import TodoTypeConverter
+
 
 rebar = Rebar()
 
@@ -30,6 +32,10 @@ registry = rebar.create_handler_registry(
 
 def create_app():
     app = Flask(__name__)
+
+    # register new type for url mapping
+    app.url_map.converters["todo_types"] = TodoTypeConverter
+    generator.register_flask_converter_to_swagger_type("todo_types", TodoTypeConverter)
 
     authenticator = HeaderApiKeyAuthenticator(header="X-MyApp-Key")
     # The HeaderApiKeyAuthenticator does super simple authentication, designed for

@@ -5,10 +5,13 @@
 from flask_rebar.validation import RequestSchema, ResponseSchema
 from marshmallow import fields, pre_dump, pre_load
 
+from .converters import TodoType
+
 
 class CreateTodoSchema(RequestSchema):
     complete = fields.Boolean(required=True)
     description = fields.String(required=True)
+    type = fields.Enum(TodoType, load_default=TodoType.user)
 
 
 class UpdateTodoSchema(CreateTodoSchema):
@@ -30,6 +33,7 @@ class TodoSchema(ResponseSchema):
     id = fields.Integer(required=True)
     complete = fields.Boolean(required=True)
     description = fields.String(required=True)
+    type = fields.Enum(TodoType, required=True)
 
 
 class TodoResourceSchema(ResponseSchema):
