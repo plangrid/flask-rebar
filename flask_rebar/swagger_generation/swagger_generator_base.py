@@ -214,7 +214,7 @@ class SwaggerGenerator(SwaggerGeneratorI):
                 flask_converter="todo_type",
                 swagger_type=TodoTypeConverter,
             )
-        
+
         With the above example, when something is labeled as a ``todo_type`` in
         a path. The correct swagger can be returned.
         """

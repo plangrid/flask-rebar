@@ -12,13 +12,9 @@ registry = rebar.create_handler_registry()
 
 
 class UUIDPathConverter:
-
     @staticmethod
     def to_swagger():
-        return {
-            sw.type_: sw.string,
-            sw.format_: sw.uuid
-        }
+        return {sw.type_: sw.string, sw.format_: sw.uuid}
 
 
 swagger_v2_generator = SwaggerV2Generator()
@@ -124,7 +120,13 @@ EXPECTED_SWAGGER_V2 = {
     "paths": {
         "/foos/{foo_uid}": {
             "parameters": [
-                {"name": "foo_uid", "in": "path", "required": True, "type": "string", "format": "uuid"}
+                {
+                    "name": "foo_uid",
+                    "in": "path",
+                    "required": True,
+                    "type": "string",
+                    "format": "uuid",
+                }
             ],
             "get": {
                 "operationId": "get_foo",
