@@ -34,7 +34,7 @@ class TodoSchema(ResponseSchema):
     id = fields.Integer(required=True)
     complete = fields.Boolean(required=True)
     description = fields.String(required=True)
-    type = fields.Enum(TodoType, required=True)
+    type = EnumField(TodoType, required=True)
 
 
 class TodoResourceSchema(ResponseSchema):
