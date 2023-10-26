@@ -28,6 +28,12 @@ Authenticator Objects
    :members:
 
 
+Base Generation
+---------------
+
+.. autoclass:: flask_rebar.swagger_generation.swagger_generator_base.SwaggerGenerator
+   :members:
+
 Swagger V2 Generation
 ---------------------
 
