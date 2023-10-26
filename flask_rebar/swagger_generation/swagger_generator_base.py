@@ -174,4 +174,48 @@ class SwaggerGenerator(SwaggerGeneratorI):
         return self._open_api_version
 
     def register_flask_converter_to_swagger_type(self, flask_converter, swagger_type):
+        """
+        Register a converter for a type in flask to a swagger type.
+
+        This can be used to alter the types of objects that already exist or add
+        swagger types to objects that are added to the base flask configuration.
+
+        For example, when adding custom path types to the Flask url_map, a
+        converter can be added for customizing the swagger type.
+
+        .. code-block:: python
+
+            import enum
+
+            from flask_rebar.swagger_generation import swagger_words as sw
+
+
+            class TodoType(str, enum.Enum):
+                user = "user"
+                group = "group"
+
+
+            class TodoTypeConverter:
+
+                @staticmethod
+                def to_swagger():
+                    return {
+                        sw.type_: sw.string,
+                        sw.enum: [t.value for t in TodoType],
+                    }
+
+            @registry.handles(
+                rule="/todos/<todo_type:type_>",
+            )
+            def get_todos_by_type(type_):
+                ...
+
+            generator.register_flask_converter_to_swagger_type(
+                flask_converter="todo_type",
+                swagger_type=TodoTypeConverter,
+            )
+        
+        With the above example, when something is labeled as a ``todo_type`` in
+        a path. The correct swagger can be returned.
+        """
         self.flask_converters_to_swagger_types[flask_converter] = swagger_type
