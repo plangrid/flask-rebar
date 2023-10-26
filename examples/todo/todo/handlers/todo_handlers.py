@@ -1,3 +1,5 @@
+from enum import Enum
+
 from todo.database import todo_id_sequence, todo_database
 from todo.app import rebar
 from todo.app import registry
@@ -61,7 +63,34 @@ def get_todos():
     todos = todo_database.values()
 
     if "complete" in args:
-        todos = [t for t in todos if ["complete"] == args["complete"]]
+        todos = [t for t in todos if t["complete"] == args["complete"]]
+
+    return todos
+
+
+@registry.handles(
+    rule="/todos/<todo_types:todo_type>",
+    method="GET",
+    query_string_schema=GetTodoListSchema(),
+    tags=["todo"],
+    # If the value for this is not a dictionary, the response code is assumed
+    # to be 200
+    response_body_schema=TodoListSchema(),  # for versions <= 1.7.0, use marshal_schema
+)
+def get_todos_by_type(todo_type):
+    global todo_database
+
+    # Just like validated_body, query string parameters are eagerly validated
+    # and made available here. Flask-toolbox does treats a request body and
+    # query string parameters as two separate sources, and currently does not
+    # implement any abstraction on top of them.
+    args = rebar.validated_args
+
+    todos = todo_database.values()
+
+    if "complete" in args:
+        todos = [t for t in todos if t["complete"] == args["complete"]]
+    todos = [t for t in todos if t["type"] == todo_type.name]
 
     return todos
 
