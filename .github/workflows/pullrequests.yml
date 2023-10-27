@@ -16,7 +16,6 @@ jobs:
         - 3.9
         - "3.10"
         - 3.11
-        - 3.12
         marshmallow:
         - marshmallow==3.17.*
         - marshmallow==3.18.*
