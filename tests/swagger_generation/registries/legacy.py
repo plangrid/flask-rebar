@@ -5,12 +5,22 @@ from flask_rebar import Rebar
 from flask_rebar import HeaderApiKeyAuthenticator
 from flask_rebar import compat
 from flask_rebar.swagger_generation import SwaggerV2Generator, SwaggerV3Generator
+from flask_rebar.swagger_generation import swagger_words as sw
 
 rebar = Rebar()
 registry = rebar.create_handler_registry()
 
+
+class UUIDPathConverter:
+    @staticmethod
+    def to_swagger():
+        return {sw.type_: sw.string, sw.format_: sw.uuid}
+
+
 swagger_v2_generator = SwaggerV2Generator()
+swagger_v2_generator.register_flask_converter_to_swagger_type("uuid", UUIDPathConverter)
 swagger_v3_generator = SwaggerV3Generator()
+swagger_v3_generator.register_flask_converter_to_swagger_type("uuid", UUIDPathConverter)
 
 authenticator = HeaderApiKeyAuthenticator(header="x-auth")
 default_authenticator = HeaderApiKeyAuthenticator(header="x-another", name="default")
@@ -43,7 +53,7 @@ class NameAndOtherSchema(m.Schema):
 
 
 @registry.handles(
-    rule="/foos/<uuid_string:foo_uid>",
+    rule="/foos/<uuid:foo_uid>",
     method="GET",
     response_body_schema={200: FooSchema()},
     headers_schema=HeaderSchema(),
@@ -56,7 +66,7 @@ def get_foo(foo_uid):
 with pytest.warns(FutureWarning):  # authenticator kwarg is deprecating
 
     @registry.handles(
-        rule="/foos/<foo_uid>",
+        rule="/foos/<uuid:foo_uid>",
         method="PATCH",
         response_body_schema={200: FooSchema()},
         request_body_schema=FooUpdateSchema(),
@@ -110,7 +120,13 @@ EXPECTED_SWAGGER_V2 = {
     "paths": {
         "/foos/{foo_uid}": {
             "parameters": [
-                {"name": "foo_uid", "in": "path", "required": True, "type": "string"}
+                {
+                    "name": "foo_uid",
+                    "in": "path",
+                    "required": True,
+                    "type": "string",
+                    "format": "uuid",
+                }
             ],
             "get": {
                 "operationId": "get_foo",
@@ -309,7 +325,7 @@ EXPECTED_SWAGGER_V3 = expected_swagger = {
                     "in": "path",
                     "required": True,
                     "style": "simple",
-                    "schema": {"type": "string"},
+                    "schema": {"type": "string", "format": "uuid"},
                 }
             ],
             "get": {

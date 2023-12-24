@@ -3,12 +3,16 @@
 # data, and to automatically generate a Swagger specification.
 
 from flask_rebar.validation import RequestSchema, ResponseSchema
+from flask_rebar.swagger_generation.marshmallow_to_swagger import EnumField
 from marshmallow import fields, pre_dump, pre_load
+
+from .converters import TodoType
 
 
 class CreateTodoSchema(RequestSchema):
     complete = fields.Boolean(required=True)
     description = fields.String(required=True)
+    type = EnumField(TodoType, load_default=TodoType.user)
 
 
 class UpdateTodoSchema(CreateTodoSchema):
@@ -30,6 +34,7 @@ class TodoSchema(ResponseSchema):
     id = fields.Integer(required=True)
     complete = fields.Boolean(required=True)
     description = fields.String(required=True)
+    type = EnumField(TodoType, required=True)
 
 
 class TodoResourceSchema(ResponseSchema):

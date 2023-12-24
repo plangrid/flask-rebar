@@ -77,3 +77,34 @@ class TestTodoApp(unittest.TestCase):
             headers={"X-MyApp-Key": "my-api-key", "Content-Type": "application/json"},
         )
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.json["data"][0],
+            {
+                "id": 1,
+                "complete": True,
+                "description": "Find product market fit",
+                "type": "user",
+            },
+        )
+
+        resp = self.app.test_client().get(
+            "/todos/user",
+            headers={"X-MyApp-Key": "my-api-key", "Content-Type": "application/json"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.json["data"][0],
+            {
+                "id": 1,
+                "complete": True,
+                "description": "Find product market fit",
+                "type": "user",
+            },
+        )
+
+        resp = self.app.test_client().get(
+            "/todos/group",
+            headers={"X-MyApp-Key": "my-api-key", "Content-Type": "application/json"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.json["data"])

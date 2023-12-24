@@ -25,7 +25,7 @@ development = [
 if __name__ == "__main__":
     setup(
         name="flask-rebar",
-        version="3.0.0",
+        version="3.1.1",
         author="Barak Alon",
         author_email="barak.s.alon@gmail.com",
         description="Flask-Rebar combines flask, marshmallow, and swagger for robust REST services.",
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         package_data={"flask_rebar": ["py.typed"]},
         include_package_data=True,
         extras_require={"dev": development, "enum": ["marshmallow-enum~=1.5"]},
-        install_requires=["Flask>=1.0,<3", "marshmallow>=3.0,<4"],
+        install_requires=["Flask>=1.0,<4", "marshmallow>=3.0,<4"],
         url="https://github.com/plangrid/flask-rebar",
         classifiers=[
             "Environment :: Web Environment",
