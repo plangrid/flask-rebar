@@ -80,7 +80,7 @@ def _convert_authenticator_to_authenticators(
 
 def _unpack_view_func_return_value(
     rv: Any,
-) -> Tuple[Dict[str, str], int, Dict[str, str]]:
+) -> Tuple[Dict[str, str], int, Any]:
     """
     Normalize a return value from a view function into a tuple of (body, status, headers).
 
