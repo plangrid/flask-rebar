@@ -29,8 +29,10 @@ from typing import (
     Set,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
+from typing_extensions import ParamSpec
 from werkzeug.datastructures import Headers
 from werkzeug.exceptions import HTTPException
 from werkzeug.routing import RequestRedirect
@@ -57,6 +59,10 @@ from flask_rebar.swagger_ui import create_swagger_ui_blueprint
 
 MOVED_PERMANENTLY_ERROR = RequestRedirect
 PERMANENT_REDIRECT_ERROR = RequestRedirect
+
+# for type hinting decorators
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
 def _convert_authenticator_to_authenticators(
@@ -107,14 +113,14 @@ def _unpack_view_func_return_value(
 
 
 def _wrap_handler(
-    f: Callable,
+    f: Callable[P, T],
     authenticators: Optional[List[Authenticator]] = None,
     query_string_schema: Optional[Schema] = None,
     request_body_schema: Optional[Schema] = None,
     headers_schema: Optional[Schema] = None,
     response_body_schema: Optional[Dict[int, Schema]] = None,
     mimetype: Optional[str] = None,
-) -> Callable:
+) -> Callable[P, Union[T, Response]]:
     """
     Wraps a handler function before registering it with a Flask application.
 
@@ -126,7 +132,7 @@ def _wrap_handler(
         authenticators = [authenticators]
 
     @wraps(f)
-    def wrapped(*args: Any, **kwargs: Any) -> Callable:
+    def wrapped(*args: P.args, **kwargs: P.kwargs) -> Union[T, Response]:
         if authenticators:
             first_error = None
             for authenticator in authenticators:
@@ -572,7 +578,7 @@ class HandlerRegistry:
         be used as a decorator.
         """
 
-        def wrapper(f: Callable) -> Callable:
+        def wrapper(f: Callable[P, T]) -> Callable[P, T]:
             self.add_handler(
                 func=f,
                 rule=rule,

@@ -64,7 +64,7 @@ class SwaggerGeneratorI(abc.ABC):
 
     @abc.abstractmethod
     def register_flask_converter_to_swagger_type(
-        self, flask_converter: str, swagger_type: str
+        self, flask_converter: str, swagger_type: Any
     ) -> None:
         """
         Flask has "converters" that convert path arguments to a Python type.
@@ -75,7 +75,7 @@ class SwaggerGeneratorI(abc.ABC):
         Unknown Flask converters will default to string.
 
         :param str flask_converter:
-        :param str swagger_type:
+        :param object swagger_type:
         """
 
 
@@ -198,8 +198,9 @@ class SwaggerGenerator(SwaggerGeneratorI):
     def get_open_api_version(self) -> str:
         return self._open_api_version
 
-
-    def register_flask_converter_to_swagger_type(self, flask_converter: str, swagger_type: str) -> None:
+    def register_flask_converter_to_swagger_type(
+        self, flask_converter: str, swagger_type: Any
+    ) -> None:
         """
         Register a converter for a type in flask to a swagger type.
 
