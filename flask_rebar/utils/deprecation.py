@@ -10,7 +10,8 @@
 from __future__ import annotations
 import functools
 import warnings
-from typing import Any, Callable, Dict, NamedTuple, Optional, Tuple, Union
+from typing import Any, Callable, Dict, NamedTuple, Optional, Tuple, TypeVar, Union
+from typing_extensions import ParamSpec
 
 from werkzeug.local import LocalProxy as module_property  # noqa
 
@@ -20,6 +21,10 @@ from werkzeug.local import LocalProxy as module_property  # noqa
 # end result: singleton config can be accessed by, e.g.,
 #    from flask_rebar.utils.deprecation import config as deprecation_config
 #    deprecation_config.warning_type = YourFavoriteWarning
+
+
+T = TypeVar("T")
+P = ParamSpec("P")
 
 
 class DeprecationConfig:
@@ -65,9 +70,9 @@ def deprecated(
     found in the tuple; caveat emptor
     """
 
-    def decorator(f: Callable) -> Callable:
+    def decorator(f: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(f)
-        def wrapper(*args: Any, **kwargs: Any) -> int:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             new, eol, _ = _validated_deprecation_spec(new_func)
             eol = eol_version or eol
             _deprecation_warning(f.__name__, new, eol, stacklevel=3)
@@ -88,9 +93,9 @@ def deprecated_parameters(**aliases: Any) -> Callable:
     :return: function decorator that will apply aliases to param names and raise DeprecationWarning
     """
 
-    def decorator(f: Callable) -> Callable:
+    def decorator(f: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(f)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             new_kwargs = _remap_kwargs(f.__name__, kwargs, aliases)
             return f(*args, **new_kwargs)
 

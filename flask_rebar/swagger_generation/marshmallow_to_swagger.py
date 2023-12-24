@@ -27,7 +27,7 @@ from typing import (
     TypeVar,
     Union,
 )
-
+from typing_extensions import ParamSpec
 import marshmallow as m
 from marshmallow import Schema
 from marshmallow.validate import Range
@@ -45,6 +45,10 @@ from flask_rebar.swagger_generation import swagger_words as sw
 MarshmallowObject = Union[Schema, m.fields.Field, Validator]
 T = TypeVar("T", bound=MarshmallowObject)
 TField = TypeVar("TField", bound=m.fields.Field)
+
+# for type hinting decorators
+S = TypeVar("S")
+P = ParamSpec("P")
 
 LoadDumpOptions = None
 try:
@@ -154,7 +158,7 @@ def sets_swagger_attr(attr: str) -> Callable:
     :param str attr: The attribute to set
     """
 
-    def wrapper(f: Callable) -> Callable:
+    def wrapper(f: Callable[P, T]) -> Callable[P, T]:
         setattr(f, _method_marker, attr)
         return f
 
