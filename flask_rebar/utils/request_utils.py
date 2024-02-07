@@ -164,9 +164,8 @@ def raise_400_for_marshmallow_errors(
     _format_marshmallow_errors_for_response_in_place(copied)
 
     additional_data = {"errors": copied}
-    message, _ = msg if isinstance(msg, tuple) else (msg, None)
 
-    return errors.BadRequest(msg=message, additional_data=additional_data)
+    return errors.BadRequest(msg=msg, additional_data=additional_data)
 
 
 def get_json_body_params_or_400(schema: Schema) -> Dict[str, Any]:
@@ -217,10 +216,8 @@ def _get_data_or_400(
     schema: Schema, data: Any, message: messages.ErrorMessage
 ) -> Dict[str, Any]:
     schema = normalize_schema(schema)
-
     try:
         return compat.load(schema=schema, data=data)
-
     except marshmallow.ValidationError as e:
         raise raise_400_for_marshmallow_errors(errs=e.messages_dict, msg=message)
 

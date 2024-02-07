@@ -193,7 +193,6 @@ class TestJsonBodyValidation(unittest.TestCase):
             path="/stuffs", data={"foo": "one", "bar": "not-an-email"}
         )
         expected = messages.body_validation_failed._asdict()
-        expected.pop("rebar_error_code")
         expected["errors"] = {
             "foo": "Not a valid integer.",
             "bar": "Not a valid email address.",
@@ -207,7 +206,6 @@ class TestJsonBodyValidation(unittest.TestCase):
             path="/stuffs", data={"foo": 1, "baz": "This is an unexpected field!"}
         )
         expected = messages.body_validation_failed._asdict()
-        expected.pop("rebar_error_code")
         expected["errors"] = {"baz": "Unknown field."}
 
         self.assertEqual(resp.status_code, 400)
@@ -219,7 +217,6 @@ class TestJsonBodyValidation(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         expected = messages.body_validation_failed._asdict()
-        expected.pop("rebar_error_code")
         expected["errors"] = {
             "baz": "Unknown field.",
             "foo": "Missing data for required field.",
@@ -240,7 +237,6 @@ class TestJsonBodyValidation(unittest.TestCase):
             },
         )
         expected = messages.body_validation_failed._asdict()
-        expected.pop("rebar_error_code")
         expected["errors"] = {
             "bam": "Unknown field.",
             "foo": "Missing data for required field.",
@@ -288,14 +284,12 @@ class TestQueryStringValidation(unittest.TestCase):
     def test_query_string_parameter_validation(self):
         resp = self.app.test_client().get(path="/stuffs?foo=one")
         expected = messages.query_string_validation_failed._asdict()
-        expected.pop("rebar_error_code")
         expected["errors"] = {"foo": "Not a valid integer."}
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, expected)
 
         resp = self.app.test_client().get(path="/stuffs?bar=true")
         expected = messages.query_string_validation_failed._asdict()
-        expected.pop("rebar_error_code")
         expected["errors"] = {"foo": "Missing data for required field."}
 
         self.assertEqual(resp.status_code, 400)
@@ -303,7 +297,6 @@ class TestQueryStringValidation(unittest.TestCase):
 
         resp = self.app.test_client().get(path="/stuffs?foo=1&unexpected=true")
         expected = messages.query_string_validation_failed._asdict()
-        expected.pop("rebar_error_code")
         expected["errors"] = {"unexpected": "Unknown field."}
 
         self.assertEqual(resp.status_code, 400)
