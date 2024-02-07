@@ -78,7 +78,7 @@ def response(
         if headers is not None:
             headers.update({"Content-Type": mimetype})
         else:
-            headers = {"Content-Type": mimetype}
+            headers = Headers({"Content-Type": mimetype})
 
     if headers is not None:
         response_headers = dict(resp.headers)
