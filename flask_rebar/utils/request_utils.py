@@ -56,7 +56,7 @@ class HeadersProxy(collections.abc.Mapping):
 
 
 def response(
-    data: Optional[Dict[str, Any]],
+    data: Optional[Any],
     status_code: int = 200,
     headers: Optional[Headers] = None,
     mimetype: Optional[str] = None,
@@ -74,8 +74,12 @@ def response(
 
     resp.status_code = status_code
 
-    if headers is not None and mimetype is not None:
-        headers.update({"Content-Type": mimetype})
+    if mimetype:
+        if headers is not None:
+            headers.update({"Content-Type": mimetype})
+        else:
+            headers = {"Content-Type": mimetype}
+
     if headers is not None:
         response_headers = dict(resp.headers)
         response_headers.update(headers)
@@ -84,7 +88,7 @@ def response(
     return resp
 
 
-def marshal(data: Dict[str, Any], schema: Schema) -> Dict[str, Any]:
+def marshal(data: Any, schema: Schema) -> Dict[str, Any]:
     """
     Dumps an object with the given marshmallow.Schema.
 

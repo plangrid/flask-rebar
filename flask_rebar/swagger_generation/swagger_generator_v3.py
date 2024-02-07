@@ -71,7 +71,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         headers_converter_registry: Optional[ConverterRegistry] = None,
         response_converter_registry: Optional[ConverterRegistry] = None,
         tags: Optional[Sequence["Tag"]] = None,
-        servers: Optional[Sequence[Server]] = None,
+        servers: Optional[list[Server]] = None,
         default_response_schema: Schema = Error(),
         authenticator_converter_registry: Optional[
             AuthenticatorConverterRegistry
@@ -140,7 +140,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         if self.tags:
             swagger[sw.tags] = [tag.as_swagger() for tag in self.tags]
 
-        servers = list(self.servers or [])
+        servers = self.servers or []
 
         if host:
             servers.append(Server(url=host))

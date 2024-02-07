@@ -64,6 +64,9 @@ PERMANENT_REDIRECT_ERROR = RequestRedirect
 P = ParamSpec("P")
 T = TypeVar("T")
 
+JsonType = Union[Dict[str, Any], List[Any], str, int, float, bool, None]
+Data = Union[bytes, JsonType]
+
 
 def _convert_authenticator_to_authenticators(
     authenticator: Optional[Union[Authenticator, Type[USE_DEFAULT]]]
@@ -79,8 +82,22 @@ def _convert_authenticator_to_authenticators(
 
 
 def _unpack_view_func_return_value(
-    rv: Any,
-) -> Tuple[Dict[str, str], int, Any]:
+    rv: Union[
+        Tuple[Data, int, Dict[str, str]],
+        Tuple[Data, int],
+        Tuple[Data, Dict[str, str]],
+        Data,
+    ],
+) -> Tuple[
+    Union[
+        Tuple[Data, int, Dict[str, str]],
+        Tuple[Data, int],
+        Tuple[Data, Dict[str, str]],
+        Data,
+    ],
+    int,
+    Any,
+]:
     """
     Normalize a return value from a view function into a tuple of (body, status, headers).
 
@@ -90,14 +107,13 @@ def _unpack_view_func_return_value(
     :return: (body, status, headers)
     :rtype: tuple
     """
-    data, status, headers = rv, 200, {}
+    headers: Any = {}
+    data, status = rv, 200
 
     if isinstance(rv, tuple):
-        len_rv = len(rv)
-
-        if len_rv == 3:
+        if len(rv) == 3:
             data, status, headers = rv
-        elif len_rv == 2:
+        elif len(rv) == 2:
             if isinstance(rv[1], (Headers, dict, tuple, list)):
                 data, headers = rv
             else:
@@ -155,7 +171,7 @@ def _wrap_handler(
         if headers_schema:
             g.validated_headers = get_header_params_or_400(schema=headers_schema)
 
-        rv = f(*args, **kwargs)
+        rv: Any = f(*args, **kwargs)
 
         if not response_body_schema:
             return rv
