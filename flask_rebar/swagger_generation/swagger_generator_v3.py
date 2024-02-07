@@ -71,7 +71,7 @@ class SwaggerV3Generator(SwaggerGenerator):
         headers_converter_registry: Optional[ConverterRegistry] = None,
         response_converter_registry: Optional[ConverterRegistry] = None,
         tags: Optional[Sequence["Tag"]] = None,
-        servers: Optional[list[Server]] = None,
+        servers: Optional[List[Server]] = None,
         default_response_schema: Schema = Error(),
         authenticator_converter_registry: Optional[
             AuthenticatorConverterRegistry

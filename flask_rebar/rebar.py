@@ -70,7 +70,7 @@ Data = Union[bytes, JsonType]
 
 def _convert_authenticator_to_authenticators(
     authenticator: Optional[Union[Authenticator, Type[USE_DEFAULT]]]
-) -> list[Union[Authenticator, Type[USE_DEFAULT]]]:
+) -> List[Union[Authenticator, Type[USE_DEFAULT]]]:
     if authenticator is None:
         return []
     elif isinstance(authenticator, Authenticator) or authenticator is USE_DEFAULT:
