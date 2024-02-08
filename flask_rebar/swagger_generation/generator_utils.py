@@ -10,13 +10,32 @@
 import copy
 import re
 from collections import namedtuple, OrderedDict
+from typing import (
+    overload,
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Set,
+    Union,
+    TYPE_CHECKING,
+)
 
+from flask_rebar.authenticators import Authenticator
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
+from marshmallow import Schema
+
+if TYPE_CHECKING:
+    from flask_rebar.rebar import HandlerRegistry
+    from flask_rebar.rebar import PathDefinition
 
 
-def get_key(obj):
+def get_key(obj: Dict[str, Any]) -> str:
     """
     Returns the key for a JSONSchema object that we can use to make a $ref.
 
@@ -28,7 +47,7 @@ def get_key(obj):
     return obj[sw.title]
 
 
-def create_ref(*parts):
+def create_ref(*parts: str) -> str:
     """Create a reference from `parts`
 
     For example:
@@ -41,18 +60,18 @@ def create_ref(*parts):
     return "/".join(parts)
 
 
-def get_ref_schema(base, schema):
+def get_ref_schema(base: str, schema: Schema) -> Dict[str, Any]:
     """Create a JSONSchema object that is a reference to `schema`
 
-    :param schema:
     :param base: base string for references, e.g. "#/definitions"
+    :param schema:
     :return:
     """
-    ref = {sw.ref: create_ref(base, get_swagger_title(schema))}
+    ref: Dict[str, Any] = {sw.ref: create_ref(base, get_swagger_title(schema))}
     return ref if not schema.many else {sw.type_: sw.array, sw.items: ref}
 
 
-def get_response_description(schema):
+def get_response_description(schema: Schema) -> str:
     """
     Retrieves a response description from a Marshmallow schema.
 
@@ -67,7 +86,7 @@ def get_response_description(schema):
         return get_swagger_title(schema)
 
 
-def flatten(schema, base):
+def flatten(schema: Dict[str, Any], base: str) -> Tuple[Dict[str, str], Dict[str, Any]]:
     """
     Recursively flattens a JSONSchema to a dictionary of keyed JSONSchemas,
     replacing nested objects with a reference to that object.
@@ -113,12 +132,14 @@ def flatten(schema, base):
     definitions dictionary.
     """
     schema = copy.deepcopy(schema)
-    definitions = {}
+    definitions: Dict[str, Any] = {}
     schema = _flatten(schema=schema, definitions=definitions, base=base)
     return schema, definitions
 
 
-def _flatten(schema, definitions, base):
+def _flatten(
+    schema: Dict[str, Any], definitions: Dict[str, Any], base: str
+) -> Dict[str, str]:
     schema_type = schema.get(sw.type_)
     subschema_keyword = _get_subschema_keyword(schema)
 
@@ -147,17 +168,18 @@ def _flatten(schema, definitions, base):
     return schema
 
 
-def _get_subschema_keyword(schema):
+def _get_subschema_keyword(schema: Dict[str, Any]) -> Optional[str]:
     for keyword in (sw.any_of, sw.one_of, sw.all_of):
         if keyword in schema:
             return keyword
+    return None
 
 
 _PATH_REGEX = re.compile("<((?P<type>.+?):)?(?P<name>.+?)>")
 PathArgument = namedtuple("PathArgument", ["name", "type"])
 
 
-def format_path_for_swagger(path):
+def format_path_for_swagger(path: str) -> Tuple[str, Tuple[PathArgument, ...]]:
     """
     Flask and Swagger represent paths differently - this parses a Flask path
     to its Swagger form. This also extracts what the arguments in the flask
@@ -179,8 +201,10 @@ def format_path_for_swagger(path):
     return subbed_path, args
 
 
-def verify_parameters_are_the_same(a, b):
-    def get_sort_key(parameter):
+def verify_parameters_are_the_same(
+    a: List[Dict[str, Any]], b: List[Dict[str, Any]]
+) -> None:
+    def get_sort_key(parameter: Dict[str, Any]) -> str:
         return parameter[sw.name]
 
     sorted_a = sorted(a, key=get_sort_key)
@@ -195,8 +219,12 @@ def verify_parameters_are_the_same(a, b):
 
 
 def get_unique_schema_definitions(
-    registry, base, default_response_schema, response_converter, request_body_converter
-):
+    registry: "HandlerRegistry",
+    base: str,
+    default_response_schema: Schema,
+    response_converter: Callable[[Schema], Dict[str, Any]],
+    request_body_converter: Callable[[Schema], Dict[str, Any]],
+) -> Dict[str, Any]:
     """Extract a map of unique schema definitions for all marshal schemas and responses schemas in `registry`
 
     :param flask_rebar.rebar.HandlerRegistry registry:
@@ -242,7 +270,7 @@ def get_unique_schema_definitions(
     return flattened
 
 
-def get_unique_authenticators(registry):
+def get_unique_authenticators(registry: "HandlerRegistry") -> Set[Authenticator]:
     authenticators = {
         authenticator
         for d in iterate_path_definitions(paths=registry.paths)
@@ -257,7 +285,9 @@ def get_unique_authenticators(registry):
     return authenticators
 
 
-def iterate_path_definitions(paths):
+def iterate_path_definitions(
+    paths: Dict[str, Dict[str, "PathDefinition"]]
+) -> Iterator["PathDefinition"]:
     """Iterate over all `PathDefinition` instances in `paths`
 
     :param dict[str, dict[str, flask_rebar.rebar.PathDefinition]] paths:
@@ -267,7 +297,26 @@ def iterate_path_definitions(paths):
         yield from methods.values()
 
 
-def recursively_convert_dict_to_ordered_dict(obj):
+@overload
+def recursively_convert_dict_to_ordered_dict(obj: Dict) -> OrderedDict:
+    ...
+
+
+@overload
+def recursively_convert_dict_to_ordered_dict(obj: List[Dict]) -> List[OrderedDict]:
+    ...
+
+
+@overload
+def recursively_convert_dict_to_ordered_dict(
+    obj: List[OrderedDict],
+) -> List[OrderedDict]:
+    ...
+
+
+def recursively_convert_dict_to_ordered_dict(
+    obj: Union[Dict, List[Dict], List[OrderedDict]]
+) -> Union[OrderedDict, List[OrderedDict]]:
     """Recursively converts a dictionary into and OrderedDict"""
     if isinstance(obj, dict):
         sorted_dict = OrderedDict(sorted(obj.items(), key=lambda i: i[0]))

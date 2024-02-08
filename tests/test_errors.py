@@ -207,8 +207,8 @@ class TestJsonBodyValidation(unittest.TestCase):
         )
         expected = messages.body_validation_failed._asdict()
         expected["errors"] = {"baz": "Unknown field."}
-        self.assertEqual(resp.status_code, 400)
 
+        self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, expected)
 
         # Both field errors and general errors

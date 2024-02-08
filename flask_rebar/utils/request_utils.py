@@ -9,8 +9,10 @@
 """
 import collections
 import copy
+from typing import Any, Dict, Iterator, List, Optional, Type, Union, overload
 
 import marshmallow
+from marshmallow import Schema
 from flask import Response
 from flask import jsonify
 from flask import request
@@ -35,25 +37,30 @@ class HeadersProxy(collections.abc.Mapping):
 
     __slots__ = ("headers",)
 
-    def __init__(self, headers):
+    def __init__(self, headers: Headers) -> None:
         self.headers = headers
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.headers)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         # EnvironHeaders.__iter__ yields tuples of (key, value).
         # We want to mimic a dict and yield keys.
         return iter(self.headers.keys())
 
-    def __contains__(self, item):
+    def __contains__(self, item: Any) -> bool:
         return item in self.headers
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> str:
         return self.headers[key]
 
 
-def response(data, status_code=200, headers=None, mimetype=None):
+def response(
+    data: Optional[Any],
+    status_code: int = 200,
+    headers: Optional[Headers] = None,
+    mimetype: Optional[str] = None,
+) -> Response:
     """
     Constructs a flask.jsonify response.
 
@@ -68,8 +75,12 @@ def response(data, status_code=200, headers=None, mimetype=None):
     resp.status_code = status_code
 
     if mimetype:
-        headers.update({"Content-Type": mimetype})
-    if headers:
+        if headers is not None:
+            headers.update({"Content-Type": mimetype})
+        else:
+            headers = Headers({"Content-Type": mimetype})
+
+    if headers is not None:
         response_headers = dict(resp.headers)
         response_headers.update(headers)
         resp.headers = Headers(response_headers)
@@ -77,7 +88,7 @@ def response(data, status_code=200, headers=None, mimetype=None):
     return resp
 
 
-def marshal(data, schema):
+def marshal(data: Any, schema: Schema) -> Dict[str, Any]:
     """
     Dumps an object with the given marshmallow.Schema.
 
@@ -89,11 +100,36 @@ def marshal(data, schema):
     return compat.dump(schema=schema, data=data)
 
 
-def normalize_schema(schema):
+@overload
+def normalize_schema(schema: None) -> None:
+    ...
+
+
+@overload
+def normalize_schema(schema: Type[USE_DEFAULT]) -> Type[USE_DEFAULT]:
+    ...
+
+
+@overload
+def normalize_schema(schema: Union[Schema, Type[Schema]]) -> Schema:
+    ...
+
+
+def normalize_schema(
+    schema: Any,
+) -> Union[Schema, Type[Schema], Type[USE_DEFAULT], None]:
     """
     This allows for either an instance of a marshmallow.Schema or the class
     itself to be passed to functions.
     For Marshmallow-objects support, if a Model class is passed, return its __schema__
+
+    Possible types:
+    - schema instance -> return itself
+    - schema class -> return instance of schema class
+    - marshmallow-objects Model class -> return schema class (is this right?)
+    - marshmallow-objects Model instance -> return schema class (is this right?)
+    - None -> return None
+    - USE_DEFAULT -> return USE_DEFAULT
     """
     if schema not in (None, USE_DEFAULT) and not isinstance(schema, marshmallow.Schema):
         # See if we were handed a marshmallow_objects Model class or instance:
@@ -110,28 +146,29 @@ def normalize_schema(schema):
     return schema
 
 
-def raise_400_for_marshmallow_errors(errs, msg):
+def raise_400_for_marshmallow_errors(
+    errs: Dict[str, Any], msg: Union[str, messages.ErrorMessage]
+) -> errors.BadRequest:
     """
     Throws a 400 error properly formatted from the given marshmallow errors.
 
-    :param dict errs: Error dictionary as returned by marshmallow
+    :param dict: Error dictionary as returned by marshmallow
     :param Union[str,messages.ErrorMessage] msg: The overall message to use in the response.
     :raises: errors.BadRequest
     """
     if not errs:
-        return
+        return errors.BadRequest(msg=msg)
 
     copied = copy.deepcopy(errs)
 
     _format_marshmallow_errors_for_response_in_place(copied)
 
     additional_data = {"errors": copied}
-    message, _ = msg if isinstance(msg, tuple) else msg, None
 
-    raise errors.BadRequest(msg=message, additional_data=additional_data)
+    return errors.BadRequest(msg=msg, additional_data=additional_data)
 
 
-def get_json_body_params_or_400(schema):
+def get_json_body_params_or_400(schema: Schema) -> Dict[str, Any]:
     """
     Retrieves the JSON body of a request, validating/loading the payload
     with a given marshmallow.Schema.
@@ -146,7 +183,7 @@ def get_json_body_params_or_400(schema):
     )
 
 
-def get_query_string_params_or_400(schema):
+def get_query_string_params_or_400(schema: Schema) -> Dict[str, Any]:
     """
     Retrieves the query string of a request, validating/loading the parameters
     with a given marshmallow.Schema.
@@ -166,7 +203,7 @@ def get_query_string_params_or_400(schema):
     )
 
 
-def get_header_params_or_400(schema):
+def get_header_params_or_400(schema: Schema) -> Dict[str, Any]:
     schema = compat.exclude_unknown_fields(schema)
     return _get_data_or_400(
         schema=schema,
@@ -175,17 +212,17 @@ def get_header_params_or_400(schema):
     )
 
 
-def _get_data_or_400(schema, data, message):
+def _get_data_or_400(
+    schema: Schema, data: Any, message: messages.ErrorMessage
+) -> Dict[str, Any]:
     schema = normalize_schema(schema)
-
     try:
         return compat.load(schema=schema, data=data)
-
     except marshmallow.ValidationError as e:
-        raise_400_for_marshmallow_errors(errs=e.messages, msg=message)
+        raise raise_400_for_marshmallow_errors(errs=e.messages_dict, msg=message)
 
 
-def _get_json_body_or_400():
+def _get_json_body_or_400() -> Union[List[Any], Dict[str, Any]]:
     """
     Retrieves the JSON payload of the current request, throwing a 400 error
     if the request doesn't include a valid JSON payload.
@@ -210,7 +247,7 @@ def _get_json_body_or_400():
     return body
 
 
-def _format_marshmallow_errors_for_response_in_place(errs):
+def _format_marshmallow_errors_for_response_in_place(errs: Dict[str, Any]) -> None:
     """
     Reformats an error dictionary returned by marshmallow to an error
     dictionary we can send in a response.

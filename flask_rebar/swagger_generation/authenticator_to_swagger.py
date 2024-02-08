@@ -1,9 +1,10 @@
 from collections import namedtuple
 from typing import Type
 
-from flask_rebar.authenticators import HeaderApiKeyAuthenticator, Authenticator
-from .marshmallow_to_swagger import ConverterRegistry
+from flask_rebar.authenticators import Authenticator, HeaderApiKeyAuthenticator
+from .marshmallow_to_swagger import UnregisteredType
 from . import swagger_words as sw
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 
 _Context = namedtuple(
@@ -38,7 +39,9 @@ class AuthenticatorConverter:
 
     AUTHENTICATOR_TYPE: Type[Authenticator]
 
-    def get_security_schemes(self, obj, context):
+    def get_security_schemes(
+        self, obj: Authenticator, context: Optional[_Context] = None
+    ) -> Dict[str, Any]:
         """
         Get the security schemes for the provided Authenticator object.
 
@@ -76,7 +79,9 @@ class AuthenticatorConverter:
         """
         raise NotImplementedError()
 
-    def get_security_requirements(self, obj, context):
+    def get_security_requirements(
+        self, obj: Authenticator, context: Optional[_Context] = None
+    ) -> List[Any]:
         """
         Get the security requirements for the provided Authenticator object
 
@@ -97,7 +102,9 @@ class AuthenticatorConverter:
         raise NotImplementedError()
 
 
-def make_class_from_method(authenticator_class, func):
+def make_class_from_method(
+    authenticator_class: Type[Authenticator], func: Callable
+) -> Type[AuthenticatorConverter]:
     """
     Utility to handle converting old-style method converters into new-style AuthenticatorConverters.
     """
@@ -113,33 +120,44 @@ def make_class_from_method(authenticator_class, func):
 class HeaderApiKeyConverter(AuthenticatorConverter):
     AUTHENTICATOR_TYPE = HeaderApiKeyAuthenticator
 
-    def get_security_requirements(self, obj, context):
+    def get_security_requirements(
+        self, obj: Authenticator, context: Optional[_Context] = None
+    ) -> List[Dict[str, List]]:
         """
         :param HeaderApiKeyAuthenticator obj:
         :param _Context context:
         :return: list
         """
+        if not isinstance(obj, HeaderApiKeyAuthenticator):
+            raise NotImplementedError("Only HeaderApiKeyAuthenticator is supported")
         return [{obj.name: []}]
 
-    def get_security_schemes(self, obj, context):
+    def get_security_schemes(
+        self, obj: Authenticator, context: Optional[_Context] = None
+    ) -> Dict[str, Dict[str, str]]:
         """
-        :param HeaderApiLeyAuthenticator obj:
+        :param HeaderApiKeyAuthenticator obj:
         :param _Context context:
         :return: dict
         """
+        if not isinstance(obj, HeaderApiKeyAuthenticator):
+            raise NotImplementedError("Only HeaderApiKeyAuthenticator is supported")
         return {
             obj.name: {sw.type_: sw.api_key, sw.in_: sw.header, sw.name: obj.header}
         }
 
 
-class AuthenticatorConverterRegistry(ConverterRegistry):
-    def _convert(self, obj, context):
+class AuthenticatorConverterRegistry:
+    def __init__(self) -> None:
+        self._type_map: Dict[Type[Authenticator], AuthenticatorConverter] = {}
+
+    def _convert(self, obj: Authenticator, context: _Context) -> None:
         pass
 
-    def convert(self, obj, openapi_version=2):
+    def convert(self, obj: Authenticator, openapi_version: int = 2) -> Dict[str, Any]:
         raise RuntimeWarning("Use get_security_schemes or get_security_requirements")
 
-    def register_type(self, converter):
+    def register_type(self, converter: AuthenticatorConverter) -> None:
         """
         Registers a converter.
 
@@ -147,15 +165,37 @@ class AuthenticatorConverterRegistry(ConverterRegistry):
         """
         self._type_map[converter.AUTHENTICATOR_TYPE] = converter
 
-    def register_types(self, converters):
+    def register_types(self, converters: Iterable[AuthenticatorConverter]) -> None:
         """
         Registers multiple converters.
 
         :param iterable[AuthenticatorConverter] converters:
         """
-        super().register_types(converters)
+        for converter in converters:
+            self.register_type(converter)
 
-    def get_security_schemes(self, authenticator, openapi_version=2):
+    def _get_converter_for_type(self, obj: Authenticator) -> AuthenticatorConverter:
+        """
+        Locates the registered converter for a given type.
+        :param obj: instance to convert
+        :return: converter for type of instance
+        """
+        method_resolution_order = obj.__class__.__mro__
+
+        for cls in method_resolution_order:
+            if cls in self._type_map:
+                return self._type_map[cls]
+        else:
+            raise UnregisteredType(
+                "No registered type found in method resolution order: {mro}\n"
+                "Registered types: {types}".format(
+                    mro=method_resolution_order, types=list(self._type_map.keys())
+                )
+            )
+
+    def get_security_schemes(
+        self, authenticator: Authenticator, openapi_version: int = 2
+    ) -> Dict[str, Any]:
         """
         Get the security schemes for the provided Authenticator object
 
@@ -170,7 +210,9 @@ class AuthenticatorConverterRegistry(ConverterRegistry):
             authenticator, _Context(openapi_version=openapi_version)
         )
 
-    def get_security_requirements(self, authenticator, openapi_version=2):
+    def get_security_requirements(
+        self, authenticator: Authenticator, openapi_version: int = 2
+    ) -> List[Dict[str, Any]]:
         """
         Get the security requirements for the provided Authenticator object
 

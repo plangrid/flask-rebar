@@ -10,10 +10,17 @@
 
 import abc
 import functools
+from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
+
+from marshmallow import Schema
 
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.authenticator_to_swagger import (
     authenticator_converter_registry as global_authenticator_converter_registry,
+)
+from flask_rebar.swagger_generation.authenticator_to_swagger import (
+    AuthenticatorConverter,
+    AuthenticatorConverterRegistry,
 )
 from flask_rebar.swagger_generation.marshmallow_to_swagger import (
     headers_converter_registry as global_headers_converter_registry,
@@ -27,19 +34,27 @@ from flask_rebar.swagger_generation.marshmallow_to_swagger import (
 from flask_rebar.swagger_generation.marshmallow_to_swagger import (
     response_converter_registry as global_response_converter_registry,
 )
+from flask_rebar.swagger_generation.marshmallow_to_swagger import ConverterRegistry
 from flask_rebar.validation import Error
+
+
+# avoid circular imports
+if TYPE_CHECKING:
+    from flask_rebar.rebar import HandlerRegistry
 
 
 class SwaggerGeneratorI(abc.ABC):
     @abc.abstractmethod
-    def get_open_api_version(self):
+    def get_open_api_version(self) -> str:
         """
         Rebar supports multiple OpenAPI specifications.
         :return: The OpenAPI specification the generator supports.
         """
 
     @abc.abstractmethod
-    def generate_swagger(self, registry, host=None):
+    def generate_swagger(
+        self, registry: "HandlerRegistry", host: Optional[str] = None
+    ) -> Dict[str, str]:
         """
         Generate a swagger definition json object.
         :param registry:
@@ -48,7 +63,9 @@ class SwaggerGeneratorI(abc.ABC):
         """
 
     @abc.abstractmethod
-    def register_flask_converter_to_swagger_type(self, flask_converter, swagger_type):
+    def register_flask_converter_to_swagger_type(
+        self, flask_converter: str, swagger_type: Any
+    ) -> None:
         """
         Flask has "converters" that convert path arguments to a Python type.
 
@@ -58,7 +75,7 @@ class SwaggerGeneratorI(abc.ABC):
         Unknown Flask converters will default to string.
 
         :param str flask_converter:
-        :param str swagger_type:
+        :param object swagger_type:
         """
 
 
@@ -87,17 +104,19 @@ class SwaggerGenerator(SwaggerGeneratorI):
 
     def __init__(
         self,
-        openapi_major_version,
-        version="1.0.0",
-        title="My API",
-        description="",
-        query_string_converter_registry=None,
-        request_body_converter_registry=None,
-        headers_converter_registry=None,
-        response_converter_registry=None,
-        default_response_schema=Error(),
-        authenticator_converter_registry=None,
-        include_hidden=False,
+        openapi_major_version: int,
+        version: str = "1.0.0",
+        title: str = "My API",
+        description: str = "",
+        query_string_converter_registry: Optional[ConverterRegistry] = None,
+        request_body_converter_registry: Optional[ConverterRegistry] = None,
+        headers_converter_registry: Optional[ConverterRegistry] = None,
+        response_converter_registry: Optional[ConverterRegistry] = None,
+        default_response_schema: Schema = Error(),
+        authenticator_converter_registry: Optional[
+            AuthenticatorConverterRegistry
+        ] = None,
+        include_hidden: bool = False,
     ):
         self.include_hidden = include_hidden
         self.title = title
@@ -141,7 +160,7 @@ class SwaggerGenerator(SwaggerGeneratorI):
 
         self.default_response_schema = default_response_schema
 
-    def _get_info(self):
+    def _get_info(self) -> Dict[str, str]:
         return {
             sw.version: self.version,
             sw.title: self.title,
@@ -149,17 +168,23 @@ class SwaggerGenerator(SwaggerGeneratorI):
         }
 
     def _create_converter(
-        self, converter_registry, default_registry, openapi_major_version
-    ):
+        self,
+        converter_registry: Optional[ConverterRegistry],
+        default_registry: ConverterRegistry,
+        openapi_major_version: int,
+    ) -> Callable:
         return functools.partial(
             (converter_registry or default_registry).convert,
             openapi_version=openapi_major_version,
         )
 
     def _create_authenticator_converter(
-        self, converter_registry, default_registry, openapi_major_version
-    ):
-        registry = type("authenticator_converter_registry", (), {})
+        self,
+        converter_registry: Optional[AuthenticatorConverterRegistry],
+        default_registry: AuthenticatorConverterRegistry,
+        openapi_major_version: int,
+    ) -> AuthenticatorConverter:
+        registry: Any = type("authenticator_converter_registry", (), {})
         registry.get_security_schemes = functools.partial(
             (converter_registry or default_registry).get_security_schemes,
             openapi_version=openapi_major_version,
@@ -170,10 +195,12 @@ class SwaggerGenerator(SwaggerGeneratorI):
         )
         return registry
 
-    def get_open_api_version(self):
+    def get_open_api_version(self) -> str:
         return self._open_api_version
 
-    def register_flask_converter_to_swagger_type(self, flask_converter, swagger_type):
+    def register_flask_converter_to_swagger_type(
+        self, flask_converter: str, swagger_type: Any
+    ) -> None:
         """
         Register a converter for a type in flask to a swagger type.
 

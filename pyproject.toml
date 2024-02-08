@@ -9,6 +9,8 @@ exclude = '''
 
 [tool.mypy]
 exclude = ['build', 'docs', 'examples']
+disallow_untyped_defs = true
+check_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = [
@@ -17,6 +19,11 @@ module = [
     "parametrize"
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+check_untyped_defs = false
 
 [tool.pytest.ini_options]
 filterwarnings = [

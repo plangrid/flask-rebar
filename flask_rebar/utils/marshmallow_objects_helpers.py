@@ -1,3 +1,6 @@
+from typing import Any, Optional, Type
+from marshmallow import Schema
+
 try:
     import marshmallow_objects as mo
 
@@ -6,7 +9,7 @@ except ImportError:
     MARSHMALLOW_OBJECTS = False
 
 
-def get_marshmallow_objects_schema(model):
+def get_marshmallow_objects_schema(model: Any) -> Optional[Type[Schema]]:
     if MARSHMALLOW_OBJECTS and (
         isinstance(model, mo.Model) or issubclass(model, mo.Model)
     ):
@@ -23,7 +26,7 @@ if MARSHMALLOW_OBJECTS:
         __swagger_title__ to override the default of {MyModelClass}Schema
         """
 
-        def __init__(self, nested, title, **kwargs):
+        def __init__(self, nested: Type[mo.Model], title: str, **kwargs: Any) -> None:
             super().__init__(nested, **kwargs)
             self.schema.__swagger_title__ = title
 
@@ -34,7 +37,7 @@ else:
         This version of NestedTitledModel will exist if marshmallow-objects is not present
         """
 
-        def __init__(self):
+        def __init__(self) -> None:
             raise ImportError(
                 "To use NestedTitledModel you must install marshmallow-objects"
             )

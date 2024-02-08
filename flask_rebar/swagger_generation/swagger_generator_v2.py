@@ -8,6 +8,9 @@
     :license: MIT, see LICENSE for details.
 """
 import copy
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence
+
+from marshmallow import Schema
 
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.authenticators import USE_DEFAULT
@@ -21,9 +24,17 @@ from flask_rebar.swagger_generation.generator_utils import (
     get_ref_schema,
     get_unique_authenticators,
 )
+from flask_rebar.swagger_generation.authenticator_to_swagger import (
+    AuthenticatorConverterRegistry,
+)
 from flask_rebar.swagger_generation.marshmallow_to_swagger import get_swagger_title
+from flask_rebar.swagger_generation.marshmallow_to_swagger import ConverterRegistry
 from flask_rebar.validation import Error
-from flask_rebar.swagger_generation.swagger_generator import SwaggerGenerator
+from flask_rebar.swagger_generation.swagger_generator_base import SwaggerGenerator
+
+if TYPE_CHECKING:
+    from flask_rebar import Tag
+    from flask_rebar.rebar import HandlerRegistry, PathDefinition
 
 
 class SwaggerV2Generator(SwaggerGenerator):
@@ -60,20 +71,22 @@ class SwaggerV2Generator(SwaggerGenerator):
 
     def __init__(
         self,
-        host="localhost",
-        schemes=(),
-        consumes=("application/json",),
-        produces=("application/json",),
-        version="1.0.0",
-        title="My API",
-        description="",
-        query_string_converter_registry=None,
-        request_body_converter_registry=None,
-        headers_converter_registry=None,
-        response_converter_registry=None,
-        tags=None,
-        default_response_schema=Error(),
-        authenticator_converter_registry=None,
+        host: str = "localhost",
+        schemes: Sequence[str] = (),
+        consumes: Sequence[str] = ("application/json",),
+        produces: Sequence[str] = ("application/json",),
+        version: str = "1.0.0",
+        title: str = "My API",
+        description: str = "",
+        query_string_converter_registry: Optional[ConverterRegistry] = None,
+        request_body_converter_registry: Optional[ConverterRegistry] = None,
+        headers_converter_registry: Optional[ConverterRegistry] = None,
+        response_converter_registry: Optional[ConverterRegistry] = None,
+        tags: Optional[Sequence["Tag"]] = None,
+        default_response_schema: Schema = Error(),
+        authenticator_converter_registry: Optional[
+            AuthenticatorConverterRegistry
+        ] = None,
     ):
         super().__init__(
             openapi_major_version=2,
@@ -94,18 +107,20 @@ class SwaggerV2Generator(SwaggerGenerator):
         self.tags = tags
         self._ref_base = "#/definitions"
 
-    def generate_swagger(self, registry, host=None):
+    def generate_swagger(
+        self, registry: "HandlerRegistry", host: Optional[str] = None
+    ) -> Dict[str, Any]:
         return self.generate(registry=registry, host=host)
 
     def generate(
         self,
-        registry,
-        host=None,
-        schemes=None,
-        consumes=None,
-        produces=None,
-        sort_keys=True,
-    ):
+        registry: "HandlerRegistry",
+        host: Optional[str] = None,
+        schemes: Optional[Sequence[str]] = None,
+        consumes: Optional[Sequence[str]] = None,
+        produces: Optional[Sequence[str]] = None,
+        sort_keys: bool = True,
+    ) -> Dict[str, Any]:
         """Generate a swagger specification from the provided `registry`
 
         `generate_swagger` implements the SwaggerGeneratorI interface. But for backwards compatibility,
@@ -151,7 +166,7 @@ class SwaggerV2Generator(SwaggerGenerator):
         if host and "://" in host:
             _, _, host = host.partition("://")
 
-        swagger = {
+        swagger: Dict[str, Any] = {
             sw.swagger: self.get_open_api_version(),
             sw.info: self._get_info(),
             sw.host: host or self.host,
@@ -175,8 +190,13 @@ class SwaggerV2Generator(SwaggerGenerator):
 
         return swagger
 
-    def _get_paths(self, paths, default_headers_schema, default_security=None):
-        path_definitions = {}
+    def _get_paths(
+        self,
+        paths: Dict[str, Dict[str, "PathDefinition"]],
+        default_headers_schema: Optional[Schema],
+        default_security: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        path_definitions: Dict[str, Any] = {}
 
         for path, methods in paths.items():
             spec_path, path_args = format_path_for_swagger(path)
@@ -321,7 +341,9 @@ class SwaggerV2Generator(SwaggerGenerator):
 
         return path_definitions
 
-    def _convert_jsonschema_to_list_of_parameters(self, obj, in_="query"):
+    def _convert_jsonschema_to_list_of_parameters(
+        self, obj: Dict[str, Any], in_: str = "query"
+    ) -> List[Dict[str, Any]]:
         """
         Swagger is only _based_ on JSONSchema. Query string and header parameters
         are represented as list, not as an object. This converts a JSONSchema

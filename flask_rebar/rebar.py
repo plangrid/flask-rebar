@@ -8,14 +8,33 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
+from __future__ import annotations
 import sys
 from collections import defaultdict
 from collections import namedtuple
-from collections.abc import Mapping
 from copy import copy
 from functools import wraps
-from flask import current_app, g, jsonify, request
+from flask import current_app, g, jsonify, request, Response
+from flask.app import Flask
+from marshmallow import Schema
+from typing import (
+    overload,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
+from typing_extensions import ParamSpec
 from werkzeug.datastructures import Headers
+from werkzeug.exceptions import HTTPException
 from werkzeug.routing import RequestRedirect
 from werkzeug.utils import find_modules
 from werkzeug.utils import import_string
@@ -23,6 +42,8 @@ from werkzeug.utils import import_string
 from flask_rebar import messages
 from flask_rebar import errors
 from flask_rebar.authenticators import Authenticator
+from flask_rebar.errors import HttpJsonError
+from flask_rebar.messages import ErrorMessage
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.utils.request_utils import marshal
 from flask_rebar.utils.request_utils import response
@@ -31,26 +52,52 @@ from flask_rebar.utils.request_utils import get_json_body_params_or_400
 from flask_rebar.utils.request_utils import get_query_string_params_or_400
 from flask_rebar.utils.request_utils import normalize_schema
 from flask_rebar.utils.deprecation import deprecated, deprecated_parameters
-from flask_rebar.swagger_generation import SwaggerV2Generator
+from flask_rebar.swagger_generation.swagger_generator_base import SwaggerGenerator
+from flask_rebar.swagger_generation.swagger_generator_v2 import SwaggerV2Generator
 from flask_rebar.swagger_ui import create_swagger_ui_blueprint
 
 
 MOVED_PERMANENTLY_ERROR = RequestRedirect
 PERMANENT_REDIRECT_ERROR = RequestRedirect
 
+# for type hinting decorators
+P = ParamSpec("P")
+T = TypeVar("T")
 
-def _convert_authenticator_to_authenticators(authenticator):
-    if isinstance(authenticator, Authenticator) or authenticator is USE_DEFAULT:
-        return [authenticator]
-    elif authenticator is None:
+JsonType = Union[Dict[str, Any], List[Any], str, int, float, bool, None]
+Data = Union[bytes, JsonType]
+
+
+def _convert_authenticator_to_authenticators(
+    authenticator: Optional[Union[Authenticator, Type[USE_DEFAULT]]]
+) -> List[Union[Authenticator, Type[USE_DEFAULT]]]:
+    if authenticator is None:
         return []
+    elif isinstance(authenticator, Authenticator) or authenticator is USE_DEFAULT:
+        return [authenticator]
     else:
         raise ValueError(
             "authenticator must be an instance of Authenticator, USE_DEFAULT, or None."
         )
 
 
-def _unpack_view_func_return_value(rv):
+def _unpack_view_func_return_value(
+    rv: Union[
+        Tuple[Data, int, Dict[str, str]],
+        Tuple[Data, int],
+        Tuple[Data, Dict[str, str]],
+        Data,
+    ],
+) -> Tuple[
+    Union[
+        Tuple[Data, int, Dict[str, str]],
+        Tuple[Data, int],
+        Tuple[Data, Dict[str, str]],
+        Data,
+    ],
+    int,
+    Any,
+]:
     """
     Normalize a return value from a view function into a tuple of (body, status, headers).
 
@@ -60,14 +107,13 @@ def _unpack_view_func_return_value(rv):
     :return: (body, status, headers)
     :rtype: tuple
     """
-    data, status, headers = rv, 200, {}
+    headers: Any = {}
+    data, status = rv, 200
 
     if isinstance(rv, tuple):
-        len_rv = len(rv)
-
-        if len_rv == 3:
+        if len(rv) == 3:
             data, status, headers = rv
-        elif len_rv == 2:
+        elif len(rv) == 2:
             if isinstance(rv[1], (Headers, dict, tuple, list)):
                 data, headers = rv
             else:
@@ -83,14 +129,14 @@ def _unpack_view_func_return_value(rv):
 
 
 def _wrap_handler(
-    f,
-    authenticators=None,
-    query_string_schema=None,
-    request_body_schema=None,
-    headers_schema=None,
-    response_body_schema=None,
-    mimetype=None,
-):
+    f: Callable[P, T],
+    authenticators: Optional[List[Authenticator]] = None,
+    query_string_schema: Optional[Schema] = None,
+    request_body_schema: Optional[Schema] = None,
+    headers_schema: Optional[Schema] = None,
+    response_body_schema: Optional[Dict[int, Schema]] = None,
+    mimetype: Optional[str] = None,
+) -> Callable[P, Union[T, Response]]:
     """
     Wraps a handler function before registering it with a Flask application.
 
@@ -102,7 +148,7 @@ def _wrap_handler(
         authenticators = [authenticators]
 
     @wraps(f)
-    def wrapped(*args, **kwargs):
+    def wrapped(*args: P.args, **kwargs: P.kwargs) -> Union[T, Response]:
         if authenticators:
             first_error = None
             for authenticator in authenticators:
@@ -125,7 +171,7 @@ def _wrap_handler(
         if headers_schema:
             g.validated_headers = get_header_params_or_400(schema=headers_schema)
 
-        rv = f(*args, **kwargs)
+        rv: Any = f(*args, **kwargs)
 
         if not response_body_schema:
             return rv
@@ -156,7 +202,7 @@ def _wrap_handler(
     return wrapped
 
 
-def get_validated_body():
+def get_validated_body() -> Dict[str, Any]:
     """
     Retrieve the result of validating/transforming an incoming request body with
     the `request_body_schema` a handler was registered with.
@@ -166,7 +212,7 @@ def get_validated_body():
     return g.validated_body
 
 
-def get_validated_args():
+def get_validated_args() -> Dict[str, Any]:
     """
     Retrieve the result of validating/transforming an incoming request's query
     string with the `query_string_schema` a handler was registered with.
@@ -176,7 +222,7 @@ def get_validated_args():
     return g.validated_args
 
 
-def get_validated_headers():
+def get_validated_headers() -> Dict[str, str]:
     """
     Retrieve the result of validating/transforming an incoming request's headers
     with the `headers_schema` a handler was registered with.
@@ -186,7 +232,17 @@ def get_validated_headers():
     return g.validated_headers
 
 
-def normalize_prefix(prefix):
+@overload
+def normalize_prefix(prefix: str) -> str:
+    ...
+
+
+@overload
+def normalize_prefix(prefix: None) -> None:
+    ...
+
+
+def normalize_prefix(prefix: Optional[str]) -> Optional[str]:
     """
     Removes slashes from a URL path prefix.
 
@@ -201,7 +257,7 @@ def normalize_prefix(prefix):
     return prefix
 
 
-def prefix_url(prefix, url):
+def prefix_url(prefix: str, url: str) -> str:
     """
     Returns a new URL with the prefix prepended to the provided URL.
 
@@ -245,12 +301,12 @@ class PathDefinition(
             _convert_authenticator_to_authenticators,
         )
     )
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs: Any) -> "PathDefinition":
         return super().__new__(cls, *args, **kwargs)
 
     @property
     @deprecated("authenticator", "3.0")
-    def authenticator(self):
+    def authenticator(self) -> Optional[Authenticator]:
         return self.authenticators[0] if self.authenticators else None
 
 
@@ -277,7 +333,7 @@ class HandlerRegistry:
         Schema to validate the headers on all requests as a default.
     :param str default_mimetype:
         Default response content-type if no content and not otherwise specified by the handler.
-    :param flask_rebar.swagger_generation.swagger_generator.SwaggerGeneratorI swagger_generator:
+    :param flask_rebar.swagger_generation.swagger_generator.SwaggerGenerator swagger_generator:
         Object to generate a Swagger specification from this registry. This will be
         the Swagger generator that is used in the endpoints swagger and swagger UI
         that are added to the API.
@@ -303,15 +359,15 @@ class HandlerRegistry:
     )
     def __init__(
         self,
-        prefix=None,
-        default_authenticators=None,
-        default_headers_schema=None,
-        default_mimetype=None,
-        swagger_generator=None,
-        spec_path="/swagger",
-        spec_ui_path="/swagger/ui",
-        handlers=None,
-    ):
+        prefix: Optional[str] = None,
+        default_authenticators: Union[Authenticator, List[Authenticator], None] = None,
+        default_headers_schema: Optional[Schema] = None,
+        default_mimetype: Optional[str] = None,
+        swagger_generator: Optional[SwaggerGenerator] = None,
+        spec_path: str = "/swagger",
+        spec_ui_path: str = "/swagger/ui",
+        handlers: Optional[Union[List[str], str]] = None,
+    ) -> None:
         # default_authenticators can be a single Authenticator, a list of Authenticators, or None.
         if isinstance(default_authenticators, Authenticator):
             default_authenticators = [default_authenticators]
@@ -319,7 +375,7 @@ class HandlerRegistry:
             default_authenticators = []
 
         self.prefix = normalize_prefix(prefix)
-        self._paths = defaultdict(dict)
+        self._paths: Dict[str, Dict[str, PathDefinition]] = defaultdict(dict)
         self.default_authenticators = default_authenticators
         self.default_headers_schema = default_headers_schema
         self.default_mimetype = default_mimetype
@@ -327,16 +383,16 @@ class HandlerRegistry:
         self.spec_path = spec_path
         self.spec_ui_path = spec_ui_path
         if handlers is None:
-            self.handlers = []
+            self.handlers: List[str] = []
         else:
             self.handlers = handlers if isinstance(handlers, list) else [handlers]
 
     @property
     @deprecated("default_authenticators", "3.0")
-    def default_authenticator(self):
+    def default_authenticator(self) -> Optional[Authenticator]:
         return self.default_authenticators[0] if self.default_authenticators else None
 
-    def set_default_authenticator(self, authenticator):
+    def set_default_authenticator(self, authenticator: Authenticator) -> None:
         """
         Sets a handler authenticator to be used by default.
 
@@ -346,7 +402,7 @@ class HandlerRegistry:
             [authenticator] if authenticator is not None else []
         )
 
-    def set_default_authenticators(self, authenticators):
+    def set_default_authenticators(self, authenticators: List[Authenticator]) -> None:
         """
         Sets the handler authenticators to be used by default.
 
@@ -354,7 +410,7 @@ class HandlerRegistry:
         """
         self.default_authenticators = authenticators or []
 
-    def set_default_headers_schema(self, headers_schema):
+    def set_default_headers_schema(self, headers_schema: Schema) -> None:
         """
         Sets the schema to be used by default to validate incoming headers.
 
@@ -362,7 +418,7 @@ class HandlerRegistry:
         """
         self.default_headers_schema = normalize_schema(headers_schema)
 
-    def clone(self):
+    def clone(self) -> HandlerRegistry:
         """
         Returns a new, shallow-copied instance of :class:`HandlerRegistry`.
 
@@ -370,23 +426,23 @@ class HandlerRegistry:
         """
         return copy(self)
 
-    def _prefixed(self, path):
+    def _prefixed(self, path: str) -> str:
         if self.prefix:
             return prefix_url(prefix=self.prefix, url=path)
         else:
             return path
 
-    def _prefixed_spec_path(self):
+    def _prefixed_spec_path(self) -> str:
         return self._prefixed(self.spec_path)
 
-    def _prefixed_spec_ui_path(self):
+    def _prefixed_spec_ui_path(self) -> str:
         return self._prefixed(self.spec_ui_path)
 
     @property
-    def paths(self):
+    def paths(self) -> Dict[str, Dict[str, PathDefinition]]:
         # We duplicate the paths so we can modify the path definitions right before
         # they are accessed.
-        paths = defaultdict(dict)
+        paths: Dict[str, Dict[str, PathDefinition]] = defaultdict(dict)
 
         for path, methods in self._paths.items():
             for method, definition_ in methods.items():
@@ -422,20 +478,22 @@ class HandlerRegistry:
     )
     def add_handler(
         self,
-        func,
-        rule,
-        method="GET",
-        endpoint=None,
-        response_body_schema=None,
-        query_string_schema=None,
-        request_body_schema=None,
-        headers_schema=USE_DEFAULT,
-        authenticators=USE_DEFAULT,
-        tags=None,
-        mimetype=USE_DEFAULT,
-        hidden=False,
-        summary=None,
-    ):
+        func: Callable,
+        rule: str,
+        method: str = "GET",
+        endpoint: Optional[str] = None,
+        response_body_schema: Optional[Dict[int, Schema]] = None,
+        query_string_schema: Optional[Schema] = None,
+        request_body_schema: Optional[Schema] = None,
+        headers_schema: Union[Type[USE_DEFAULT], Schema] = USE_DEFAULT,
+        authenticators: Union[
+            Type[USE_DEFAULT], List[Authenticator], Authenticator
+        ] = USE_DEFAULT,
+        tags: Optional[Sequence[str]] = None,
+        mimetype: Union[Type[USE_DEFAULT], str] = USE_DEFAULT,
+        hidden: bool = False,
+        summary: Optional[str] = None,
+    ) -> None:
         """
         Registers a function as a request handler.
 
@@ -483,10 +541,13 @@ class HandlerRegistry:
             }
 
         # authenticators can be a list of Authenticators, a single Authenticator, USE_DEFAULT, or None
-        if isinstance(authenticators, Authenticator) or authenticators is USE_DEFAULT:
-            authenticators = [authenticators]
+        authenticators_list: Sequence[Union[Type[USE_DEFAULT], Authenticator]] = []
+        if isinstance(authenticators, list):
+            authenticators_list = authenticators
+        elif isinstance(authenticators, Authenticator) or authenticators is USE_DEFAULT:
+            authenticators_list = [authenticators]
         elif authenticators is None:
-            authenticators = []
+            authenticators_list = []
 
         self._paths[rule][method] = PathDefinition(
             func=func,
@@ -497,7 +558,7 @@ class HandlerRegistry:
             query_string_schema=query_string_schema,
             request_body_schema=request_body_schema,
             headers_schema=headers_schema,
-            authenticators=authenticators,
+            authenticators=authenticators_list,
             tags=tags,
             mimetype=mimetype,
             hidden=hidden,
@@ -513,25 +574,27 @@ class HandlerRegistry:
     )
     def handles(
         self,
-        rule,
-        method="GET",
-        endpoint=None,
-        response_body_schema=None,
-        query_string_schema=None,
-        request_body_schema=None,
-        headers_schema=USE_DEFAULT,
-        authenticators=USE_DEFAULT,
-        tags=None,
-        mimetype=USE_DEFAULT,
-        hidden=False,
-        summary=None,
-    ):
+        rule: str,
+        method: str = "GET",
+        endpoint: Optional[str] = None,
+        response_body_schema: Optional[Dict[int, Schema]] = None,
+        query_string_schema: Optional[Schema] = None,
+        request_body_schema: Optional[Schema] = None,
+        headers_schema: Union[Type[USE_DEFAULT], Schema] = USE_DEFAULT,
+        authenticators: Union[
+            Type[USE_DEFAULT], List[Authenticator], Authenticator
+        ] = USE_DEFAULT,
+        tags: Optional[Sequence[str]] = None,
+        mimetype: Union[Type[USE_DEFAULT], str] = USE_DEFAULT,
+        hidden: bool = False,
+        summary: Optional[str] = None,
+    ) -> Callable:
         """
         Same arguments as :meth:`HandlerRegistry.add_handler`, except this can
         be used as a decorator.
         """
 
-        def wrapper(f):
+        def wrapper(f: Callable[P, T]) -> Callable[P, T]:
             self.add_handler(
                 func=f,
                 rule=rule,
@@ -551,14 +614,14 @@ class HandlerRegistry:
 
         return wrapper
 
-    def register(self, app):
+    def register(self, app: Flask) -> None:
         self._register_routes(app=app)
         self._register_swagger(app=app)
         self._register_swagger_ui(app=app)
 
-    def _register_routes(self, app):
+    def _register_routes(self, app: Flask) -> None:
         for handler in self.handlers:
-            for handler_mod in find_modules(handler, recursive=True):
+            for handler_mod in find_modules(import_path=handler, recursive=True):
                 import_string(handler_mod)
 
         for path, methods in self.paths.items():
@@ -601,7 +664,7 @@ class HandlerRegistry:
                     endpoint=endpoint,
                 )
 
-    def _register_swagger(self, app):
+    def _register_swagger(self, app: Flask) -> None:
         swagger_endpoint = "get_swagger"
 
         if self.prefix:
@@ -612,13 +675,13 @@ class HandlerRegistry:
             @app.route(
                 self._prefixed_spec_path(), methods=["GET"], endpoint=swagger_endpoint
             )
-            def get_swagger():
+            def get_swagger() -> Response:
                 swagger = self.swagger_generator.generate_swagger(
                     registry=self, host=request.host_url.rstrip("/")
                 )
                 return response(data=swagger)
 
-    def _register_swagger_ui(self, app):
+    def _register_swagger_ui(self, app: Flask) -> None:
         blueprint_name = "swagger_ui"
 
         if self.prefix:
@@ -656,10 +719,10 @@ class Rebar:
 
     """
 
-    def __init__(self):
-        self.handler_registries = set()
-        self.paths = defaultdict(dict)
-        self.uncaught_exception_handlers = []
+    def __init__(self) -> None:
+        self.handler_registries: Set[HandlerRegistry] = set()
+        self.paths: Dict[str, Dict[str, PathDefinition]] = defaultdict(dict)
+        self.uncaught_exception_handlers: List[Callable] = []
         # If a developer doesn't wish to advertise that they are using rebar this can be used to control
         # the name of the attribute in error responses, or set to None to suppress inclusion of error codes entirely
         self.error_code_attr = "rebar_error_code"
@@ -674,15 +737,15 @@ class Rebar:
     )
     def create_handler_registry(
         self,
-        prefix=None,
-        default_authenticators=None,
-        default_headers_schema=None,
-        default_mimetype=None,
-        swagger_generator=None,
-        spec_path="/swagger",
-        swagger_ui_path="/swagger/ui",
-        handlers=None,
-    ):
+        prefix: Optional[str] = None,
+        default_authenticators: Union[List[Authenticator], Authenticator, None] = None,
+        default_headers_schema: Optional[Schema] = None,
+        default_mimetype: Optional[str] = None,
+        swagger_generator: Optional[SwaggerGenerator] = None,
+        spec_path: str = "/swagger",
+        swagger_ui_path: str = "/swagger/ui",
+        handlers: Optional[List[str]] = None,
+    ) -> HandlerRegistry:
         """
         Create a new handler registry and add to this extension's set of
         registered registries.
@@ -727,7 +790,7 @@ class Rebar:
         self.add_handler_registry(registry=registry)
         return registry
 
-    def add_handler_registry(self, registry):
+    def add_handler_registry(self, registry: HandlerRegistry) -> None:
         """
         Register a handler registry with the extension.
 
@@ -739,7 +802,7 @@ class Rebar:
         self.handler_registries.add(registry)
 
     @property
-    def validated_body(self):
+    def validated_body(self) -> Dict[str, Any]:
         """
         Proxy to the result of validating/transforming an incoming request body with
         the `request_body_schema` a handler was registered with.
@@ -749,7 +812,7 @@ class Rebar:
         return get_validated_body()
 
     @property
-    def validated_args(self):
+    def validated_args(self) -> Dict[str, Any]:
         """
         Proxy to the result of validating/transforming an incoming request's query
         string with the `query_string_schema` a handler was registered with.
@@ -759,7 +822,7 @@ class Rebar:
         return get_validated_args()
 
     @property
-    def validated_headers(self):
+    def validated_headers(self) -> Dict[str, str]:
         """
         Proxy to the result of validating/transforming an incoming request's headers
         with the `headers_schema` a handler was registered with.
@@ -768,7 +831,7 @@ class Rebar:
         """
         return get_validated_headers()
 
-    def add_uncaught_exception_handler(self, func):
+    def add_uncaught_exception_handler(self, func: Callable) -> None:
         """
         Add a function that will be called for uncaught exceptions, i.e. exceptions
         that will result in a 500 error.
@@ -781,7 +844,7 @@ class Rebar:
         """
         self.uncaught_exception_handlers.append(func)
 
-    def init_app(self, app):
+    def init_app(self, app: Flask) -> None:
         """
         Register all the handler registries with a Flask application.
 
@@ -797,9 +860,9 @@ class Rebar:
             "handler_registries": self.handler_registries,
         }
 
-    def _init_error_handling(self, app):
+    def _init_error_handling(self, app: Flask) -> None:
         @app.errorhandler(errors.HttpJsonError)
-        def handle_http_error(error):
+        def handle_http_error(error: HttpJsonError) -> Response:
             return self._create_json_error_response(
                 message=error.error_message,
                 http_status_code=error.http_status_code,
@@ -809,14 +872,14 @@ class Rebar:
         @app.errorhandler(400)
         @app.errorhandler(404)
         @app.errorhandler(405)
-        def handle_werkzeug_http_error(error):
+        def handle_werkzeug_http_error(error: HTTPException) -> Response:
             return self._create_json_error_response(
                 message=error.description, http_status_code=error.code
             )
 
         @app.errorhandler(MOVED_PERMANENTLY_ERROR)
         @app.errorhandler(PERMANENT_REDIRECT_ERROR)
-        def handle_request_redirect_error(error):
+        def handle_request_redirect_error(error: RequestRedirect) -> Response:
             return self._create_json_error_response(
                 message=error.name,
                 http_status_code=error.code,
@@ -824,7 +887,7 @@ class Rebar:
                 headers={"Location": error.new_url},
             )
 
-        def run_unhandled_exception_handlers(exception):
+        def run_unhandled_exception_handlers(exception: BaseException) -> None:
             exc_info = sys.exc_info()
             current_app.log_exception(exc_info=exc_info)
 
@@ -832,7 +895,7 @@ class Rebar:
                 func(exception)
 
         @app.errorhandler(Exception)
-        def handle_generic_error(error):
+        def handle_generic_error(error: Exception) -> Response:
             run_unhandled_exception_handlers(error)
 
             if current_app.debug:
@@ -843,18 +906,21 @@ class Rebar:
                 )
 
         @app.teardown_request
-        def teardown(exception):
+        def teardown(exception: Optional[BaseException]) -> None:
             if isinstance(exception, SystemExit):
                 try:
                     run_unhandled_exception_handlers(exception)
-                except (
-                    Exception
-                ):  # make sure the exception handlers dont prevent teardown
+                except Exception:
+                    # make sure the exception handlers dont prevent teardown
                     pass
 
     def _create_json_error_response(
-        self, message, http_status_code, additional_data=None, headers=None
-    ):
+        self,
+        message: Optional[Union[ErrorMessage, str]],
+        http_status_code: Optional[int],
+        additional_data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> Response:
         """
         Compiles a response object for an error.
 
@@ -882,5 +948,6 @@ class Rebar:
         if headers:
             for key, value in headers.items():
                 resp.headers[key] = value
-        resp.status_code = http_status_code
+        if http_status_code is not None:
+            resp.status_code = http_status_code
         return resp

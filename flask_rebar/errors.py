@@ -7,6 +7,8 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
+from flask_rebar.messages import ErrorMessage
+from typing import Any, Dict, Optional, Union
 
 
 class HttpJsonError(Exception):
@@ -30,7 +32,11 @@ class HttpJsonError(Exception):
     default_message: str
     http_status_code: int
 
-    def __init__(self, msg=None, additional_data=None):
+    def __init__(
+        self,
+        msg: Optional[Union[str, ErrorMessage]] = None,
+        additional_data: Optional[Dict[str, Any]] = None,
+    ) -> None:
         self.error_message = msg or self.default_message
         self.additional_data = additional_data
         super().__init__(self.error_message)

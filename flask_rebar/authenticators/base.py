@@ -15,7 +15,7 @@ class Authenticator:
     extend this class.
     """
 
-    def authenticate(self):
+    def authenticate(self) -> None:
         """
         Implementations of :class:`Authenticator` should override this method.
 

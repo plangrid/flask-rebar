@@ -7,6 +7,8 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
+from typing import Dict
+
 from flask import request, g
 from hmac import compare_digest
 
@@ -14,7 +16,7 @@ from flask_rebar import errors, messages
 from flask_rebar.authenticators.base import Authenticator
 
 
-def get_authenticated_app_name():
+def get_authenticated_app_name() -> str:
     return g.authenticated_app_name
 
 
@@ -39,16 +41,16 @@ class HeaderApiKeyAuthenticator(Authenticator):
     # This is the default name, if someone doesn't need about this feature.
     DEFAULT_APP_NAME = "default"
 
-    def __init__(self, header, name="sharedSecret"):
+    def __init__(self, header: str, name: str = "sharedSecret") -> None:
         self.header = header
-        self.keys = {}
+        self.keys: Dict[str, str] = {}
         self.name = name
 
     @property
-    def authenticated_app_name(self):
+    def authenticated_app_name(self) -> str:
         return get_authenticated_app_name()
 
-    def register_key(self, key, app_name=DEFAULT_APP_NAME):
+    def register_key(self, key: str, app_name: str = DEFAULT_APP_NAME) -> None:
         """
         Register a client application's shared secret.
 
@@ -60,7 +62,7 @@ class HeaderApiKeyAuthenticator(Authenticator):
         """
         self.keys[key] = app_name
 
-    def authenticate(self):
+    def authenticate(self) -> None:
         if self.header not in request.headers:
             raise errors.Unauthorized(messages.missing_auth_token)
 

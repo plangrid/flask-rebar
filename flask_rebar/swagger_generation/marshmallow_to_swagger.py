@@ -13,22 +13,46 @@ import inspect
 import logging
 import sys
 from collections import namedtuple
-from typing import Any, Optional, Type, Union
-
+from typing import (
+    overload,
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
+from typing_extensions import ParamSpec
 import marshmallow as m
+from marshmallow import Schema
 from marshmallow.validate import Range
 from marshmallow.validate import OneOf
 from marshmallow.validate import Length
 from marshmallow.validate import Validator
 
 from flask_rebar import compat
+from flask_rebar.authenticators import Authenticator
 from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.swagger_generation import swagger_words as sw
 
+# for easier type hinting
+MarshmallowObject = Union[Schema, m.fields.Field, Validator]
+T = TypeVar("T", bound=MarshmallowObject)
+TField = TypeVar("TField", bound=m.fields.Field)
+
+# for type hinting decorators
+S = TypeVar("S")
+P = ParamSpec("P")
+
 LoadDumpOptions = None
 try:
-    EnumField: Optional[Type[m.fields.Field]] = m.fields.Enum
+    EnumField: Any = m.fields.Enum
 except AttributeError:
     try:
         from marshmallow_enum import EnumField, LoadDumpOptions  # type: ignore
@@ -68,7 +92,21 @@ class UnregisteredType(Exception):
     pass
 
 
-def _normalize_validate(validate):
+@overload
+def _normalize_validate(validate: None) -> None:
+    ...
+
+
+@overload
+def _normalize_validate(
+    validate: Union[Callable, Iterable[Callable]]
+) -> Iterable[Callable]:
+    ...
+
+
+def _normalize_validate(
+    validate: Optional[Union[Callable, Iterable[Callable]]]
+) -> Optional[Iterable[Callable]]:
     """
     Coerces the validate attribute on a Marshmallow field to a consistent type.
 
@@ -84,7 +122,7 @@ def _normalize_validate(validate):
         return validate
 
 
-def get_swagger_title(obj):
+def get_swagger_title(obj: MarshmallowObject) -> str:
     """
     Gets a title for the given object. This title will be used
     as a name/key for the object in swagger.
@@ -100,7 +138,7 @@ def get_swagger_title(obj):
         return obj.__class__.__name__
 
 
-def sets_swagger_attr(attr):
+def sets_swagger_attr(attr: str) -> Callable:
     """
     Decorates a `MarshmallowConverter` method, marking it as an JSONSchema
     attribute setter.
@@ -120,28 +158,28 @@ def sets_swagger_attr(attr):
     :param str attr: The attribute to set
     """
 
-    def wrapper(f):
+    def wrapper(f: Callable[P, T]) -> Callable[P, T]:
         setattr(f, _method_marker, attr)
         return f
 
     return wrapper
 
 
-def get_schema_fields(schema):
+def get_schema_fields(schema: Schema) -> List[Tuple[str, m.fields.Field]]:
     """Retrieve all the names and field objects for a marshmallow Schema
 
     :param m.Schema schema:
     :returns: Yields tuples of the field name and the field itself
     :rtype: typing.Iterator[typing.Tuple[str, m.fields.Field]]
     """
-    fields = []
+    fields: List[Tuple[str, m.fields.Field]] = []
     for name, field in schema.fields.items():
         prop = compat.get_data_key(field)
         fields.append((prop, field))
     return sorted(fields)
 
 
-class MarshmallowConverter:
+class MarshmallowConverter(Generic[T]):
     """
     Abstract class for objects that convert Marshmallow objects to
     JSONSchema dictionaries.
@@ -149,7 +187,7 @@ class MarshmallowConverter:
 
     MARSHMALLOW_TYPE: Any = None
 
-    def convert(self, obj, context):
+    def convert(self, obj: T, context: _Context) -> Dict[str, Union[str, bool]]:
         """
         Converts a Marshmallow object to a JSONSchema dictionary.
 
@@ -175,20 +213,22 @@ class MarshmallowConverter:
         return jsonschema_obj
 
 
-class SchemaConverter(MarshmallowConverter):
+class SchemaConverter(MarshmallowConverter[Schema]):
     """Converts Marshmallow Schema objects."""
 
     MARSHMALLOW_TYPE = m.Schema
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(self, obj: Schema, context: _Context) -> str:
         if obj.many:
             return sw.array
         else:
             return sw.object_
 
     @sets_swagger_attr(sw.items)
-    def get_items(self, obj, context):
+    def get_items(
+        self, obj: Schema, context: _Context
+    ) -> Union[Type[UNSET], MarshmallowObject]:
         if not obj.many:
             return UNSET
 
@@ -198,7 +238,9 @@ class SchemaConverter(MarshmallowConverter):
         return context.convert(singular_obj, context)
 
     @sets_swagger_attr(sw.properties)
-    def get_properties(self, obj, context):
+    def get_properties(
+        self, obj: Schema, context: _Context
+    ) -> Union[Type[UNSET], Dict[str, Any]]:
         if obj.many:
             return UNSET
 
@@ -210,17 +252,19 @@ class SchemaConverter(MarshmallowConverter):
         return properties
 
     @sets_swagger_attr(sw.required)
-    def get_required(self, obj, context):
+    def get_required(
+        self, obj: Schema, context: _Context
+    ) -> Union[Type[UNSET], List[str]]:
         if obj.many or obj.partial is True:
             return UNSET
 
-        required = []
+        required: List[str] = []
         obj_partial_is_collection = m.utils.is_collection(obj.partial)
 
         for name, field in obj.fields.items():
             if field.required:
                 prop = compat.get_data_key(field)
-                if obj_partial_is_collection and prop in obj.partial:
+                if obj_partial_is_collection and obj.partial and prop in obj.partial:
                     continue
                 required.append(prop)
 
@@ -229,7 +273,9 @@ class SchemaConverter(MarshmallowConverter):
         return required if required else UNSET
 
     @sets_swagger_attr(sw.description)
-    def get_description(self, obj, context):
+    def get_description(
+        self, obj: Schema, context: _Context
+    ) -> Union[Type[UNSET], str]:
         if obj.many:
             return UNSET
         elif obj.__doc__:
@@ -238,14 +284,14 @@ class SchemaConverter(MarshmallowConverter):
             return UNSET
 
     @sets_swagger_attr(sw.title)
-    def get_title(self, obj, context):
+    def get_title(self, obj: Schema, context: _Context) -> Union[Type[UNSET], str]:
         if not obj.many:
             return get_swagger_title(obj)
         else:
             return UNSET
 
     @sets_swagger_attr(sw.additional_properties)
-    def get_additional_properties(self, obj, context):
+    def get_additional_properties(self, obj: Schema, context: _Context) -> bool:
         if obj.unknown in (m.RAISE, m.EXCLUDE):
             return False
         elif obj.unknown is m.INCLUDE:
@@ -256,7 +302,7 @@ class SchemaConverter(MarshmallowConverter):
             )
 
 
-class FieldConverter(MarshmallowConverter):
+class FieldConverter(MarshmallowConverter, Generic[TField]):
     """
     Base Converter for Marshmallow Field objects.
 
@@ -265,7 +311,7 @@ class FieldConverter(MarshmallowConverter):
 
     MARSHMALLOW_TYPE: Type[m.fields.Field] = m.fields.Field
 
-    def convert(self, obj, context):
+    def convert(self, obj: TField, context: _Context) -> Dict[str, Union[str, bool]]:
         jsonschema_obj = super().convert(obj, context)
 
         if obj.dump_only:
@@ -273,7 +319,6 @@ class FieldConverter(MarshmallowConverter):
 
         if obj.validate:
             validators = _normalize_validate(obj.validate)
-
             for validator in validators:
                 try:
                     jsonschema_obj.update(
@@ -298,14 +343,16 @@ class FieldConverter(MarshmallowConverter):
 
     # With OpenApi 3.1 nullable has been removed entirely
     # and allowing 'none' means we return an array of allowed types that includes sw.null
-    def null_type_determination(self, obj, context, sw_type):
+    def null_type_determination(
+        self, obj: TField, context: _Context, sw_type: str
+    ) -> Union[str, List[str]]:
         if context.openapi_version == 3 and obj.allow_none:
             return [sw_type, sw.null]
         else:
             return sw_type
 
     @sets_swagger_attr(sw.default)
-    def get_default(self, obj, context):
+    def get_default(self, obj: TField, context: _Context) -> Any:
         if (
             obj.load_default is not m.missing
             # Marshmallow accepts a callable for the default. This is tricky
@@ -317,21 +364,23 @@ class FieldConverter(MarshmallowConverter):
             return UNSET
 
     @sets_swagger_attr(sw.nullable)
-    def get_nullable(self, obj, context):
+    def get_nullable(self, obj: TField, context: _Context) -> Union[Type[UNSET], bool]:
         if context.openapi_version == 2 and obj.allow_none is not False:
             return True
         else:
             return UNSET
 
     @sets_swagger_attr(sw.description)
-    def get_description(self, obj, context):
+    def get_description(
+        self, obj: TField, context: _Context
+    ) -> Union[Type[UNSET], str]:
         if "description" in obj.metadata:
             return obj.metadata["description"]
         else:
             return UNSET
 
 
-class ValidatorConverter(MarshmallowConverter):
+class ValidatorConverter(MarshmallowConverter[Validator]):
     """
     Base Converter for Marshmallow Validator objects.
 
@@ -341,106 +390,120 @@ class ValidatorConverter(MarshmallowConverter):
     MARSHMALLOW_TYPE: Union[Type[Validator], Type[OneOf]] = Validator
 
 
-class NestedConverter(FieldConverter):
+class NestedConverter(FieldConverter[m.fields.Nested]):
     MARSHMALLOW_TYPE = m.fields.Nested
 
-    def convert(self, obj, context):
+    def convert(self, obj: m.fields.Nested, context: _Context) -> Dict[str, Any]:
         return context.convert(obj.schema, context)
 
 
-class ListConverter(FieldConverter):
+class ListConverter(FieldConverter[m.fields.List]):
     MARSHMALLOW_TYPE = m.fields.List
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(self, obj: m.fields.List, context: _Context) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.array)
 
     @sets_swagger_attr(sw.items)
-    def get_items(self, obj, context):
+    def get_items(
+        self, obj: m.fields.List, context: _Context
+    ) -> Union[Type[UNSET], m.fields.List]:
         return context.convert(obj.inner, context)
 
 
-class DictConverter(FieldConverter):
+class DictConverter(FieldConverter[m.fields.Dict]):
     MARSHMALLOW_TYPE = m.fields.Dict
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(self, obj: m.fields.Dict, context: _Context) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.object_)
 
 
-class IntegerConverter(FieldConverter):
+class IntegerConverter(FieldConverter[m.fields.Integer]):
     MARSHMALLOW_TYPE = m.fields.Integer
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(
+        self, obj: m.fields.Integer, context: _Context
+    ) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.integer)
 
 
-class StringConverter(FieldConverter):
+class StringConverter(FieldConverter[m.fields.String]):
     MARSHMALLOW_TYPE = m.fields.String
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(
+        self, obj: m.fields.String, context: _Context
+    ) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.string)
 
 
-class NumberConverter(FieldConverter):
+class NumberConverter(FieldConverter[m.fields.Number]):
     MARSHMALLOW_TYPE = m.fields.Number
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(
+        self, obj: m.fields.Number, context: _Context
+    ) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.number)
 
 
-class BooleanConverter(FieldConverter):
+class BooleanConverter(FieldConverter[m.fields.Boolean]):
     MARSHMALLOW_TYPE = m.fields.Boolean
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(
+        self, obj: m.fields.Boolean, context: _Context
+    ) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.boolean)
 
 
-class DateTimeConverter(FieldConverter):
+class DateTimeConverter(FieldConverter[m.fields.DateTime]):
     MARSHMALLOW_TYPE = m.fields.DateTime
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(
+        self, obj: m.fields.DateTime, context: _Context
+    ) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.string)
 
     @sets_swagger_attr(sw.format_)
-    def get_format(self, obj, context):
+    def get_format(self, obj: m.fields.DateTime, context: _Context) -> str:
         return sw.date_time
 
 
-class UUIDConverter(FieldConverter):
+class UUIDConverter(FieldConverter[m.fields.UUID]):
     MARSHMALLOW_TYPE = m.fields.UUID
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(self, obj: m.fields.UUID, context: _Context) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.string)
 
     @sets_swagger_attr(sw.format_)
-    def get_format(self, obj, context):
+    def get_format(self, obj: m.fields.UUID, context: _Context) -> str:
         return sw.uuid
 
 
-class DateConverter(FieldConverter):
+class DateConverter(FieldConverter[m.fields.Date]):
     MARSHMALLOW_TYPE = m.fields.Date
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(self, obj: m.fields.Date, context: _Context) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.string)
 
     @sets_swagger_attr(sw.format_)
-    def get_format(self, obj, context):
+    def get_format(self, obj: m.fields.Date, context: _Context) -> str:
         return sw.date
 
 
-class MethodConverter(FieldConverter):
+class MethodConverter(FieldConverter[m.fields.Method]):
     MARSHMALLOW_TYPE = m.fields.Method
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(
+        self, obj: m.fields.Method, context: _Context
+    ) -> Union[str, List[str]]:
         if "swagger_type" in obj.metadata:
             return self.null_type_determination(
                 obj, context, obj.metadata["swagger_type"]
@@ -451,11 +514,13 @@ class MethodConverter(FieldConverter):
             )
 
 
-class FunctionConverter(FieldConverter):
+class FunctionConverter(FieldConverter[m.fields.Function]):
     MARSHMALLOW_TYPE = m.fields.Function
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(
+        self, obj: m.fields.Function, context: _Context
+    ) -> Union[str, List[str]]:
         if "swagger_type" in obj.metadata:
             return self.null_type_determination(
                 obj, context, obj.metadata["swagger_type"]
@@ -466,11 +531,11 @@ class FunctionConverter(FieldConverter):
             )
 
 
-class ConstantConverter(FieldConverter):
+class ConstantConverter(FieldConverter[m.fields.Constant]):
     MARSHMALLOW_TYPE = m.fields.Constant
 
     @sets_swagger_attr(sw.enum)
-    def get_enum(self, obj, context):
+    def get_enum(self, obj: m.fields.Constant, context: _Context) -> List[str]:
         return [obj.constant]
 
 
@@ -478,15 +543,21 @@ class CsvArrayConverter(ListConverter):
     MARSHMALLOW_TYPE = CommaSeparatedList
 
     @sets_swagger_attr(sw.collection_format)
-    def get_collection_format(self, obj, context):
+    def get_collection_format(
+        self, obj: CommaSeparatedList, context: _Context
+    ) -> Union[Type[UNSET], str]:
         return sw.csv if context.openapi_version == 2 else UNSET
 
     @sets_swagger_attr(sw.style)
-    def get_style(self, obj, context):
+    def get_style(
+        self, obj: CommaSeparatedList, context: _Context
+    ) -> Union[Type[UNSET], str]:
         return sw.form if context.openapi_version == 3 else UNSET
 
     @sets_swagger_attr(sw.explode)
-    def get_explode(self, obj, context):
+    def get_explode(
+        self, obj: CommaSeparatedList, context: _Context
+    ) -> Union[Type[UNSET], bool]:
         return False if context.openapi_version == 3 else UNSET
 
 
@@ -494,11 +565,15 @@ class MultiArrayConverter(ListConverter):
     MARSHMALLOW_TYPE = QueryParamList
 
     @sets_swagger_attr(sw.collection_format)
-    def get_collection_format(self, obj, context):
+    def get_collection_format(
+        self, obj: QueryParamList, context: _Context
+    ) -> Union[Type[UNSET], str]:
         return sw.multi if context.openapi_version == 2 else UNSET
 
     @sets_swagger_attr(sw.explode)
-    def get_explode(self, obj, context):
+    def get_explode(
+        self, obj: QueryParamList, context: _Context
+    ) -> Union[Type[UNSET], bool]:
         return True if context.openapi_version == 3 else UNSET
 
 
@@ -506,14 +581,18 @@ class RangeConverter(ValidatorConverter):
     MARSHMALLOW_TYPE = Range
 
     @sets_swagger_attr(sw.minimum)
-    def get_minimum(self, obj, context):
+    def get_minimum(
+        self, obj: Range, context: _Context
+    ) -> Union[Type[UNSET], int, float]:
         if obj.min is not None:
             return obj.min
         else:
             return UNSET
 
     @sets_swagger_attr(sw.maximum)
-    def get_maximum(self, obj, context):
+    def get_maximum(
+        self, obj: Range, context: _Context
+    ) -> Union[Type[UNSET], int, float]:
         if obj.max is not None:
             return obj.max
         else:
@@ -524,7 +603,7 @@ class OneOfConverter(ValidatorConverter):
     MARSHMALLOW_TYPE = OneOf
 
     @sets_swagger_attr(sw.enum)
-    def get_enum(self, obj, context):
+    def get_enum(self, obj: OneOf, context: _Context) -> List[str]:
         return list(obj.choices)
 
 
@@ -532,28 +611,36 @@ class LengthConverter(ValidatorConverter):
     MARSHMALLOW_TYPE = Length
 
     @sets_swagger_attr(sw.min_items)
-    def get_minimum_items(self, obj, context):
+    def get_minimum_items(
+        self, obj: Length, context: _Context
+    ) -> Union[Type[UNSET], int]:
         if context.memo[sw.type_] == sw.array:
             if obj.min is not None:
                 return obj.min
         return UNSET
 
     @sets_swagger_attr(sw.max_items)
-    def get_maximum_items(self, obj, context):
+    def get_maximum_items(
+        self, obj: Length, context: _Context
+    ) -> Union[Type[UNSET], int]:
         if context.memo[sw.type_] == sw.array:
             if obj.max is not None:
                 return obj.max
         return UNSET
 
     @sets_swagger_attr(sw.min_length)
-    def get_minimum_length(self, obj, context):
+    def get_minimum_length(
+        self, obj: Length, context: _Context
+    ) -> Union[Type[UNSET], int]:
         if context.memo[sw.type_] == sw.string:
             if obj.min is not None:
                 return obj.min
         return UNSET
 
     @sets_swagger_attr(sw.max_length)
-    def get_maximum_length(self, obj, context):
+    def get_maximum_length(
+        self, obj: Length, context: _Context
+    ) -> Union[Type[UNSET], int]:
         if context.memo[sw.type_] == sw.string:
             if obj.max is not None:
                 return obj.max
@@ -573,11 +660,13 @@ class ConverterRegistry:
     Marshmallow types.
     """
 
-    def __init__(self):
-        self._type_map = {}
-        self._validator_map = {}
+    def __init__(self) -> None:
+        self._type_map: Dict[
+            Union[Type[MarshmallowObject], Type[Authenticator]], MarshmallowConverter
+        ] = {}
+        # self._validator_map = {}
 
-    def register_type(self, converter):
+    def register_type(self, converter: MarshmallowConverter) -> None:
         """
         Registers a converter.
 
@@ -585,7 +674,7 @@ class ConverterRegistry:
         """
         self._type_map[converter.MARSHMALLOW_TYPE] = converter
 
-    def register_types(self, converters):
+    def register_types(self, converters: Iterable[MarshmallowConverter]) -> None:
         """
         Registers multiple converters.
 
@@ -594,7 +683,7 @@ class ConverterRegistry:
         for converter in converters:
             self.register_type(converter)
 
-    def _get_converter_for_type(self, obj):
+    def _get_converter_for_type(self, obj: MarshmallowObject) -> MarshmallowConverter:
         """
         Locates the registered converter for a given type.
         :param obj: instance to convert
@@ -613,7 +702,9 @@ class ConverterRegistry:
                 )
             )
 
-    def _convert(self, obj, context):
+    def _convert(
+        self, obj: MarshmallowObject, context: _Context
+    ) -> Dict[str, Union[str, bool]]:
         """
         Converts a Marshmallow object to a JSONSchema dictionary.
 
@@ -628,7 +719,9 @@ class ConverterRegistry:
         """
         return self._get_converter_for_type(obj).convert(obj=obj, context=context)
 
-    def convert(self, obj, openapi_version=2):
+    def convert(
+        self, obj: MarshmallowObject, openapi_version: int = 2
+    ) -> Dict[str, Any]:
         """
         Converts a Marshmallow object to a JSONSchema dictionary.
 
@@ -650,9 +743,12 @@ class ConverterRegistry:
 
 class EnumConverter(FieldConverter):
     MARSHMALLOW_TYPE = EnumField  # type: ignore
+    # Note that `obj` is typed as Any in this converter because mypy has great difficulty
+    # trying to sort out type hints for EnumField, since it could be either m.fields.Enum
+    # (marshmallow >= 3.18) or marshmallow_enum.EnumField
 
     @sets_swagger_attr(sw.type_)
-    def get_type(self, obj, context):
+    def get_type(self, obj: Any, context: _Context) -> Union[str, List[str]]:
         # Note: we don't (yet?) support mix-and-match between load_by and dump_by. Pick one.
         if obj.by_value or (
             LoadDumpOptions is not None
@@ -670,7 +766,7 @@ class EnumConverter(FieldConverter):
             return self.null_type_determination(obj, context, sw.string)
 
     @sets_swagger_attr(sw.enum)
-    def get_enum(self, obj, context):
+    def get_enum(self, obj: Any, context: _Context) -> List[str]:
         if obj.by_value or (
             LoadDumpOptions is not None
             and obj.load_by == obj.dump_by == LoadDumpOptions.value
@@ -689,9 +785,9 @@ ALL_CONVERTERS = tuple(
 )
 
 
-def _common_converters():
+def _common_converters() -> List[MarshmallowConverter]:
     """Instantiates the converters we use in ALL of the registries below"""
-    converters = [
+    converters: List[MarshmallowConverter] = [
         BooleanConverter(),
         DateConverter(),
         DateTimeConverter(),
@@ -708,28 +804,28 @@ def _common_converters():
         UUIDConverter(),
         ConstantConverter(),
     ]
-    if EnumConverter.MARSHMALLOW_TYPE is not None:
+    if EnumConverter.MARSHMALLOW_TYPE is not None:  # type: ignore
         converters.append(EnumConverter())
 
     return converters
 
 
-query_string_converter_registry = ConverterRegistry()
+query_string_converter_registry: ConverterRegistry = ConverterRegistry()
 query_string_converter_registry.register_types(
     _common_converters() + [CsvArrayConverter(), MultiArrayConverter()]
 )
 
-headers_converter_registry = ConverterRegistry()
+headers_converter_registry: ConverterRegistry = ConverterRegistry()
 headers_converter_registry.register_types(
     _common_converters() + [CsvArrayConverter(), MultiArrayConverter()]
 )
 
-request_body_converter_registry = ConverterRegistry()
+request_body_converter_registry: ConverterRegistry = ConverterRegistry()
 request_body_converter_registry.register_types(
     _common_converters() + [DictConverter(), NestedConverter()]
 )
 
-response_converter_registry = ConverterRegistry()
+response_converter_registry: ConverterRegistry = ConverterRegistry()
 response_converter_registry.register_types(
     _common_converters() + [DictConverter(), NestedConverter()]
 )

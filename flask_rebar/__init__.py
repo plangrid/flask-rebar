@@ -12,10 +12,10 @@ from flask_rebar.authenticators import HeaderApiKeyAuthenticator
 
 from flask_rebar.validation import ResponseSchema, RequestSchema
 
-from flask_rebar.swagger_generation import (
+from flask_rebar.swagger_generation.swagger_generator_v2 import SwaggerV2Generator
+from flask_rebar.swagger_generation.swagger_generator_v3 import SwaggerV3Generator
+from flask_rebar.swagger_generation.swagger_objects import (
     ExternalDocumentation,
-    SwaggerV2Generator,
-    SwaggerV3Generator,
     Tag,
     Server,
     ServerVariable,

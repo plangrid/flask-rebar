@@ -1,25 +1,32 @@
+from typing import Any
+from typing import Dict
+
 import marshmallow
+from marshmallow.fields import Field
+from marshmallow.schema import Schema
 
 from flask import current_app
 from flask_rebar.validation import filter_dump_only, RequireOnDumpMixin
 
 
-def set_data_key(field, key):
+def set_data_key(field: Field, key: str) -> Field:
     field.data_key = key
     return field
 
 
-def get_data_key(field):
+def get_data_key(field: Field) -> str:
     if field.data_key:
         return field.data_key
+    if field.name is None:
+        raise ValueError("Field name cannot be None")
     return field.name
 
 
-def load(schema, data):
+def load(schema: Schema, data: Dict[str, Any]) -> Dict[str, Any]:
     return schema.load(data)
 
 
-def dump(schema, data):
+def dump(schema: Schema, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Our wrapper for Schema.dump that includes optional validation.
     Note that as of Flask-Rebar 2.x (hence Marshmallow 3.x), Marshmallow's default behavior is to NOT validate on dump
@@ -54,6 +61,6 @@ def dump(schema, data):
     return result
 
 
-def exclude_unknown_fields(schema):
+def exclude_unknown_fields(schema: Schema) -> Schema:
     schema.unknown = marshmallow.EXCLUDE
     return schema
