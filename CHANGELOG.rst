@@ -2,6 +2,190 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- Merge pull request #303 from plangrid/sj/release-2-16-2024. [Scott
+  Josephson]
+
+  Bump version: 3.1.1 → 3.2.0
+- Add mypy type hints to all non-test code + update mypy config (#300)
+  [Eugene Kim]
+
+  * begin adding type hints
+
+  * fixes
+
+  * more hints
+
+  * 1
+
+  * 1
+
+  * 1
+
+  * type hint marshmallow converters
+
+  * 1
+
+  * revert
+
+  * change import to hopefully make compatible with older python
+
+  * more fixes for old python
+
+  * fix for old marshmallow
+
+  * generator v2
+
+  * v3 generator
+
+  * swagger objects
+
+  * more typing
+
+  * add a few missing hints
+
+  * add typed
+
+  * minor fixes
+
+  * update type + rerun black
+
+  * more type hints
+
+  * finish adding type hints
+
+  * fix tests
+
+  * address comments
+
+  * fix
+
+  * minor fix
+
+  * fix typo
+
+
+v3.1.1 (2023-10-27)
+-------------------
+- Dont test python 3.12 right now. [Daniel Wallace]
+- Bump flask dependency to include 3.0. [Daniel Wallace]
+
+
+v3.1.0 (2023-10-26)
+-------------------
+
+Fix
+~~~
+- Prevent hidden methods from being included in schema (#298) [Daniel
+  Wallace, mbierma, mbierma]
+
+  * Prevent hidden methods from being included in schema
+
+  * Fixup processing for including hidden entries
+
+  * Add tests
+
+  * blacken
+
+  ---------
+
+Other
+~~~~~
+- Linting. [Daniel Wallace]
+- Missed one. [Daniel Wallace]
+- Use EnumField from marshmallow to swagger. [Daniel Wallace]
+- Update documentation. [Daniel Wallace]
+- Add example to todo app. [Daniel Wallace]
+- Change the logic around. [Daniel Wallace]
+- Blacken. [Daniel Wallace]
+- Allow specifying swagger documents for path converters. [Daniel
+  Wallace]
+
+  without much changing elsewhere, this allows us to set enum types for
+  custom path converters in flask.
+
+  for example: `/v1/preferences/<preference_type:scope>` where scope could
+  be `user`, `project`, or `account`. We can define an object with a
+  `to_swagger` function as part of the [Flask
+  Converter](https://flask.palletsprojects.com/en/2.3.x/api/#flask.Flask.url_map)
+  that is defined.
+- Blacken. [mbierma]
+- Support optional short summary for paths. [mbierma]
+
+
+v3.0.0 (2023-08-08)
+-------------------
+- Merge pull request #294 from plangrid/acsbp-more-syntax-fixes. [Scott
+  Josephson]
+
+  Acsbp - more syntax fixes
+- Add rst linter to precommit. [Scott Josephson]
+- Fix syntax. [Scott Josephson]
+- Merge pull request #293 from plangrid/acsbp/sj-fix-syntax-in-readme.
+  [Scott Josephson]
+
+  fix syntax in readme
+- Fix syntax. [Scott Josephson]
+- Install mypy + update dev deps + update pre commit + begin type
+  hinting (#292) [Eugene Kim]
+
+  * update all dev dependencies to latest version
+
+  * install mypy, update pre commit, fix minimal required type hints
+
+  * fix tests
+
+  * fix python 3.8
+
+  * trailing line breaks
+
+  * another 3.8 fix
+
+  * run pyupgrade to python 3.8
+
+  * trailing empty line
+
+  * comment
+
+  * move to pyproject
+- Merge pull request #284 from plangrid/acsbp-3718. [Scott Josephson]
+
+  ACSBP-3718 Update to use openapi 3.1
+- Remove B950 update. [Scott Josephson]
+- Lint: blackify. [Scott Josephson]
+- Update jsonschema. [Scott Josephson]
+- Revert "set id to schema url as per" [Scott Josephson]
+
+  This reverts commit 8474029d8b5470baa524f786101d4ad6ebdc2d19.
+- Set id to schema url as per https://json-
+  schema.org/specification.html#output-schemas-and-examples. [Scott
+  Josephson]
+- Update true -> True. [Scott Josephson]
+- Replace false -> False. [Scott Josephson]
+- Update OApi 3.1 spec. [Scott Josephson]
+- Fix version. [Scott Josephson]
+- Update static files. [Scott Josephson]
+- Merge branch 'master' into acsbp-3718. [Scott Josephson]
+- Readme: add shell command for replacing ui files. [Scott Josephson]
+- Swagger: update static dir with latest dist files. [Scott Josephson]
+- Merge branch 'master' into acsbp-3718. [Scott Josephson]
+- Fix linting with black. [Scott Josephson]
+- Updates for 3.1. [Scott Josephson]
+- Merge branch 'master' into acsbp-3718. [Scott Josephson]
+- Convert to using null as a type. [Scott Josephson]
+- Black created some line length problems for flake8 see: https://black.
+  readthedocs.io/en/stable/the_black_code_style/current_style.html#line-
+  length. [Scott Josephson]
+- Black reformat. [Scott Josephson]
+- Uppercase booleans. [Scott Josephson]
+- Update json-schema for v3. [Scott Josephson]
+- Change references from 3.0.2 --> 3.1.0. [Scott Josephson]
+- Updated v3 version. [Scott Josephson]
+- Update comment. [Scott Josephson]
+- Use 3.1.0. [Scott Josephson]
+
+
 v2.4.1 (2023-06-30)
 -------------------
 
