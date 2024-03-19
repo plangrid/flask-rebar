@@ -9,9 +9,14 @@
 """
 from __future__ import annotations
 import functools
+import sys
 import warnings
 from typing import Any, Callable, Dict, NamedTuple, Optional, Tuple, TypeVar, Union
-from typing_extensions import ParamSpec
+
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+else:
+    from typing_extensions import ParamSpec
 
 from werkzeug.local import LocalProxy as module_property  # noqa
 

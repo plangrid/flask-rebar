@@ -32,7 +32,12 @@ from typing import (
     TypeVar,
     Union,
 )
-from typing_extensions import ParamSpec
+
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+else:
+    from typing_extensions import ParamSpec
+
 from werkzeug.datastructures import Headers
 from werkzeug.exceptions import HTTPException
 from werkzeug.routing import RequestRedirect
