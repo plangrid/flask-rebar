@@ -8,7 +8,7 @@ There are number of packages out there that solve a similar problem. Here are ju
 * `flask-apispec <https://github.com/jmcarp/flask-apispec>`_
 * `Flasgger <https://github.com/rochacbruno/flasgger>`_
 
-These are all great projects, and one might work better for your use case. Flask-Rebar solves a similar problem with its own its own twist on the approach:
+These are all great projects, and one might work better for your use case. Flask-Rebar solves a similar problem with its own twist on the approach:
 
 Marshmallow for validation *and* marshaling
 -------------------------------------------
@@ -23,7 +23,7 @@ Swagger as a side effect
 
 Some approaches generate code *from* a Swagger specification, or generate Swagger from docstrings. Flask-Rebar aims to make Swagger (a.k.a. OpenAPI) a byproduct of writing application code with Marshmallow and Flask.
 
-This is really nice if you prefer the rich validation/transformation functionality of Marshmallow over Swagger's limited.
+This is really nice if you prefer the rich validation/transformation functionality of Marshmallow over Swagger's more limited set.
 
 It also alleviates the need to manually keep an API's documentation in sync with the actual application code - the schemas used by the application are the same schemas used to generate Swagger.
 
