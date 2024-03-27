@@ -8,9 +8,8 @@
     :license: MIT, see LICENSE for details.
 """
 from datetime import datetime
-from importlib import metadata
+from importlib.metadata import version
 from unittest import TestCase
-from packaging.version import Version
 from pytest import mark
 
 from marshmallow import Schema
@@ -27,7 +26,7 @@ from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
 from tests.test_rebar import create_rebar_app
 
-MARSHMALLOW_VERSION = Version(metadata.version("marshmallow")).release
+MARSHMALLOW_VERSION = tuple(int(x) for x in version("marshmallow").split("."))
 
 
 class NoRequireOnDumpMixinSchema(Schema):
