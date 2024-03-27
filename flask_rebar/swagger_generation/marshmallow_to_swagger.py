@@ -27,7 +27,12 @@ from typing import (
     TypeVar,
     Union,
 )
-from typing_extensions import ParamSpec
+
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+else:
+    from typing_extensions import ParamSpec
+
 import marshmallow as m
 from marshmallow import Schema
 from marshmallow.validate import Range

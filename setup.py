@@ -22,6 +22,13 @@ development = [
     "types-setuptools==68.0.0.3",
 ]
 
+install_requires = [
+    "Flask>=1.0,<4",
+    "marshmallow>=3.0,<4",
+    "typing-extensions>=4.8,<5;python_version<'3.10'",
+    "Werkzeug>=2.2,<4",
+]
+
 if __name__ == "__main__":
     setup(
         name="flask-rebar",
@@ -36,7 +43,7 @@ if __name__ == "__main__":
         package_data={"flask_rebar": ["py.typed"]},
         include_package_data=True,
         extras_require={"dev": development, "enum": ["marshmallow-enum~=1.5"]},
-        install_requires=["Flask>=1.0,<4", "marshmallow>=3.0,<4"],
+        install_requires=install_requires,
         url="https://github.com/plangrid/flask-rebar",
         classifiers=[
             "Environment :: Web Environment",
