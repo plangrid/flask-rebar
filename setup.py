@@ -20,6 +20,7 @@ development = [
     "sphinx_rtd_theme==1.2.2",
     "types-jsonschema==4.17.0.10",
     "types-setuptools==68.0.0.3",
+    "flask[async]>=2,<4",
 ]
 
 install_requires = [
@@ -42,7 +43,11 @@ if __name__ == "__main__":
         packages=find_packages(exclude=("test*", "examples")),
         package_data={"flask_rebar": ["py.typed"]},
         include_package_data=True,
-        extras_require={"dev": development, "enum": ["marshmallow-enum~=1.5"]},
+        extras_require={
+            "dev": development,
+            "enum": ["marshmallow-enum~=1.5"],
+            "async": ["flask[async]>=2,<4"],
+        },
         install_requires=install_requires,
         url="https://github.com/plangrid/flask-rebar",
         classifiers=[

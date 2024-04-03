@@ -7,6 +7,7 @@
     :copyright: Copyright 2018 PlanGrid, Inc., see AUTHORS.
     :license: MIT, see LICENSE for details.
 """
+import asyncio
 import json
 import unittest
 
@@ -864,3 +865,20 @@ class RebarTest(unittest.TestCase):
         self.assertIsNotNone(swagger)  # really only care that it didn't barf
         swagger = SwaggerV3Generator().generate(registry)
         self.assertIsNotNone(swagger)
+
+    def test_async_handler(self):
+        rebar = Rebar()
+        registry = rebar.create_handler_registry()
+
+        @registry.handles(
+            rule="/async",
+            method="GET",
+            response_body_schema=DefaultResponseSchema(),
+        )
+        async def get_response():
+            await asyncio.sleep(0)
+            return DEFAULT_RESPONSE
+
+        app = create_rebar_app(rebar)
+        resp = app.test_client().get(path="/async")
+        self.assertEqual(resp.status_code, 200)
