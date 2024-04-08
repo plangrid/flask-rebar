@@ -176,7 +176,7 @@ def _wrap_handler(
         if headers_schema:
             g.validated_headers = get_header_params_or_400(schema=headers_schema)
 
-        rv: Any = f(*args, **kwargs)
+        rv: Any = current_app.ensure_sync(f)(*args, **kwargs)
 
         if not response_body_schema:
             return rv
