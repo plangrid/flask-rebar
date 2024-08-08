@@ -188,6 +188,47 @@ class TestFlatten(unittest.TestCase):
         self.assertEqual(schema, expected_schema)
         self.assertEqual(definitions, expected_definitions)
 
+    def test_flatten_creates_refs_when_type_is_list(self):
+        self.maxDiff = None
+        input_ = {
+            "properties": {
+                "data": {
+                    "items": {
+                        "properties": {"name": {"type": "string"}},
+                        "title": "NestedSchema",
+                        "type": "object",
+                    },
+                    "type": ["array", "null"],
+                },
+            },
+            "title": "ParentAllowNoneTrueSchema",
+            "type": "object",
+        }
+
+        expected_schema = {"$ref": "#/definitions/ParentAllowNoneTrueSchema"}
+
+        expected_definitions = {
+            "NestedSchema": {
+                "properties": {"name": {"type": "string"}},
+                "title": "NestedSchema",
+                "type": "object",
+            },
+            "ParentAllowNoneTrueSchema": {
+                "properties": {
+                    "data": {
+                        "items": {"$ref": "#/definitions/NestedSchema"},
+                        "type": ["array", "null"],
+                    }
+                },
+                "title": "ParentAllowNoneTrueSchema",
+                "type": "object",
+            },
+        }
+
+        schema, definitions = flatten(input_, base="#/definitions")
+        self.assertEqual(schema, expected_schema)
+        self.assertEqual(definitions, expected_definitions)
+
 
 class TestFormatPathForSwagger(unittest.TestCase):
     def test_format_path(self):

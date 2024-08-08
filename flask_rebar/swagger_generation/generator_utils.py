@@ -140,15 +140,22 @@ def flatten(schema: Dict[str, Any], base: str) -> Tuple[Dict[str, str], Dict[str
 def _flatten(
     schema: Dict[str, Any], definitions: Dict[str, Any], base: str
 ) -> Dict[str, str]:
-    schema_type = schema.get(sw.type_)
+    # With OpenAPI 3.1, this will be a list of allowed types that includes sw.null if the field is nullable.
+    schema_type: str | list[str] | None = schema.get(sw.type_)
+    schema_types = []
+    if isinstance(schema_type, str):
+        schema_types = [schema_type]
+    elif isinstance(schema_type, list):
+        schema_types = schema_type
+
     subschema_keyword = _get_subschema_keyword(schema)
 
-    if schema_type == sw.object_:
+    if sw.object_ in schema_types:
         properties = schema.get(sw.properties, {})
         for key, prop in properties.items():
             properties[key] = _flatten(schema=prop, definitions=definitions, base=base)
 
-    elif schema_type == sw.array:
+    elif sw.array in schema_types:
         schema[sw.items] = _flatten(
             schema=schema[sw.items], definitions=definitions, base=base
         )
