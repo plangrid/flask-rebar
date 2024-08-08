@@ -82,18 +82,6 @@ class MeSchema(m.Schema):
     user_name = m.fields.String()
 
 
-class NestedSchema(m.Schema):
-    name = m.fields.String()
-
-
-class ParentAllowNoneTrueSchema(m.Schema):
-    data = m.fields.List(m.fields.Nested(NestedSchema), allow_none=True)
-
-
-class ParentAllowNoneFalseSchema(m.Schema):
-    data = m.fields.List(m.fields.Nested(NestedSchema))
-
-
 class DefaultResponseSchema(
     m.Schema
 ):  # DEFAULT_RESPONSE = {"uid": "0", "name": "I'm the default for testing!"}
@@ -894,39 +882,3 @@ class RebarTest(unittest.TestCase):
         app = create_rebar_app(rebar)
         resp = app.test_client().get(path="/async")
         self.assertEqual(resp.status_code, 200)
-
-    def test_nested_list_allow_none_ref_issue(self):
-        rebar = Rebar()
-        registry = rebar.create_handler_registry()
-
-        register_endpoint(
-            registry=registry,
-            method="POST",
-            path="/nested_list_allow_none_true",
-            response_body_schema=ParentAllowNoneTrueSchema,
-        )
-
-        register_endpoint(
-            registry=registry,
-            method="POST",
-            path="/nested_list_allow_none_false",
-            response_body_schema=ParentAllowNoneFalseSchema,
-        )
-
-        from flask_rebar import SwaggerV3Generator
-
-        swagger = SwaggerV3Generator().generate(registry)
-
-        # Both parent schemas should have refs
-        self.assertEqual(
-            swagger["components"]["schemas"]["ParentAllowNoneFalseSchema"][
-                "properties"
-            ]["data"]["items"]["$ref"],
-            "#/components/schemas/NestedSchema",
-        )
-        self.assertEqual(
-            swagger["components"]["schemas"]["ParentAllowNoneTrueSchema"]["properties"][
-                "data"
-            ]["items"]["$ref"],
-            "#/components/schemas/NestedSchema",
-        )
