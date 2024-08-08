@@ -143,9 +143,9 @@ def _flatten(
     # With OpenAPI 3.1, this will be a list of allowed types that includes sw.null if the field is nullable.
     schema_type: str | list[str] | None = schema.get(sw.type_)
     schema_types = []
-    if type(schema_type) is str:
+    if isinstance(schema_type, str):
         schema_types = [schema_type]
-    elif type(schema_type) is list:
+    elif isinstance(schema_type, list):
         schema_types = schema_type
 
     subschema_keyword = _get_subschema_keyword(schema)
