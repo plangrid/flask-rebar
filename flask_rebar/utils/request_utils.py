@@ -9,7 +9,15 @@
 """
 import collections
 import copy
-from typing import Any, Dict, Iterator, List, Optional, Type, Union, overload
+from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import List
+from typing import NoReturn
+from typing import Optional
+from typing import Type
+from typing import Union
+from typing import overload
 
 import marshmallow
 from marshmallow import Schema
@@ -148,7 +156,7 @@ def normalize_schema(
 
 def raise_400_for_marshmallow_errors(
     errs: Dict[str, Any], msg: Union[str, messages.ErrorMessage]
-) -> errors.BadRequest:
+) -> NoReturn:
     """
     Throws a 400 error properly formatted from the given marshmallow errors.
 
@@ -157,7 +165,7 @@ def raise_400_for_marshmallow_errors(
     :raises: errors.BadRequest
     """
     if not errs:
-        return errors.BadRequest(msg=msg)
+        raise errors.BadRequest(msg=msg)
 
     copied = copy.deepcopy(errs)
 
@@ -165,7 +173,7 @@ def raise_400_for_marshmallow_errors(
 
     additional_data = {"errors": copied}
 
-    return errors.BadRequest(msg=msg, additional_data=additional_data)
+    raise errors.BadRequest(msg=msg, additional_data=additional_data)
 
 
 def get_json_body_params_or_400(schema: Schema) -> Dict[str, Any]:
@@ -219,7 +227,7 @@ def _get_data_or_400(
     try:
         return compat.load(schema=schema, data=data)
     except marshmallow.ValidationError as e:
-        raise raise_400_for_marshmallow_errors(errs=e.messages_dict, msg=message)
+        raise_400_for_marshmallow_errors(errs=e.messages_dict, msg=message)
 
 
 def _get_json_body_or_400() -> Union[List[Any], Dict[str, Any]]:
