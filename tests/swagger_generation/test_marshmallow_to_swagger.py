@@ -195,6 +195,46 @@ class TestConverterRegistry(TestCase):
                 },
             )
 
+    def test_list_enum_openapi_v3(self):
+        for field, result in [
+            (m.fields.Integer(allow_none=True), {"type": ["integer", "null"]}),
+            (
+                QueryParamList(m.fields.Integer(), validate=v.ContainsOnly([1, 2, 3])),
+                {
+                    "type": "array",
+                    "items": {"type": "integer", "enum": [1, 2, 3]},
+                    "explode": True,
+                },
+            ),
+            (
+                CommaSeparatedList(
+                    m.fields.String(), validate=v.ContainsOnly(["a", "b", "c"])
+                ),
+                {
+                    "type": "array",
+                    "items": {"type": "string", "enum": ["a", "b", "c"]},
+                    "style": "form",
+                    "explode": False,
+                },
+            ),
+        ]:
+
+            class Foo(m.Schema):
+                a = field
+
+            schema = Foo()
+            json_schema = self.registry.convert(schema, openapi_version=3)
+
+            self.assertEqual(
+                json_schema,
+                {
+                    "additionalProperties": False,
+                    "type": "object",
+                    "title": "Foo",
+                    "properties": {"a": result},
+                },
+            )
+
     def test_data_key(self):
         registry = ConverterRegistry()
         registry.register_types(ALL_CONVERTERS)
