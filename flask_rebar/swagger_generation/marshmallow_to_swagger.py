@@ -618,7 +618,7 @@ class ContainsOnlyConverter(ValidatorConverter):
     MARSHMALLOW_TYPE = ContainsOnly
 
     @sets_swagger_attr(sw.items)
-    def get_items(self, obj: ContainsOnly, context: _Context) -> dict[str, Any]:
+    def get_items(self, obj: ContainsOnly, context: _Context) -> Dict[str, Any]:
         return {"type": context.memo["items"]["type"], "enum": obj.choices}
 
 
