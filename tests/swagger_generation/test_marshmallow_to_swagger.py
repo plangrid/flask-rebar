@@ -244,9 +244,7 @@ class TestConverterRegistry(TestCase):
             ),
             (
                 m.fields.Dict(
-                    keys=m.fields.String(),
                     values=m.fields.Integer(),
-                    dump_default={"a": 1},
                 ),
                 {
                     "type": "object",
@@ -255,7 +253,7 @@ class TestConverterRegistry(TestCase):
             ),
             (
                 m.fields.Dict(
-                    keys=m.fields.String(validate=v.OneOf("a", "b", "c")),
+                    keys=m.fields.String(),
                     values=m.fields.String(),
                 ),
                 {
