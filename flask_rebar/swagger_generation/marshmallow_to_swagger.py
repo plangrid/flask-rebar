@@ -427,7 +427,7 @@ class DictConverter(FieldConverter[m.fields.Dict]):
     @sets_swagger_attr(sw.additional_properties)
     def get_additional_properties(
         self, obj: m.fields.Dict, context: _Context
-    ) -> Union[UNSET, m.fields.Dict]:
+    ) -> Union[Type[UNSET], m.fields.Dict]:
         if obj.value_field:
             return context.convert(obj.value_field, context)
         else:
