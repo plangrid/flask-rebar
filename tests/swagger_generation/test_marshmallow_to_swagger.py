@@ -197,7 +197,6 @@ class TestConverterRegistry(TestCase):
 
     def test_list_enum_openapi_v3(self):
         for field, result in [
-            (m.fields.Integer(allow_none=True), {"type": ["integer", "null"]}),
             (
                 QueryParamList(m.fields.Integer(), validate=v.ContainsOnly([1, 2, 3])),
                 {
@@ -215,6 +214,53 @@ class TestConverterRegistry(TestCase):
                     "items": {"type": "string", "enum": ["a", "b", "c"]},
                     "style": "form",
                     "explode": False,
+                },
+            ),
+        ]:
+
+            class Foo(m.Schema):
+                a = field
+
+            schema = Foo()
+            json_schema = self.registry.convert(schema, openapi_version=3)
+
+            self.assertEqual(
+                json_schema,
+                {
+                    "additionalProperties": False,
+                    "type": "object",
+                    "title": "Foo",
+                    "properties": {"a": result},
+                },
+            )
+
+    def test_custom_dicts_openapi_v3(self):
+        for field, result in [
+            (
+                m.fields.Dict(),
+                {
+                    "type": "object",
+                },
+            ),
+            (
+                m.fields.Dict(
+                    keys=m.fields.String(),
+                    values=m.fields.Integer(),
+                    dump_default={"a": 1},
+                ),
+                {
+                    "type": "object",
+                    "additionalProperties": {"type": "integer"},
+                },
+            ),
+            (
+                m.fields.Dict(
+                    keys=m.fields.String(validate=v.OneOf("a", "b", "c")),
+                    values=m.fields.String(),
+                ),
+                {
+                    "type": "object",
+                    "additionalProperties": {"type": "string"},
                 },
             ),
         ]:

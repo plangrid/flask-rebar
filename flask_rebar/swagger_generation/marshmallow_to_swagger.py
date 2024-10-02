@@ -424,6 +424,15 @@ class DictConverter(FieldConverter[m.fields.Dict]):
     def get_type(self, obj: m.fields.Dict, context: _Context) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.object_)
 
+    @sets_swagger_attr(sw.additional_properties)
+    def get_additional_properties(
+        self, obj: m.fields.Dict, context: _Context
+    ) -> Union[UNSET, m.fields.Dict]:
+        if obj.value_field:
+            return context.convert(obj.value_field, context)
+        else:
+            return UNSET
+
 
 class IntegerConverter(FieldConverter[m.fields.Integer]):
     MARSHMALLOW_TYPE = m.fields.Integer
