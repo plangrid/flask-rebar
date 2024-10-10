@@ -2,8 +2,136 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+v3.3.2 (2024-10-10)
+-------------------
+
+Fix
+~~~
+- Make `raise_400_for_marshmallow_errors` raise again (#317) [Greg
+  Kuwaye]
+
+  Buried in #300 was a consequential change to `raise_400_for_marshmallow_errors`
+  that changed its behavior from raising errors to returning them.
+
+  This affects >= 3.2.0.
+
+  This PR reverts this behavior since there seems to be no need for this change.
+
+Other
+~~~~~
+- [PJL-10221] handle some edge cases in OpenAPI v3.1 swagger generation
+  (#319) [Eugene Kim]
+
+  * Bugfix for ContainsOnly marshmallow validator
+  * Fix to allow custom dict attributes to be typed
+
+
+- Merge pull request #318 from plangrid/ACSBP-4867. [Zuhair Taleb]
+
+  Add stalebot to flask-rebar [ACSBP-4867]
+- Add stalebot to flask-rebar [ACSBP-4867] [Zuhair Taleb]
+
+
+v3.3.1 (2024-08-08)
+-------------------
+
+Fix
+~~~
+- Handle `type` when it is a list. [Greg Kuwaye]
+
+Other
+~~~~~
+- Merge pull request #315 from kaiku/gkuwaye/issue-314-repro. [Greg
+  Kuwaye]
+
+  Fix schema flattener to support list-type `type` field introduced in OpenAPI 3.1
+- Update flask_rebar/swagger_generation/generator_utils.py. [Daniel
+  Wallace, Greg Kuwaye]
+- Revert "Add failing test to repro issue#314" [Greg Kuwaye]
+
+  This reverts commit f2546ee3d02964b5e516f0c2c34c1756ea823f43.
+- Add failing test to repro issue#314. [Greg Kuwaye]
+
+
+v3.3.0 (2024-04-15)
+-------------------
+- Merge pull request #313 from plangrid/release_4-15-24/3.3.0. [Scott
+  Josephson]
+
+  Bump version: 3.2.1 → 3.3.0
+- Merge pull request #311 from plangrid/jonls/async-handler. [Jon Lund
+  Steffensen]
+
+  Async handler support
+- Async handler support. [Jon Lund Steffensen]
+
+
+v3.2.1 (2024-03-27)
+-------------------
+
+Changes
+~~~~~~~
+- Provide clear vulnerability reporting instructions. [Nicholas
+  Lawrence]
+- Provide clear vulnerability reporting instructions. [Nicholas
+  Lawrence]
+
+Fix
+~~~
+- Remove packaging dependency for checking version. [Verina Georgy]
+- Update depreciated marshmallow version check. [Verina Georgy]
+
+Other
+~~~~~
+- Bump Version: 3.2.0 → 3.2.1 (#309) [Verina Georgy]
+
+  Bump version: 3.2.0 → 3.2.1
+- Merge pull request #308 from plangrid/update-pypa/gh-action-pypi-
+  release-tag. [Verina Georgy]
+
+  build: update pypa/gh-action-pypi-publish tag to release/v1
+- Merge branch 'master' into update-pypa/gh-action-pypi-release-tag.
+  [Verina Georgy]
+- Merge pull request #306 from vkunz/runtime-deps. [Nicholas Lawrence]
+
+  add missing runtime dependencies
+- Merge branch 'master' into runtime-deps. [Nicholas Lawrence]
+- Update why.rst. [David Hariri]
+
+  Just was reading the docs and found a few typos.
+- Merge branch 'master' into runtime-deps. [Verina Georgy]
+- Merge pull request #307 from plangrid/ACSBP-4569-resolve-marshmallow-
+  depreciation-errors. [Verina Georgy]
+
+  [ACSBP-4569] Fix Test Failures Due to Marshmallow Depreciation Warnings
+- Setuptools: add Werkzeug as a runtime dependency. [Valentin Kunz]
+
+  Bits from this module are used directly within flask-rebar.
+- Setuptools: demote typing-extensions dependency. [Valentin Kunz]
+
+  Polyfills within typing-extensions dependency are only used within
+  specific python versions.
+
+  Limit the dependency to those specific versions.
+- Types: limit polyfill usage to unsupported python versions. [Valentin
+  Kunz]
+
+  Type class ParamSpec was made available with python3.10.
+
+  Limit polyfill import to python versions missing ParamSpec.
+- Setuptools: pull in typing-extensions as a runtime depndency.
+  [Valentin Kunz]
+
+  Flask-rebar uses type classes not available in all supported python
+  versions.
+
+  Missing type classes are imported from typing-extensions.
+- Build: update pypa/gh-action-pypi-publish tag to release/v1. [Verina
+  Georgy]
+
+
+v3.2.0 (2024-02-16)
+-------------------
 - Merge pull request #303 from plangrid/sj/release-2-16-2024. [Scott
   Josephson]
 
@@ -330,7 +458,7 @@ Changes
   * Continuation of work started here: https://github.com/plangrid/flask-rebar/pull/209
 
   * Use deprecation util to make this more forgiving
-  
+
 - Remove previously deprecated things that have passed EOL (#246) [Rick
   Riensche]
 
