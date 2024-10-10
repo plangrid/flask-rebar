@@ -37,6 +37,7 @@ import marshmallow as m
 from marshmallow import Schema
 from marshmallow.validate import Range
 from marshmallow.validate import OneOf
+from marshmallow.validate import ContainsOnly
 from marshmallow.validate import Length
 from marshmallow.validate import Validator
 
@@ -423,6 +424,15 @@ class DictConverter(FieldConverter[m.fields.Dict]):
     def get_type(self, obj: m.fields.Dict, context: _Context) -> Union[str, List[str]]:
         return self.null_type_determination(obj, context, sw.object_)
 
+    @sets_swagger_attr(sw.additional_properties)
+    def get_additional_properties(
+        self, obj: m.fields.Dict, context: _Context
+    ) -> Union[Type[UNSET], m.fields.Dict]:
+        if obj.value_field:
+            return context.convert(obj.value_field, context)
+        else:
+            return UNSET
+
 
 class IntegerConverter(FieldConverter[m.fields.Integer]):
     MARSHMALLOW_TYPE = m.fields.Integer
@@ -602,6 +612,14 @@ class RangeConverter(ValidatorConverter):
             return obj.max
         else:
             return UNSET
+
+
+class ContainsOnlyConverter(ValidatorConverter):
+    MARSHMALLOW_TYPE = ContainsOnly
+
+    @sets_swagger_attr(sw.items)
+    def get_items(self, obj: ContainsOnly, context: _Context) -> Dict[str, Any]:
+        return {"type": context.memo["items"]["type"], "enum": obj.choices}
 
 
 class OneOfConverter(ValidatorConverter):
@@ -794,6 +812,7 @@ def _common_converters() -> List[MarshmallowConverter]:
     """Instantiates the converters we use in ALL of the registries below"""
     converters: List[MarshmallowConverter] = [
         BooleanConverter(),
+        ContainsOnlyConverter(),
         DateConverter(),
         DateTimeConverter(),
         FunctionConverter(),
