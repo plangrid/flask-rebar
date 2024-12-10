@@ -586,8 +586,8 @@ class HandlerRegistry:
         query_string_schema: Optional[Schema] = None,
         request_body_schema: Optional[Schema] = None,
         headers_schema: Union[Type[USE_DEFAULT], Schema] = USE_DEFAULT,
-        authenticators: Union[
-            Type[USE_DEFAULT], List[Authenticator], Authenticator
+        authenticators: Optional[
+            Union[Type[USE_DEFAULT], List[Authenticator], Authenticator]
         ] = USE_DEFAULT,
         tags: Optional[Sequence[str]] = None,
         mimetype: Union[Type[USE_DEFAULT], str] = USE_DEFAULT,
