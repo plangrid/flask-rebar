@@ -492,7 +492,7 @@ class HandlerRegistry:
         request_body_schema: Optional[Schema] = None,
         headers_schema: Union[Type[USE_DEFAULT], Schema] = USE_DEFAULT,
         authenticators: Union[
-            Type[USE_DEFAULT], List[Authenticator], Authenticator
+            Type[USE_DEFAULT], Sequence[Authenticator], Authenticator
         ] = USE_DEFAULT,
         tags: Optional[Sequence[str]] = None,
         mimetype: Union[Type[USE_DEFAULT], str] = USE_DEFAULT,
@@ -519,7 +519,7 @@ class HandlerRegistry:
             assumes everything is JSON.
         :param Type[USE_DEFAULT]|None|marshmallow.Schema headers_schema:
             Schema to use to grab and validate headers.
-        :param Type[USE_DEFAULT]|None|List(Authenticator)|Authenticator authenticators:
+        :param Type[USE_DEFAULT]|None|Sequence[Authenticator]|Authenticator authenticators:
             A list of authenticator objects to authenticate incoming requests.
             If left as USE_DEFAULT, the Rebar's default will be used.
             Set to None to make this an unauthenticated handler.
@@ -547,12 +547,17 @@ class HandlerRegistry:
 
         # authenticators can be a list of Authenticators, a single Authenticator, USE_DEFAULT, or None
         authenticators_list: Sequence[Union[Type[USE_DEFAULT], Authenticator]] = []
-        if isinstance(authenticators, list):
-            authenticators_list = authenticators
+        if isinstance(authenticators, Sequence):
+            authenticators_list = list(authenticators)
         elif isinstance(authenticators, Authenticator) or authenticators is USE_DEFAULT:
             authenticators_list = [authenticators]
         elif authenticators is None:
             authenticators_list = []
+        else:
+            raise TypeError(
+                f"Unexpected data type '{type(authenticators)}' for parameter 'authenticators'. "
+                f"Expected type is either Authenticator, Sequence or None."
+            )
 
         self._paths[rule][method] = PathDefinition(
             func=func,
