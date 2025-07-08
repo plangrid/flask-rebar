@@ -199,7 +199,7 @@ def _wrap_handler(
                 data=data, status_code=status_code, headers=headers, mimetype=mimetype
             )
 
-        marshaled = marshal(data=data, schema=schema)
+        marshaled = marshal(data=data, schema=schema, should_normalize_schema=False)
         return response(
             data=marshaled, status_code=status_code, headers=headers, mimetype=mimetype
         )

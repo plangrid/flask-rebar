@@ -96,13 +96,16 @@ def response(
     return resp
 
 
-def marshal(data: Any, schema: Schema) -> Dict[str, Any]:
+def marshal(data: Any, schema: Schema, *, should_normalize_schema: bool = True) -> Dict[str, Any]:
     """
     Dumps an object with the given marshmallow.Schema.
 
     :raises: marshmallow.ValidationError if the given data fails validation
       of the schema.
     """
+    if should_normalize_schema:
+        schema = normalize_schema(schema)
+
     return compat.dump(schema=schema, data=data)
 
 
