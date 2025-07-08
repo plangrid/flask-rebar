@@ -221,7 +221,6 @@ def get_header_params_or_400(schema: Schema) -> Dict[str, Any]:
 def _get_data_or_400(
     schema: Schema, data: Any, message: messages.ErrorMessage
 ) -> Dict[str, Any]:
-    schema = normalize_schema(schema)
     try:
         return compat.load(schema=schema, data=data)
     except marshmallow.ValidationError as e:
