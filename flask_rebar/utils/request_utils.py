@@ -103,8 +103,6 @@ def marshal(data: Any, schema: Schema) -> Dict[str, Any]:
     :raises: marshmallow.ValidationError if the given data fails validation
       of the schema.
     """
-    schema = normalize_schema(schema)
-
     return compat.dump(schema=schema, data=data)
 
 
