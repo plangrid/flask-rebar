@@ -141,6 +141,9 @@ def _wrap_handler(
     headers_schema: Optional[Schema] = None,
     response_body_schema: Optional[Dict[int, Schema]] = None,
     mimetype: Optional[str] = None,
+    *,
+    normalize_schema_on_dump: bool = True,
+    normalize_schema_on_load: bool = True,
 ) -> Callable[P, Union[T, Response]]:
     """
     Wraps a handler function before registering it with a Flask application.
@@ -167,14 +170,21 @@ def _wrap_handler(
 
         if query_string_schema:
             g.validated_args = get_query_string_params_or_400(
-                schema=query_string_schema
+                schema=query_string_schema,
+                should_normalize_schema=normalize_schema_on_load,
             )
 
         if request_body_schema:
-            g.validated_body = get_json_body_params_or_400(schema=request_body_schema)
+            g.validated_body = get_json_body_params_or_400(
+                schema=request_body_schema,
+                should_normalize_schema=normalize_schema_on_load,
+            )
 
         if headers_schema:
-            g.validated_headers = get_header_params_or_400(schema=headers_schema)
+            g.validated_headers = get_header_params_or_400(
+                schema=headers_schema,
+                should_normalize_schema=normalize_schema_on_load,
+            )
 
         rv: Any = current_app.ensure_sync(f)(*args, **kwargs)
 
@@ -199,7 +209,11 @@ def _wrap_handler(
                 data=data, status_code=status_code, headers=headers, mimetype=mimetype
             )
 
-        marshaled = marshal(data=data, schema=schema, should_normalize_schema=False)
+        marshaled = marshal(
+            data=data,
+            schema=schema,
+            should_normalize_schema=normalize_schema_on_dump,
+        )
         return response(
             data=marshaled, status_code=status_code, headers=headers, mimetype=mimetype
         )
@@ -372,6 +386,9 @@ class HandlerRegistry:
         spec_path: str = "/swagger",
         spec_ui_path: str = "/swagger/ui",
         handlers: Optional[Union[List[str], str]] = None,
+        *,
+        normalize_schema_on_dump: bool = True,
+        normalize_schema_on_load: bool = True,
     ) -> None:
         # default_authenticators can be a single Authenticator, a list of Authenticators, or None.
         if isinstance(default_authenticators, Authenticator):
@@ -387,6 +404,10 @@ class HandlerRegistry:
         self.swagger_generator = swagger_generator or SwaggerV2Generator()
         self.spec_path = spec_path
         self.spec_ui_path = spec_ui_path
+
+        self.normalize_schema_on_dump = normalize_schema_on_dump
+        self.normalize_schema_on_load = normalize_schema_on_load
+
         if handlers is None:
             self.handlers: List[str] = []
         else:
@@ -669,6 +690,8 @@ class HandlerRegistry:
                             if definition_.mimetype is USE_DEFAULT
                             else definition_.mimetype
                         ),
+                        normalize_schema_on_dump=self.normalize_schema_on_dump,
+                        normalize_schema_on_load=self.normalize_schema_on_load,
                     ),
                     methods=[definition_.method],
                     endpoint=endpoint,
@@ -729,7 +752,12 @@ class Rebar:
 
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        normalize_schema_on_dump: bool = True,
+        normalize_schema_on_load: bool = True,
+    ) -> None:
         self.handler_registries: Set[HandlerRegistry] = set()
         self.paths: Dict[str, Dict[str, PathDefinition]] = defaultdict(dict)
         self.uncaught_exception_handlers: List[Callable] = []
@@ -737,6 +765,8 @@ class Rebar:
         # the name of the attribute in error responses, or set to None to suppress inclusion of error codes entirely
         self.error_code_attr = "rebar_error_code"
         self.validate_on_dump = False
+        self.normalize_schema_on_dump = normalize_schema_on_dump
+        self.normalize_schema_on_load = normalize_schema_on_load
 
     @deprecated_parameters(
         default_authenticator=(
@@ -796,6 +826,8 @@ class Rebar:
             spec_path=spec_path,
             spec_ui_path=swagger_ui_path,
             handlers=handlers,
+            normalize_schema_on_dump=self.normalize_schema_on_dump,
+            normalize_schema_on_load=self.normalize_schema_on_load,
         )
         self.add_handler_registry(registry=registry)
         return registry
