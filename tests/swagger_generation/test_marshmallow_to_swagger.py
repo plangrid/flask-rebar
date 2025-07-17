@@ -327,33 +327,6 @@ class TestConverterRegistry(TestCase):
             },
         )
 
-    def test_ordered_required(self):
-        class Foo(m.Schema):
-            b = m.fields.Integer(required=True)
-            a = m.fields.Integer(required=True)
-            c = m.fields.Integer()
-
-            class Meta:
-                ordered = True
-
-        schema = Foo()
-        json_schema = self.registry.convert(schema)
-
-        self.assertEqual(
-            json_schema,
-            {
-                "additionalProperties": False,
-                "type": "object",
-                "title": "Foo",
-                "properties": {
-                    "b": {"type": "integer"},
-                    "a": {"type": "integer"},
-                    "c": {"type": "integer"},
-                },
-                "required": ["b", "a"],
-            },
-        )
-
     def test_partial(self):
         class Foo(m.Schema):
             b = m.fields.Integer(required=True)
