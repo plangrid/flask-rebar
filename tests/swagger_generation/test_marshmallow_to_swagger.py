@@ -42,7 +42,10 @@ class TestConverterRegistry(TestCase):
         for field, result in [
             (m.fields.Integer(), {"type": "integer"}),
             (m.fields.String(), {"type": "string"}),
-            (m.fields.Number(), {"type": "number"}),
+            # (m.fields.Number(), {"type": "number"}),
+            (m.fields.Integer(), {"type": "integer"}),
+            (m.fields.Float(), {"type": "number"}),
+            (m.fields.Decimal(), {"type": "number"}),
             (m.fields.DateTime(), {"type": "string", "format": "date-time"}),
             (m.fields.Date(), {"type": "string", "format": "date"}),
             (m.fields.UUID(), {"type": "string", "format": "uuid"}),
