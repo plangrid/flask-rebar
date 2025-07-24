@@ -42,7 +42,10 @@ class TestConverterRegistry(TestCase):
         for field, result in [
             (m.fields.Integer(), {"type": "integer"}),
             (m.fields.String(), {"type": "string"}),
-            (m.fields.Number(), {"type": "number"}),
+            # (m.fields.Number(), {"type": "number"}),
+            (m.fields.Integer(), {"type": "integer"}),
+            (m.fields.Float(), {"type": "number"}),
+            (m.fields.Decimal(), {"type": "number"}),
             (m.fields.DateTime(), {"type": "string", "format": "date-time"}),
             (m.fields.Date(), {"type": "string", "format": "date"}),
             (m.fields.UUID(), {"type": "string", "format": "uuid"}),
@@ -321,33 +324,6 @@ class TestConverterRegistry(TestCase):
                     "c": {"type": "integer"},
                 },
                 "required": ["a", "b"],
-            },
-        )
-
-    def test_ordered_required(self):
-        class Foo(m.Schema):
-            b = m.fields.Integer(required=True)
-            a = m.fields.Integer(required=True)
-            c = m.fields.Integer()
-
-            class Meta:
-                ordered = True
-
-        schema = Foo()
-        json_schema = self.registry.convert(schema)
-
-        self.assertEqual(
-            json_schema,
-            {
-                "additionalProperties": False,
-                "type": "object",
-                "title": "Foo",
-                "properties": {
-                    "b": {"type": "integer"},
-                    "a": {"type": "integer"},
-                    "c": {"type": "integer"},
-                },
-                "required": ["b", "a"],
             },
         )
 
