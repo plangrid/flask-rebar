@@ -96,14 +96,17 @@ def response(
     return resp
 
 
-def marshal(data: Any, schema: Schema) -> Dict[str, Any]:
+def marshal(
+    data: Any, schema: Schema, *, should_normalize_schema: bool = True
+) -> Dict[str, Any]:
     """
     Dumps an object with the given marshmallow.Schema.
 
     :raises: marshmallow.ValidationError if the given data fails validation
       of the schema.
     """
-    schema = normalize_schema(schema)
+    if should_normalize_schema:
+        schema = normalize_schema(schema)
 
     return compat.dump(schema=schema, data=data)
 
@@ -176,7 +179,9 @@ def raise_400_for_marshmallow_errors(
     raise errors.BadRequest(msg=msg, additional_data=additional_data)
 
 
-def get_json_body_params_or_400(schema: Schema) -> Dict[str, Any]:
+def get_json_body_params_or_400(
+    schema: Schema, *, should_normalize_schema: bool = True
+) -> Dict[str, Any]:
     """
     Retrieves the JSON body of a request, validating/loading the payload
     with a given marshmallow.Schema.
@@ -187,11 +192,16 @@ def get_json_body_params_or_400(schema: Schema) -> Dict[str, Any]:
     body = _get_json_body_or_400()
 
     return _get_data_or_400(
-        schema=schema, data=body, message=messages.body_validation_failed
+        schema=schema,
+        data=body,
+        message=messages.body_validation_failed,
+        should_normalize_schema=should_normalize_schema,
     )
 
 
-def get_query_string_params_or_400(schema: Schema) -> Dict[str, Any]:
+def get_query_string_params_or_400(
+    schema: Schema, *, should_normalize_schema: bool = True
+) -> Dict[str, Any]:
     """
     Retrieves the query string of a request, validating/loading the parameters
     with a given marshmallow.Schema.
@@ -208,22 +218,30 @@ def get_query_string_params_or_400(schema: Schema) -> Dict[str, Any]:
         schema=schema,
         data=query_multidict,
         message=messages.query_string_validation_failed,
+        should_normalize_schema=should_normalize_schema,
     )
 
 
-def get_header_params_or_400(schema: Schema) -> Dict[str, Any]:
+def get_header_params_or_400(
+    schema: Schema, *, should_normalize_schema: bool = True
+) -> Dict[str, Any]:
     schema = compat.exclude_unknown_fields(schema)
     return _get_data_or_400(
         schema=schema,
         data=HeadersProxy(request.headers),
         message=messages.header_validation_failed,
+        should_normalize_schema=should_normalize_schema,
     )
 
 
 def _get_data_or_400(
-    schema: Schema, data: Any, message: messages.ErrorMessage
+    schema: Schema,
+    data: Any,
+    message: messages.ErrorMessage,
+    should_normalize_schema: bool = True,
 ) -> Dict[str, Any]:
-    schema = normalize_schema(schema)
+    if should_normalize_schema:
+        schema = normalize_schema(schema)
     try:
         return compat.load(schema=schema, data=data)
     except marshmallow.ValidationError as e:
