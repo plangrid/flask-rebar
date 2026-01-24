@@ -8,8 +8,8 @@
     :license: MIT, see LICENSE for details.
 """
 import enum
-from importlib.metadata import version
 from unittest import TestCase
+from parametrize import parametrize
 import pytest
 
 
@@ -22,9 +22,7 @@ from flask_rebar.swagger_generation.marshmallow_to_swagger import EnumField
 
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.validation import QueryParamList
-
-
-MARSHMALLOW_VERSION = tuple(int(x) for x in version("marshmallow").split(".")[:2])
+from flask_rebar.compat import MARSHMALLOW_VERSION_MAJOR
 
 
 class StopLight(enum.Enum):
@@ -427,7 +425,7 @@ class TestConverterRegistry(TestCase):
         )
 
     @pytest.mark.skipif(
-        MARSHMALLOW_VERSION >= (4, 0),
+        MARSHMALLOW_VERSION_MAJOR >= 4,
         reason="'self' nested reference removed in marshmallow 4.x"
     )
     def test_self_referential_nested_pre_3_3(self):
@@ -644,46 +642,23 @@ class TestConverterRegistry(TestCase):
         class Meta:
             unknown = m.INCLUDE
 
-    def test_additional_properties_default(self):
+    @parametrize(
+        "schema_cls, expected_additional_value",
+        [
+            (FooDefault, False),
+            (FooExplicitRaise, False),
+            (FooExplicitExclude, False),
+            (FooExplicitInclude, True),
+        ],
+    )
+    def test_additional_properties(self, schema_cls, expected_additional_value):
         expected = {
             "type": "object",
-            "title": "FooDefault",
+            "title": schema_cls.__name__,
             "properties": {"a": {"type": "integer"}},
-            "additionalProperties": False,
+            "additionalProperties": expected_additional_value,
         }
-        schema = self.FooDefault()
-        json_schema = self.registry.convert(schema)
-        self.assertEqual(json_schema, expected)
 
-    def test_additional_properties_raise(self):
-        expected = {
-            "type": "object",
-            "title": "FooExplicitRaise",
-            "properties": {"a": {"type": "integer"}},
-            "additionalProperties": False,
-        }
-        schema = self.FooExplicitRaise()
-        json_schema = self.registry.convert(schema)
-        self.assertEqual(json_schema, expected)
-
-    def test_additional_properties_exclude(self):
-        expected = {
-            "type": "object",
-            "title": "FooExplicitExclude",
-            "properties": {"a": {"type": "integer"}},
-            "additionalProperties": False,
-        }
-        schema = self.FooExplicitExclude()
-        json_schema = self.registry.convert(schema)
-        self.assertEqual(json_schema, expected)
-
-    def test_additional_properties_include(self):
-        expected = {
-            "type": "object",
-            "title": "FooExplicitInclude",
-            "properties": {"a": {"type": "integer"}},
-            "additionalProperties": True,
-        }
-        schema = self.FooExplicitInclude()
+        schema = schema_cls()
         json_schema = self.registry.convert(schema)
         self.assertEqual(json_schema, expected)
