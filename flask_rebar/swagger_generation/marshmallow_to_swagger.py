@@ -182,7 +182,13 @@ def get_schema_fields(schema: Schema) -> List[Tuple[str, m.fields.Field]]:
     for name, field in schema.fields.items():
         prop = compat.get_data_key(field)
         fields.append((prop, field))
-    return sorted(fields)
+    
+    # In Marshmallow 3.x, respect the 'ordered' Meta option for field ordering.
+    # When ordered=False (default), fields should be sorted alphabetically.
+    # In Marshmallow 4.0+, field order is always preserved (insertion order).
+    if not compat.is_schema_ordered(schema):
+        fields.sort()
+    return fields
 
 
 class MarshmallowConverter(Generic[T]):
@@ -274,9 +280,12 @@ class SchemaConverter(MarshmallowConverter[Schema]):
                     continue
                 required.append(prop)
 
-        if required and not obj.ordered:
-            required = sorted(required)
-        return required if required else UNSET
+        if not required:
+            return UNSET
+
+        if not compat.is_schema_ordered(obj):
+            required.sort()
+        return required
 
     @sets_swagger_attr(sw.description)
     def get_description(

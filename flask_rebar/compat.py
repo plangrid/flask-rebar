@@ -1,6 +1,11 @@
 from typing import Any
 from typing import Dict
 
+try:
+    from importlib.metadata import version
+except ImportError:
+    from importlib_metadata import version  # type: ignore
+
 import marshmallow
 from marshmallow.fields import Field
 from marshmallow.schema import Schema
@@ -64,3 +69,25 @@ def dump(schema: Schema, data: Dict[str, Any]) -> Dict[str, Any]:
 def exclude_unknown_fields(schema: Schema) -> Schema:
     schema.unknown = marshmallow.EXCLUDE
     return schema
+
+
+# Marshmallow version detection for backward compatibility
+MARSHMALLOW_VERSION_MAJOR = int(version('marshmallow').split('.')[0])
+
+def is_schema_ordered(schema: Schema) -> bool:
+    """
+    Check if a schema should maintain field order.
+    
+    In Marshmallow 3.x, this is controlled by the 'ordered' attribute.
+    In Marshmallow 4.x+, field order is always preserved (insertion order from dict).
+    
+    :param Schema schema: The schema to check
+    :return: True if fields should maintain their order, False if they should be sorted
+    :rtype: bool
+    """
+    if MARSHMALLOW_VERSION_MAJOR >= 4:
+        # In Marshmallow 4+, fields are always ordered (insertion order)
+        return True
+    else:
+        # In Marshmallow 3, check the 'ordered' attribute
+        return getattr(schema, 'ordered', False)
