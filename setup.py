@@ -25,7 +25,7 @@ development = [
 
 install_requires = [
     "Flask>=1.0,<4",
-    "marshmallow>=3.0,<4",
+    "marshmallow>=3.0,<5",
     "typing-extensions>=4.8,<5;python_version<'3.10'",
     "Werkzeug>=2.2,<4",
 ]
