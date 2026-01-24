@@ -97,9 +97,11 @@ class RequireOutputMixinTest(TestCase):
         self.data["validation_required"] = "123"
         with self.assertRaises(ValidationError) as ctx:
             compat.dump(self.validated_schema, self.data)
-        # it's some sort of date error
-        self.assertIn(
-            "'str' object has no attribute 'isoformat'", ctx.exception.messages[0]
+        # it's some sort of date error - message format varies by marshmallow version
+        error_msg = str(ctx.exception.messages)
+        self.assertTrue(
+            "isoformat" in error_msg,
+            f"Expected 'isoformat' error message, got: {error_msg}"
         )
 
     def test_required_failed_validate(self):
