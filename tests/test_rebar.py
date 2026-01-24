@@ -12,10 +12,24 @@ import json
 import unittest
 
 import marshmallow as m
-import marshmallow_objects as mo
 from flask import Flask, make_response
 
 from parametrize import parametrize
+
+# marshmallow-objects is archived and incompatible with marshmallow 4.x
+# Make it optional for tests
+try:
+    import marshmallow_objects as mo
+    # Test that marshmallow-objects actually works with current marshmallow version
+    # by trying to create a simple model - it fails with marshmallow 4.x
+    class _TestModel(mo.Model):
+        test = mo.fields.String()
+    _TestModel()  # This will fail if incompatible
+    MARSHMALLOW_OBJECTS_AVAILABLE = True
+    del _TestModel
+except (ImportError, TypeError):
+    mo = None  # type: ignore
+    MARSHMALLOW_OBJECTS_AVAILABLE = False
 
 from flask_rebar import messages
 from flask_rebar import HeaderApiKeyAuthenticator, SwaggerV3Generator
@@ -41,41 +55,67 @@ class FooSchema(m.Schema):
     name = m.fields.String()
 
 
-class FooModel(mo.Model):
-    uid = mo.fields.String()
-    name = mo.fields.String()
-
-
 class ListOfFooSchema(m.Schema):
     data = m.fields.Nested(FooSchema, many=True)
-
-
-class ListOfFooModel(mo.Model):
-    data = mo.NestedModel(FooModel, many=True)
 
 
 class FooUpdateSchema(m.Schema):
     name = m.fields.String()
 
 
-class FooUpdateModel(mo.Model):
-    name = mo.fields.String()
-
-
 class FooListSchema(m.Schema):
     name = m.fields.String(required=True)
-
-
-class FooListModel(mo.Model):
-    name = mo.fields.String(required=True)
 
 
 class HeadersSchema(m.Schema):
     name = set_data_key(field=m.fields.String(required=True), key="x-name")
 
 
-class HeadersModel(mo.Model):
-    name = set_data_key(field=mo.fields.String(required=True), key="x-name")
+# marshmallow-objects Model classes (only defined if library is available)
+if MARSHMALLOW_OBJECTS_AVAILABLE:
+    class FooModel(mo.Model):
+        uid = mo.fields.String()
+        name = mo.fields.String()
+
+    class ListOfFooModel(mo.Model):
+        data = mo.NestedModel(FooModel, many=True)
+
+    class FooUpdateModel(mo.Model):
+        name = mo.fields.String()
+
+    class FooListModel(mo.Model):
+        name = mo.fields.String(required=True)
+
+    class HeadersModel(mo.Model):
+        name = set_data_key(field=mo.fields.String(required=True), key="x-name")
+else:
+    # Placeholders when marshmallow-objects is not available
+    FooModel = None  # type: ignore
+    ListOfFooModel = None  # type: ignore
+    FooUpdateModel = None  # type: ignore
+    FooListModel = None  # type: ignore
+    HeadersModel = None  # type: ignore
+
+
+# Parametrize test data - include model tests only when marshmallow-objects is available
+_body_params_test_cases = [(FooSchema, FooUpdateSchema, False)]
+_foo_update_cls_test_cases = [(FooUpdateSchema,)]
+_list_of_foo_cls_test_cases = [(ListOfFooSchema,)]
+_headers_cls_test_cases = [(HeadersSchema, False)]
+_foo_definition_cls_test_cases = [(FooSchema,)]
+_foo_definition_instance_test_cases = [(FooSchema(),)]
+_headers_def_test_cases = [(HeadersSchema(), False)]
+_schema_cls_test_cases = [(FooSchema, FooListSchema, HeadersSchema)]
+
+if MARSHMALLOW_OBJECTS_AVAILABLE:
+    _body_params_test_cases.append((FooModel, FooUpdateModel, True))
+    _foo_update_cls_test_cases.append((FooUpdateModel,))
+    _list_of_foo_cls_test_cases.append((ListOfFooModel,))
+    _headers_cls_test_cases.append((HeadersModel, True))
+    _foo_definition_cls_test_cases.append((FooModel,))
+    _foo_definition_instance_test_cases.append((FooModel(),))
+    _headers_def_test_cases.append((HeadersModel, True))
+    _schema_cls_test_cases.append((FooModel, FooListModel, HeadersModel))
 
 
 class MeSchema(m.Schema):
@@ -241,7 +281,7 @@ class RebarTest(unittest.TestCase):
 
     @parametrize(
         "foo_cls,foo_update_cls,use_model",
-        [(FooSchema, FooUpdateSchema, False), (FooModel, FooUpdateModel, True)],
+        _body_params_test_cases,
     )
     def test_validate_body_parameters(self, foo_cls, foo_update_cls, use_model):
         rebar = Rebar()
@@ -278,7 +318,7 @@ class RebarTest(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
 
-    @parametrize("foo_update_cls", [(FooUpdateSchema,), (FooUpdateModel,)])
+    @parametrize("foo_update_cls", _foo_update_cls_test_cases)
     def test_flask_response_instance_interop_body_matches_schema(self, foo_update_cls):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
@@ -293,7 +333,7 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.headers["foo"], "bar")
 
-    @parametrize("foo_update_cls", [(FooUpdateSchema,), (FooUpdateModel,)])
+    @parametrize("foo_update_cls", _foo_update_cls_test_cases)
     def test_flask_response_instance_interop_body_does_not_match_schema(
         self, foo_update_cls
     ):
@@ -322,7 +362,7 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.headers["Location"], "http://foo.com")
 
-    @parametrize("list_of_foo_cls", [(ListOfFooSchema,), (ListOfFooModel,)])
+    @parametrize("list_of_foo_cls", _list_of_foo_cls_test_cases)
     def test_validate_query_parameters(self, list_of_foo_cls):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
@@ -346,7 +386,7 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 400)
 
     @parametrize(
-        "headers_cls, use_model", [(HeadersSchema, False), (HeadersModel, True)]
+        "headers_cls, use_model", _headers_cls_test_cases
     )
     def test_validate_headers(self, headers_cls, use_model):
         rebar = Rebar()
@@ -473,7 +513,7 @@ class RebarTest(unittest.TestCase):
         self.assertEqual(resp.data.decode("utf-8"), "")
         self.assertEqual(resp.headers["Content-Type"], "handler/type")
 
-    @parametrize("foo_definition", [(FooSchema,), (FooModel,)])
+    @parametrize("foo_definition", _foo_definition_cls_test_cases)
     def test_view_function_tuple_response(self, foo_definition):
         header_key = "X-Foo"
         header_value = "bar"
@@ -570,7 +610,7 @@ class RebarTest(unittest.TestCase):
         resp = app.test_client().get("/swagger/ui/")
         self.assertEqual(resp.status_code, 200)
 
-    @parametrize("foo_definition", [(FooSchema(),), (FooModel(),)])
+    @parametrize("foo_definition", _foo_definition_instance_test_cases)
     def test_register_multiple_paths(self, foo_definition):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
@@ -596,7 +636,7 @@ class RebarTest(unittest.TestCase):
         self.assertIn("/bars/{foo_uid}", swagger["paths"])
         self.assertIn("/foos/{foo_uid}", swagger["paths"])
 
-    @parametrize("foo_definition", [(FooSchema(),), (FooModel(),)])
+    @parametrize("foo_definition", _foo_definition_instance_test_cases)
     def test_register_multiple_methods(self, foo_definition):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
@@ -629,7 +669,7 @@ class RebarTest(unittest.TestCase):
         self.assertIn("patch", swagger["paths"]["/foos/{foo_uid}"])
 
     @parametrize(
-        "headers_def, use_model", [(HeadersSchema(), False), (HeadersModel, True)]
+        "headers_def, use_model", _headers_def_test_cases
     )
     def test_default_headers(self, headers_def, use_model):
         rebar = Rebar()
@@ -784,10 +824,7 @@ class RebarTest(unittest.TestCase):
 
     @parametrize(
         "foo_cls, foo_list_cls, headers_cls",
-        [
-            (FooSchema, FooListSchema, HeadersSchema),
-            (FooModel, FooListModel, HeadersModel),
-        ],
+        _schema_cls_test_cases,
     )
     def test_bare_class_schemas_handled(self, foo_cls, foo_list_cls, headers_cls):
         rebar = Rebar()
