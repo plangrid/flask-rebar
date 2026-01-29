@@ -47,6 +47,11 @@ from flask_rebar.validation import QueryParamList
 from flask_rebar.validation import CommaSeparatedList
 from flask_rebar.swagger_generation import swagger_words as sw
 
+try:
+    from deepfriedmarshmallow import JitSchema
+except ImportError:
+    JitSchema = None  # type: ignore
+
 # for easier type hinting
 MarshmallowObject = Union[Schema, m.fields.Field, Validator]
 T = TypeVar("T", bound=MarshmallowObject)
@@ -244,8 +249,13 @@ class SchemaConverter(MarshmallowConverter[Schema]):
         if not obj.many:
             return UNSET
 
-        singular_obj = copy.deepcopy(obj)
-        singular_obj.many = False
+        if JitSchema is not None and isinstance(obj, JitSchema):
+            # DeepFriedMarshmallow and similar libraries may not support deepcopy
+            # Create a new instance with many=False instead
+            singular_obj = obj.__class__(many=False)
+        else:
+            singular_obj = copy.deepcopy(obj)
+            singular_obj.many = False
 
         return context.convert(singular_obj, context)
 
