@@ -18,9 +18,9 @@ jobs:
         - 3.13
         - 3.14
         marshmallow:
-        - marshmallow<4
-        - marshmallow==4.1.*
-        - marshmallow>4.2.0
+        - "'marshmallow<4'"
+        - "'marshmallow==4.1.*'"
+        - "'marshmallow>4.2.0'"
         flask:
         - flask=='2.3.*' werkzeug=='2.3.*'
         - flask=='3.0.*' werkzeug=='3.0.*'
