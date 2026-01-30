@@ -182,7 +182,7 @@ def get_schema_fields(schema: Schema) -> List[Tuple[str, m.fields.Field]]:
     for name, field in schema.fields.items():
         prop = compat.get_data_key(field)
         fields.append((prop, field))
-    
+
     # In Marshmallow 3.x, respect the 'ordered' Meta option for field ordering.
     # When ordered=False (default), fields should be sorted alphabetically.
     # In Marshmallow 4.0+, field order is always preserved (insertion order).

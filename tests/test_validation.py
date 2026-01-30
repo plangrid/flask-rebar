@@ -101,7 +101,7 @@ class RequireOutputMixinTest(TestCase):
         error_msg = str(ctx.exception.messages)
         self.assertTrue(
             "isoformat" in error_msg,
-            f"Expected 'isoformat' error message, got: {error_msg}"
+            f"Expected 'isoformat' error message, got: {error_msg}",
         )
 
     def test_required_failed_validate(self):

@@ -72,15 +72,16 @@ def exclude_unknown_fields(schema: Schema) -> Schema:
 
 
 # Marshmallow version detection for backward compatibility
-MARSHMALLOW_VERSION_MAJOR = int(version('marshmallow').split('.')[0])
+MARSHMALLOW_VERSION_MAJOR = int(version("marshmallow").split(".")[0])
+
 
 def is_schema_ordered(schema: Schema) -> bool:
     """
     Check if a schema should maintain field order.
-    
+
     In Marshmallow 3.x, this is controlled by the 'ordered' attribute.
     In Marshmallow 4.x+, field order is always preserved (insertion order from dict).
-    
+
     :param Schema schema: The schema to check
     :return: True if fields should maintain their order, False if they should be sorted
     :rtype: bool
@@ -90,4 +91,4 @@ def is_schema_ordered(schema: Schema) -> bool:
         return True
     else:
         # In Marshmallow 3, check the 'ordered' attribute
-        return getattr(schema, 'ordered', False)
+        return getattr(schema, "ordered", False)
