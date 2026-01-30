@@ -426,7 +426,7 @@ class TestConverterRegistry(TestCase):
 
     @pytest.mark.skipif(
         MARSHMALLOW_VERSION_MAJOR >= 4,
-        reason="'self' nested reference removed in marshmallow 4.x"
+        reason="'self' nested reference removed in marshmallow 4.x",
     )
     def test_self_referential_nested_pre_3_3(self):
         # Issue 90

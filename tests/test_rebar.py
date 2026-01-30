@@ -20,10 +20,12 @@ from parametrize import parametrize
 # Make it optional for tests
 try:
     import marshmallow_objects as mo
+
     # Test that marshmallow-objects actually works with current marshmallow version
     # by trying to create a simple model - it fails with marshmallow 4.x
     class _TestModel(mo.Model):
         test = mo.fields.String()
+
     _TestModel()  # This will fail if incompatible
     MARSHMALLOW_OBJECTS_AVAILABLE = True
     del _TestModel
@@ -73,6 +75,7 @@ class HeadersSchema(m.Schema):
 
 # marshmallow-objects Model classes (only defined if library is available)
 if MARSHMALLOW_OBJECTS_AVAILABLE:
+
     class FooModel(mo.Model):
         uid = mo.fields.String()
         name = mo.fields.String()
@@ -88,6 +91,7 @@ if MARSHMALLOW_OBJECTS_AVAILABLE:
 
     class HeadersModel(mo.Model):
         name = set_data_key(field=mo.fields.String(required=True), key="x-name")
+
 else:
     # Placeholders when marshmallow-objects is not available
     FooModel = None  # type: ignore
@@ -385,9 +389,7 @@ class RebarTest(unittest.TestCase):
         resp = app.test_client().get(path="/foos?foo=bar")  # missing required parameter
         self.assertEqual(resp.status_code, 400)
 
-    @parametrize(
-        "headers_cls, use_model", _headers_cls_test_cases
-    )
+    @parametrize("headers_cls, use_model", _headers_cls_test_cases)
     def test_validate_headers(self, headers_cls, use_model):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
@@ -668,9 +670,7 @@ class RebarTest(unittest.TestCase):
         self.assertIn("get", swagger["paths"]["/foos/{foo_uid}"])
         self.assertIn("patch", swagger["paths"]["/foos/{foo_uid}"])
 
-    @parametrize(
-        "headers_def, use_model", _headers_def_test_cases
-    )
+    @parametrize("headers_def, use_model", _headers_def_test_cases)
     def test_default_headers(self, headers_def, use_model):
         rebar = Rebar()
         registry = rebar.create_handler_registry()
