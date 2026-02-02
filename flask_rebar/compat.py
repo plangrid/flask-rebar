@@ -89,6 +89,6 @@ def is_schema_ordered(schema: Schema) -> bool:
     if MARSHMALLOW_VERSION_MAJOR >= 4:
         # In Marshmallow 4+, fields are always ordered (insertion order)
         return True
-    else:
-        # In Marshmallow 3, check the 'ordered' attribute
-        return getattr(schema, "ordered", False)
+
+    # In Marshmallow 3, check the 'ordered' attribute
+    return getattr(schema, "ordered", False)
