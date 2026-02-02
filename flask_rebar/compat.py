@@ -13,6 +13,9 @@ from marshmallow.schema import Schema
 from flask import current_app
 from flask_rebar.validation import filter_dump_only, RequireOnDumpMixin
 
+# Marshmallow version detection for backward compatibility
+MARSHMALLOW_VERSION_MAJOR = int(version("marshmallow").split(".")[0])
+
 
 def set_data_key(field: Field, key: str) -> Field:
     field.data_key = key
@@ -69,10 +72,6 @@ def dump(schema: Schema, data: Dict[str, Any]) -> Dict[str, Any]:
 def exclude_unknown_fields(schema: Schema) -> Schema:
     schema.unknown = marshmallow.EXCLUDE
     return schema
-
-
-# Marshmallow version detection for backward compatibility
-MARSHMALLOW_VERSION_MAJOR = int(version("marshmallow").split(".")[0])
 
 
 def is_schema_ordered(schema: Schema) -> bool:
