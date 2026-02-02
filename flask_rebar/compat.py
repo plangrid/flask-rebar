@@ -14,6 +14,10 @@ from flask import current_app
 from flask_rebar.validation import filter_dump_only, RequireOnDumpMixin
 
 
+# Marshmallow version detection for backward compatibility
+MARSHMALLOW_VERSION_MAJOR = int(version("marshmallow").split(".")[0])
+
+
 def set_data_key(field: Field, key: str) -> Field:
     field.data_key = key
     return field
@@ -71,10 +75,6 @@ def exclude_unknown_fields(schema: Schema) -> Schema:
     return schema
 
 
-# Marshmallow version detection for backward compatibility
-MARSHMALLOW_VERSION_MAJOR = int(version("marshmallow").split(".")[0])
-
-
 def is_schema_ordered(schema: Schema) -> bool:
     """
     Check if a schema should maintain field order.
@@ -89,6 +89,6 @@ def is_schema_ordered(schema: Schema) -> bool:
     if MARSHMALLOW_VERSION_MAJOR >= 4:
         # In Marshmallow 4+, fields are always ordered (insertion order)
         return True
-    else:
-        # In Marshmallow 3, check the 'ordered' attribute
-        return getattr(schema, "ordered", False)
+
+    # In Marshmallow 3, check the 'ordered' attribute
+    return getattr(schema, "ordered", False)
