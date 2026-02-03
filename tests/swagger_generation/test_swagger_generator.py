@@ -30,6 +30,7 @@ from tests.swagger_generation.registries import (
     exploded_query_string,
     marshmallow_objects,
     multiple_authenticators,
+    deepfried_marshmallow,
 )
 
 
@@ -250,6 +251,16 @@ def test_path_parameter_types_must_be_the_same_for_same_path(generator):
             marshmallow_objects.registry,
             marshmallow_objects.swagger_v3_generator,
             marshmallow_objects.EXPECTED_SWAGGER_V3,
+        ),
+        (
+            deepfried_marshmallow.registry,
+            deepfried_marshmallow.swagger_v2_generator,
+            deepfried_marshmallow.EXPECTED_SWAGGER_V2,
+        ),
+        (
+            deepfried_marshmallow.registry,
+            deepfried_marshmallow.swagger_v3_generator,
+            deepfried_marshmallow.EXPECTED_SWAGGER_V3,
         ),
     ],
 )

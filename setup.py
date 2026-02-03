@@ -21,6 +21,7 @@ development = [
     "types-jsonschema==4.17.0.10",
     "types-setuptools==68.0.0.3",
     "flask[async]>=2,<4",
+    "DeepFriedMarshmallow>=1.1.2",
 ]
 
 install_requires = [
