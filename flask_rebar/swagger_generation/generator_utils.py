@@ -334,3 +334,17 @@ def recursively_convert_dict_to_ordered_dict(
         return [recursively_convert_dict_to_ordered_dict(item) for item in obj]
     else:
         return obj
+
+
+def deep_merge(base: Dict[str, Any], overlay: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively merge ``overlay`` into ``base`` in place and return ``base``.
+
+    Nested dicts are merged key-by-key; non-dict values in ``overlay`` replace
+    those in ``base``. ``overlay`` is not mutated.
+    """
+    for key, value in overlay.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            deep_merge(base[key], value)
+        else:
+            base[key] = copy.deepcopy(value)
+    return base
