@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 # packages required for local development and testing
 development = [
-    "black==23.7.0",
+    "black==26.3.1",
     "bumpversion==0.6.0",
     "click>=8.1.3,<9.0.0",
     "flake8==6.0.0",
