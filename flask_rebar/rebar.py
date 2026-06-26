@@ -139,7 +139,7 @@ def _wrap_handler(
     query_string_schema: Optional[Schema] = None,
     request_body_schema: Optional[Schema] = None,
     headers_schema: Optional[Schema] = None,
-    response_body_schema: Optional[Dict[int, Schema]] = None,
+    response_body_schema: Optional[Dict[int, Schema | None]] = None,
     mimetype: Optional[str] = None,
 ) -> Callable[P, Union[T, Response]]:
     """
@@ -487,7 +487,7 @@ class HandlerRegistry:
         rule: str,
         method: str = "GET",
         endpoint: Optional[str] = None,
-        response_body_schema: Optional[Dict[int, Schema]] = None,
+        response_body_schema: Optional[Dict[int, Schema | None]] = None,
         query_string_schema: Optional[Schema] = None,
         request_body_schema: Optional[Schema] = None,
         headers_schema: Union[Type[USE_DEFAULT], Schema] = USE_DEFAULT,
@@ -587,7 +587,7 @@ class HandlerRegistry:
         rule: str,
         method: str = "GET",
         endpoint: Optional[str] = None,
-        response_body_schema: Optional[Dict[int, Schema]] = None,
+        response_body_schema: Optional[Dict[int, Schema | None]] = None,
         query_string_schema: Optional[Schema] = None,
         request_body_schema: Optional[Schema] = None,
         headers_schema: Union[Type[USE_DEFAULT], Schema] = USE_DEFAULT,
