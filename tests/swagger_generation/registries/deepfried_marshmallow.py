@@ -24,11 +24,13 @@ default_authenticator = HeaderApiKeyAuthenticator(header="x-another", name="defa
 
 class ArtistSchema(JitSchema):
     """Artist schema using DeepFriedMarshmallow's JitSchema."""
+
     name = fields.Str()
 
 
 class AlbumSchema(JitSchema):
     """Album schema using DeepFriedMarshmallow's JitSchema with nested schema."""
+
     title = fields.Str()
     release_date = fields.Date()
     artist = fields.Nested(ArtistSchema())
@@ -36,16 +38,19 @@ class AlbumSchema(JitSchema):
 
 class AlbumUpdateSchema(JitSchema):
     """Schema for updating album - partial fields."""
+
     title = fields.Str()
 
 
 class HeaderSchema(JitSchema):
     """Header schema for testing header parameters."""
+
     user_id = compat.set_data_key(field=fields.String(required=True), key="X-UserId")
 
 
 class CompressedSheetText(JitSchema):
     """Schema with List field to test deepcopy recursion fix."""
+
     sheet = fields.UUID(required=True)
     text = fields.String(required=True)
     frame = fields.List(fields.Float(), required=True)
@@ -330,9 +335,7 @@ EXPECTED_SWAGGER_V3 = {
                     "required": True,
                     "content": {
                         "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/AlbumUpdateSchema"
-                            }
+                            "schema": {"$ref": "#/components/schemas/AlbumUpdateSchema"}
                         }
                     },
                 },
@@ -384,7 +387,9 @@ EXPECTED_SWAGGER_V3 = {
                             "application/json": {
                                 "schema": {
                                     "type": "array",
-                                    "items": {"$ref": "#/components/schemas/CompressedSheetText"},
+                                    "items": {
+                                        "$ref": "#/components/schemas/CompressedSheetText"
+                                    },
                                 }
                             }
                         },
