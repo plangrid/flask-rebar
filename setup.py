@@ -47,6 +47,7 @@ if __name__ == "__main__":
             "dev": development,
             "enum": ["marshmallow-enum~=1.5"],
             "async": ["flask[async]>=2,<4"],
+            "pydantic": ["pydantic>=2.10,<3"],
         },
         install_requires=install_requires,
         url="https://github.com/plangrid/flask-rebar",
