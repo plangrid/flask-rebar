@@ -49,7 +49,7 @@ def _standardize_required(obj):
     """
     if isinstance(obj, dict):
         for k, v in obj.items():
-            if k == "requir`ed" and isinstance(v, list):
+            if k == "required" and isinstance(v, list):
                 v.sort()
             else:
                 _standardize_required(v)
