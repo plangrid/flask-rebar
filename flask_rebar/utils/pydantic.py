@@ -29,7 +29,7 @@ else:  # pragma: no cover - Python < 3.10
     UnionType = None
 
 import marshmallow
-from flask_rebar import get_validated_args, get_validated_body, get_validated_headers
+from flask_rebar.rebar import get_validated_args, get_validated_body, get_validated_headers
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.marshmallow_to_swagger import (
     MarshmallowConverter,
@@ -72,11 +72,6 @@ class ApiModel(BaseModel):
         extra="forbid",
     )
 
-    @classmethod
-    def rebar_schema(cls) -> PydanticSchema:
-        """Return this model's cached Flask-Rebar schema adapter."""
-        return schema_for(cls)
-
 
 class CamelCaseApiModel(ApiModel):
     """:class:`ApiModel` that also aliases fields to camelCase."""
@@ -116,6 +111,9 @@ class PydanticSchema(marshmallow.Schema):
     """A Marshmallow-shaped adapter around a Pydantic model."""
 
     model: ClassVar[type[BaseModel]]
+
+    # skip validate_on_dump in compat.dump
+    dump_validates: ClassVar[bool] = True
 
     @cached_property
     def _known_keys(self) -> frozenset[str]:

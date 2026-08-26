@@ -32,6 +32,7 @@ from flask_rebar import errors
 from flask_rebar import messages
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.utils.marshmallow_objects_helpers import get_marshmallow_objects_schema
+from flask_rebar.utils.pydantic_helpers import get_pydantic_schema
 
 
 class HeadersProxy(collections.abc.Mapping):
@@ -127,8 +128,8 @@ def normalize_schema(
     schema: Any,
 ) -> Union[Schema, Type[Schema], Type[USE_DEFAULT], None]:
     """
-    This allows for either an instance of a marshmallow.Schema or the class
-    itself to be passed to functions.
+    This allows for either of (an instance or class of a marshmallow.Schema), or 
+    a pydantic model class itself to be passed to functions.
     For Marshmallow-objects support, if a Model class is passed, return its __schema__
 
     Possible types:
@@ -136,18 +137,22 @@ def normalize_schema(
     - schema class -> return instance of schema class
     - marshmallow-objects Model class -> return schema class (is this right?)
     - marshmallow-objects Model instance -> return schema class (is this right?)
+    - pydantic BaseModel class or instance -> return its cached schema adapter
     - None -> return None
     - USE_DEFAULT -> return USE_DEFAULT
     """
     if schema not in (None, USE_DEFAULT) and not isinstance(schema, marshmallow.Schema):
         # See if we were handed a marshmallow_objects Model class or instance:
         mo_schema = get_marshmallow_objects_schema(schema)
+        pydantic_schema = get_pydantic_schema(schema)
         if mo_schema:
             model = schema
             schema = mo_schema
             # If __swagger_title__ is defined on the Model, propagate that down:
             if hasattr(model, "__swagger_title__"):
                 schema.__swagger_title__ = model.__swagger_title__
+        elif pydantic_schema is not None:
+            schema = pydantic_schema
         else:
             # assume we were passed a Schema class (not an instance)
             schema = schema()

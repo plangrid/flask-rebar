@@ -12,8 +12,13 @@ extra in applications that use it:
 Models
 ------
 
-Use ``ApiModel`` for API payloads. It validates unknown fields strictly and
-supports population by field name.
+Although you can use a plain Pydantic ``BaseModel`` subclass, Flask-Rebar provides two thin subclasses:
+- ``ApiModel``, with:
+    - ``extra="forbid"``: unknown fields fail validation instead of being ignored,
+    - ``from_attributes=True``: instantiate by attribute or by keys,
+    - ``populate_by_name=True``: construct instances by field name even when a field has a wire-format alias.
+- ``CamelCaseApiModel``,
+    - ``alias_generator=to_camel``, automatically generate camel-case aliases for all fields.
 
 .. code-block:: python
 
@@ -38,8 +43,10 @@ camel-case aliases (``pageWidth``) alongside the Python field names:
        page_width: float
 
 
-Pass the cached Flask-Rebar schema to a handler. ``validated_body`` returns
-the Pydantic model that validated the request (compatible with type hints):
+Pass the model class straight to a handler; Flask-Rebar detects Pydantic
+models automatically and adapts them, the same way it already does for
+plain Marshmallow schema classes. ``validated_body`` returns the Pydantic
+model that validated the request (compatible with type hints):
 
 .. code-block:: python
 
@@ -53,8 +60,8 @@ the Pydantic model that validated the request (compatible with type hints):
    @registry.handles(
        rule="/widgets",
        method="POST",
-       request_body_schema=CreateWidget.rebar_schema(),
-       response_body_schema={201: CreateWidget.rebar_schema()},
+       request_body_schema=CreateWidget,
+       response_body_schema={201: CreateWidget},
    )
    def create_widget():
        widget = validated_body(CreateWidget)
@@ -87,7 +94,7 @@ ignored rather than rejected:
    @registry.handles(
        rule="/widgets",
        method="POST",
-       headers_schema=WidgetHeaders.rebar_schema(),
+       headers_schema=WidgetHeaders,
    )
    def create_widget():
        headers = validated_headers(WidgetHeaders)
@@ -104,20 +111,6 @@ offset when serialized to JSON, rather than Pydantic's default:
    class WidgetResponse(ApiModel):
        updated_at: DateTime
 
-Plain Pydantic models remain supported when the API defaults are not
-suitable:
-
-.. code-block:: python
-
-   from pydantic import BaseModel
-   from flask_rebar.utils.pydantic import schema_for
-
-
-   class HealthResponse(BaseModel):
-       status: str
-
-
-   response_schema = schema_for(HealthResponse)
 
 
 Responses
@@ -130,10 +123,9 @@ without changing ordinary ``model_dump`` behavior:
 
 .. note::
 
-   Unlike a plain Marshmallow schema, whose ``dump`` never validates by
-   default, a Pydantic-backed response schema always validates a mapping or
-   attribute-bearing object against the model before serializing it (since
-   Pydantic has no unvalidated "dump" path for non-model input). A handler
+   Unlike a plain Marshmallow schema, whose ``dump`` doesn't validate by
+   default, a Pydantic-backed response schema always validates a mapping or 
+   object against the model before serializing it . A handler
    that returns data missing a required field will raise, even with
    Flask-Rebar's ``validate_on_dump`` left at its default of ``False``.
 
@@ -150,14 +142,13 @@ without changing ordinary ``model_dump`` behavior:
 Swagger
 -------
 
-Importing ``flask_rebar.utils.pydantic`` registers its converters with
-Flask-Rebar. ``ApiModel.rebar_schema()`` therefore participates in the normal
-request, response, query-string, and header schema paths.
+Pydantic models do not emit valid Swagger 2 schemas. Flask-Rebar does not currently
+fail automatically, so the generated Swagger 2 document may only fail later when 
+it is validated or used to generate a client.
 
-Pydantic emits modern JSON Schema. Flask-Rebar's default Swagger 2 generator
-supports ordinary models, while ``SwaggerV3Generator`` preserves Pydantic's
-complete OpenAPI 3.1 schema for nullable values, unions, and advanced
-constraints.
+Use ``SwaggerV3Generator`` with Pydantic models. It generates an OpenAPI 3
+document that can represent Pydantic's schema, including nullable values,
+unions, and advanced constraints.
 
 .. code-block:: python
 

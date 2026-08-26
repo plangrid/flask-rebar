@@ -6,11 +6,11 @@ from uuid import UUID
 import marshmallow
 import pytest
 from flask import Flask
-from flask_rebar import Rebar
+from flask_rebar import Rebar, compat
 
 pytest.importorskip("pydantic")
 
-from pydantic import BaseModel, Field  # noqa: E402
+from pydantic import BaseModel, Field, computed_field  # noqa: E402
 
 from flask_rebar.utils.pydantic import (  # noqa: E402
     ApiModel,
@@ -56,8 +56,8 @@ def client_fixture():
     @registry.handles(
         rule="/things",
         method="POST",
-        request_body_schema=CreateThing.rebar_schema(),
-        response_body_schema={200: ThingResponse.rebar_schema()},
+        request_body_schema=CreateThing,
+        response_body_schema={200: ThingResponse},
     )
     def create_thing():
         body = validated_body(CreateThing)
@@ -71,7 +71,7 @@ def client_fixture():
     @registry.handles(
         rule="/things",
         method="GET",
-        query_string_schema=ThingQuery.rebar_schema(),
+        query_string_schema=ThingQuery,
     )
     def list_things():
         args = validated_args(ThingQuery)
@@ -120,7 +120,7 @@ def test_response_omits_none_values(client):
 
 
 def test_datetime_keeps_the_offset_format():
-    dumped = ThingResponse.rebar_schema().dump(
+    dumped = schema_for(ThingResponse).dump(
         {
             "uid": UUID("11111111-1111-1111-1111-111111111111"),
             "name": "x",
@@ -173,15 +173,14 @@ def test_omit_none_only_applies_to_rebar_response_dumps():
     nested = Nested(bubble_urn=None, rotation=90)
 
     assert nested.model_dump(by_alias=True) == {"bubbleUrn": None, "rotation": 90}
-    assert Nested.rebar_schema().dump(nested) == {"rotation": 90}
+    assert schema_for(Nested).dump(nested) == {"rotation": 90}
 
 
-def test_rebar_schema_is_cached_and_schema_for_supports_plain_models():
+def test_schema_for_is_cached_and_supports_plain_models():
     class PlainModel(BaseModel):
         status: str
 
-    assert CreateThing.rebar_schema() is CreateThing.rebar_schema()
-    assert CreateThing.rebar_schema() is schema_for(CreateThing)
+    assert schema_for(CreateThing) is schema_for(CreateThing)
     assert schema_for(PlainModel).load({"status": "ok"}) == PlainModel(status="ok")
 
 
@@ -189,11 +188,11 @@ def test_api_model_keeps_snake_case_fields_and_rejects_unknown_fields():
     class SnakeCaseThing(ApiModel):
         page_width: float
 
-    assert SnakeCaseThing.rebar_schema().load({"page_width": 1.5}) == SnakeCaseThing(
+    assert schema_for(SnakeCaseThing).load({"page_width": 1.5}) == SnakeCaseThing(
         page_width=1.5
     )
     with pytest.raises(marshmallow.ValidationError):
-        SnakeCaseThing.rebar_schema().load({"pageWidth": 1.5})
+        schema_for(SnakeCaseThing).load({"pageWidth": 1.5})
 
 
 def test_headers_schema_ignores_incidental_headers():
@@ -206,7 +205,7 @@ def test_headers_schema_ignores_incidental_headers():
     @registry.handles(
         rule="/things",
         method="GET",
-        headers_schema=ThingHeaders.rebar_schema(),
+        headers_schema=ThingHeaders,
     )
     def get_thing():
         headers = validated_headers(ThingHeaders)
@@ -223,3 +222,60 @@ def test_headers_schema_ignores_incidental_headers():
 
     assert response.status_code == 200
     assert response.json == {"api_key": "secret"}
+
+
+def test_validate_on_dump_does_not_reload_computed_fields():
+    """compat.dump's validate_on_dump re-load must be skipped for Pydantic
+    schemas: it always validates in dump() already, and re-loading its own
+    dump output would reject computed fields under ApiModel's extra="forbid".
+    """
+
+    class ComputedThing(ApiModel):
+        name: str
+
+        @computed_field  # type: ignore[prop-decorator]
+        @property
+        def name_upper(self) -> str:
+            return self.name.upper()
+
+    rebar = Rebar()
+    app = Flask(__name__)
+    rebar.init_app(app)
+
+    with app.app_context():
+        rebar.validate_on_dump = True
+        result = compat.dump(schema_for(ComputedThing), ComputedThing(name="x"))
+
+    assert result == {"name": "x", "name_upper": "X"}
+
+
+def test_a_plain_dict_response_is_validated_and_coerced_through_the_model():
+    """A handler doesn't have to construct the response model itself: a plain
+    dict is run through Pydantic's own validation/coercion (e.g. a numeric
+    string becomes an int) before being dumped, and keys the model doesn't
+    know about are dropped rather than tripping ApiModel's extra="forbid".
+    """
+
+    class CountResponse(ApiModel):
+        count: int
+        ratio: float
+
+    rebar = Rebar()
+    registry = rebar.create_handler_registry(prefix="/v1")
+
+    @registry.handles(
+        rule="/counts",
+        method="GET",
+        response_body_schema={200: CountResponse},
+    )
+    def get_counts():
+        return {"count": "5", "ratio": 2, "unknown": "dropped"}, 200
+
+    app = Flask(__name__)
+    rebar.init_app(app)
+    client = app.test_client()
+
+    response = client.get("/v1/counts")
+
+    assert response.status_code == 200
+    assert response.json == {"count": 5, "ratio": 2.0}
