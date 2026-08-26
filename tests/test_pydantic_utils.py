@@ -218,7 +218,9 @@ def test_headers_schema_ignores_incidental_headers():
 
     # A real request always carries headers (Host, User-Agent, ...) beyond the
     # ones declared on the schema; those must not fail validation.
-    response = client.get("/v1/things", headers={"X-Api-Key": "secret", 'another-headers': 'ignored'})
+    response = client.get(
+        "/v1/things", headers={"X-Api-Key": "secret", "another-headers": "ignored"}
+    )
 
     assert response.status_code == 200
     assert response.json == {"api_key": "secret"}

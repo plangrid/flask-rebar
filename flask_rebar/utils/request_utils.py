@@ -128,7 +128,7 @@ def normalize_schema(
     schema: Any,
 ) -> Union[Schema, Type[Schema], Type[USE_DEFAULT], None]:
     """
-    This allows for either of (an instance or class of a marshmallow.Schema), or 
+    This allows for either of (an instance or class of a marshmallow.Schema), or
     a pydantic model class itself to be passed to functions.
     For Marshmallow-objects support, if a Model class is passed, return its __schema__
 

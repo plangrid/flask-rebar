@@ -29,7 +29,11 @@ else:  # pragma: no cover - Python < 3.10
     UnionType = None
 
 import marshmallow
-from flask_rebar.rebar import get_validated_args, get_validated_body, get_validated_headers
+from flask_rebar.rebar import (
+    get_validated_args,
+    get_validated_body,
+    get_validated_headers,
+)
 from flask_rebar.swagger_generation import swagger_words as sw
 from flask_rebar.swagger_generation.marshmallow_to_swagger import (
     MarshmallowConverter,
@@ -91,7 +95,7 @@ class OmitNone(BaseModel):
     """Mixin that omits ``None`` values when Flask-Rebar serializes a response."""
 
     @model_serializer(mode="wrap")
-    # No return annotation: Pydantic uses it to build the *serialization* JSON Schema, 
+    # No return annotation: Pydantic uses it to build the *serialization* JSON Schema,
     # and an explicit type here (even `Any`) breaks introspection for wrap-mode-serializers.
     def _omit_none(self, handler: Any, info: SerializationInfo):  # type: ignore[no-untyped-def]
         data = handler(self)
