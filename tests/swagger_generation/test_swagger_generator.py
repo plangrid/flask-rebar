@@ -30,8 +30,12 @@ from tests.swagger_generation.registries import (
     exploded_query_string,
     marshmallow_objects,
     multiple_authenticators,
-    deepfried_marshmallow,
 )
+
+try:
+    from tests.swagger_generation.registries import deepfried_marshmallow  # noqa: E402
+except ImportError:
+    deepfried_marshmallow = None
 
 
 def _assert_dicts_equal(a, b):
@@ -270,14 +274,34 @@ def test_path_parameter_types_must_be_the_same_for_same_path(generator):
             marshmallow_objects.EXPECTED_SWAGGER_V3,
         ),
         (
-            deepfried_marshmallow.registry,
-            deepfried_marshmallow.swagger_v2_generator,
-            deepfried_marshmallow.EXPECTED_SWAGGER_V2,
+            pytest.param(
+                deepfried_marshmallow.registry if deepfried_marshmallow else None,
+                deepfried_marshmallow.swagger_v2_generator
+                if deepfried_marshmallow
+                else None,
+                deepfried_marshmallow.EXPECTED_SWAGGER_V2
+                if deepfried_marshmallow
+                else None,
+                marks=pytest.mark.skipif(
+                    deepfried_marshmallow is None,
+                    reason="DeepFriedMarshmallow is unavailable",
+                ),
+            )
         ),
         (
-            deepfried_marshmallow.registry,
-            deepfried_marshmallow.swagger_v3_generator,
-            deepfried_marshmallow.EXPECTED_SWAGGER_V3,
+            pytest.param(
+                deepfried_marshmallow.registry if deepfried_marshmallow else None,
+                deepfried_marshmallow.swagger_v3_generator
+                if deepfried_marshmallow
+                else None,
+                deepfried_marshmallow.EXPECTED_SWAGGER_V3
+                if deepfried_marshmallow
+                else None,
+                marks=pytest.mark.skipif(
+                    deepfried_marshmallow is None,
+                    reason="DeepFriedMarshmallow is unavailable",
+                ),
+            )
         ),
     ],
 )
