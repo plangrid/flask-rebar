@@ -10,7 +10,7 @@ from flask_rebar import Rebar, compat
 
 pytest.importorskip("pydantic")
 
-from pydantic import BaseModel, Field, computed_field  # noqa: E402
+from pydantic import BaseModel, Field, computed_field, RootModel  # noqa: E402
 
 from flask_rebar.utils.pydantic import (  # noqa: E402
     ApiModel,
@@ -176,12 +176,178 @@ def test_omit_none_only_applies_to_rebar_response_dumps():
     assert schema_for(Nested).dump(nested) == {"rotation": 90}
 
 
-def test_schema_for_is_cached_and_supports_plain_models():
+def test_schema_for_returns_a_fresh_instance_and_supports_plain_models():
     class PlainModel(BaseModel):
         status: str
 
-    assert schema_for(CreateThing) is schema_for(CreateThing)
+    # A fresh instance every call, so per-request mutations on one schema
+    # (e.g. compat.exclude_unknown_fields toggling .unknown) can't bleed into
+    # another registration that reuses the same model in a different role.
+    assert schema_for(CreateThing) is not schema_for(CreateThing)
     assert schema_for(PlainModel).load({"status": "ok"}) == PlainModel(status="ok")
+
+
+def test_excluding_unknown_fields_on_a_headers_schema_does_not_leak_to_other_roles():
+    class Shared(ApiModel):
+        name: str = Field(alias="Name")
+
+    rebar = Rebar()
+    registry = rebar.create_handler_registry(prefix="/v1")
+
+    @registry.handles(rule="/headers-role", method="GET", headers_schema=Shared)
+    def use_as_headers():
+        return {}, 200
+
+    @registry.handles(rule="/body-role", method="POST", request_body_schema=Shared)
+    def use_as_body():
+        return {}, 200
+
+    app = Flask(__name__)
+    rebar.init_app(app)
+    client = app.test_client()
+
+    headers_response = client.get(
+        "/v1/headers-role", headers={"name": "x", "another-header": "ignored"}
+    )
+    assert headers_response.status_code == 200
+
+    body_response = client.post("/v1/body-role", json={"name": "x", "unexpected": True})
+    assert body_response.status_code == 400
+    assert "unexpected" in body_response.json["errors"]
+
+
+def test_many_loads_and_dumps_a_list_of_models():
+    schema = schema_for(CreateThing, many=True)
+
+    loaded = schema.load([{"name": "x", "pageWidth": 1.0}])
+    assert loaded == [CreateThing(name="x", pageWidth=1.0)]
+
+    dumped = schema.dump(loaded)
+    assert dumped == [{"name": "x", "pageWidth": 1.0, "nested": {}}]
+
+
+def test_many_load_errors_are_keyed_by_index():
+    schema = schema_for(CreateThing, many=True)
+
+    with pytest.raises(marshmallow.ValidationError) as excinfo:
+        schema.load([{"name": "x", "pageWidth": 1.0}, {"pageWidth": "wide"}])
+
+    assert list(excinfo.value.messages) == [1]
+
+
+def test_many_response_body_schema_returns_a_json_array():
+    rebar = Rebar()
+    registry = rebar.create_handler_registry(prefix="/v1")
+
+    @registry.handles(
+        rule="/things/many",
+        method="GET",
+        response_body_schema={200: schema_for(ThingResponse, many=True)},
+    )
+    def list_thing_responses():
+        return [
+            {
+                "uid": UUID("11111111-1111-1111-1111-111111111111"),
+                "name": "x",
+                "nested": Nested(),
+            }
+        ], 200
+
+    app = Flask(__name__)
+    rebar.init_app(app)
+    response = app.test_client().get("/v1/things/many")
+
+    assert response.status_code == 200
+    assert response.json == [
+        {
+            "uid": "11111111-1111-1111-1111-111111111111",
+            "name": "x",
+            "nested": {},
+            "updatedAt": None,
+        }
+    ]
+
+    swagger = registry.swagger_generator.generate_swagger(registry)
+    responses = swagger["paths"]["/v1/things/many"]["get"]["responses"]
+    assert responses["200"]["schema"] == {
+        "type": "array",
+        "items": {"$ref": "#/definitions/ThingResponse"},
+    }
+    assert "ThingResponse" in swagger["definitions"]
+
+
+def test_root_model_lists_work_as_a_pure_pydantic_alternative_to_many():
+    """A ``pydantic.RootModel[list[X]]`` is the pure-pydantic way to say "a
+    list of X" - pass it straight to a handler like any other model, with
+    no ``schema_for(..., many=True)`` needed. Its own component name must
+    still resolve to a real Swagger definition, not just the singular
+    item's.
+    """
+
+    class Item(ApiModel):
+        count: int
+
+    class Items(RootModel[list[Item]]):
+        pass
+
+    rebar = Rebar()
+    registry = rebar.create_handler_registry(prefix="/v1")
+
+    @registry.handles(
+        rule="/items",
+        method="GET",
+        response_body_schema={200: Items},
+    )
+    def list_items():
+        return [{"count": 1}, {"count": 2}], 200
+
+    app = Flask(__name__)
+    rebar.init_app(app)
+    response = app.test_client().get("/v1/items")
+
+    assert response.status_code == 200
+    assert response.json == [{"count": 1}, {"count": 2}]
+
+    swagger = registry.swagger_generator.generate_swagger(registry)
+    ref = swagger["paths"]["/v1/items"]["get"]["responses"]["200"]["schema"]["$ref"]
+    definitions = swagger["definitions"]
+
+    assert "Item" in definitions
+    assert ref == "#/definitions/Items"
+    assert definitions["Items"] == {
+        "title": "Items",
+        "type": "array",
+        "items": {"$ref": "#/definitions/Item"},
+    }
+
+
+def test_colliding_component_names_fail_swagger_generation():
+    def make_item_model() -> type[BaseModel]:
+        class Item(ApiModel):
+            pass
+
+        return Item
+
+    FirstItem = make_item_model()
+
+    class Item(ApiModel):
+        count: int
+
+    rebar = Rebar()
+    registry = rebar.create_handler_registry(prefix="/v1")
+
+    @registry.handles(
+        rule="/first", method="GET", response_body_schema={200: FirstItem}
+    )
+    def get_first():
+        return {}, 200
+
+    @registry.handles(rule="/second", method="GET", response_body_schema={200: Item})
+    def get_second():
+        return {}, 200
+
+    with pytest.raises(ValueError, match="Item"):
+        registry.swagger_generator.generate_swagger(registry)
 
 
 def test_api_model_keeps_snake_case_fields_and_rejects_unknown_fields():

@@ -21,6 +21,7 @@ from typing import (
     cast,
     get_args,
     get_origin,
+    overload,
 )
 
 if sys.version_info >= (3, 10):
@@ -65,6 +66,16 @@ except ModuleNotFoundError as error:
 
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
+DateTime = Annotated[
+    datetime,
+    PlainSerializer(lambda value: value.isoformat(), return_type=str, when_used="json"),
+    WithJsonSchema({"type": "string", "format": "date-time"}, mode="serialization"),
+]
+
+_OMIT_NONE = "flask_rebar_omit_none"
+_OPENAPI_SCHEMA_CACHE: dict[tuple[type[BaseModel], str], dict[str, Any]] = {}
+_INVALID_NAME_CHARS = re.compile(r"[^A-Za-z0-9._-]")
+_PROPERTY_MAP_KEYS = ("properties", "patternProperties", "$defs")
 
 
 class ApiModel(BaseModel):
@@ -83,14 +94,6 @@ class CamelCaseApiModel(ApiModel):
     model_config = ConfigDict(alias_generator=to_camel)
 
 
-DateTime = Annotated[
-    datetime,
-    PlainSerializer(lambda value: value.isoformat(), return_type=str, when_used="json"),
-    WithJsonSchema({"type": "string", "format": "date-time"}, mode="serialization"),
-]
-"""A datetime annotation that preserves offsets in serialized API responses."""
-
-
 class OmitNone(BaseModel):
     """Mixin that omits ``None`` values when Flask-Rebar serializes a response."""
 
@@ -102,9 +105,6 @@ class OmitNone(BaseModel):
         if not _omit_none_active(info):
             return data
         return {key: value for key, value in data.items() if value is not None}
-
-
-_OMIT_NONE = "flask_rebar_omit_none"
 
 
 def _omit_none_active(info: SerializationInfo) -> bool:
@@ -137,6 +137,39 @@ class PydanticSchema(marshmallow.Schema):
             if key and _accepts_sequence(field.annotation)
         )
 
+    @overload
+    def load(
+        self,
+        data: Any,
+        *,
+        many: Literal[True],
+        partial: Any = None,
+        unknown: str | None = None,
+    ) -> list[BaseModel]:
+        ...
+
+    @overload
+    def load(
+        self,
+        data: Any,
+        *,
+        many: Literal[False],
+        partial: Any = None,
+        unknown: str | None = None,
+    ) -> BaseModel:
+        ...
+
+    @overload
+    def load(
+        self,
+        data: Any,
+        *,
+        many: None = None,
+        partial: Any = None,
+        unknown: str | None = None,
+    ) -> BaseModel | list[BaseModel]:
+        ...
+
     def load(
         self,
         data: Any,
@@ -144,9 +177,25 @@ class PydanticSchema(marshmallow.Schema):
         many: bool | None = None,
         partial: Any = None,
         unknown: str | None = None,
-    ) -> BaseModel:
-        """Validate data with Pydantic and return its model instance."""
-        del many, partial
+    ) -> BaseModel | list[BaseModel]:
+        """Validate data with Pydantic and return its model instance(s)."""
+        del partial
+        if many is None:
+            many = self.many
+        if many:
+            errors: dict[int, Any] = {}
+            models = []
+            for index, item in enumerate(data):
+                try:
+                    models.append(self._load_one(item, unknown))
+                except marshmallow.ValidationError as error:
+                    errors[index] = error.messages
+            if errors:
+                raise marshmallow.ValidationError(errors)
+            return models
+        return self._load_one(data, unknown)
+
+    def _load_one(self, data: Any, unknown: str | None) -> BaseModel:
         if isinstance(data, MultiDict):
             data = self._flatten_multidict(data)
         if (unknown or self.unknown) == marshmallow.EXCLUDE and isinstance(
@@ -168,8 +217,10 @@ class PydanticSchema(marshmallow.Schema):
 
     def dump(self, obj: Any, *, many: bool | None = None) -> Any:
         """Serialize a model, mapping, or attribute-bearing object with Pydantic."""
+        if many is None:
+            many = self.many
         if many:
-            return [self.dump(item) for item in obj]
+            return [self.dump(item, many=False) for item in obj]
         if isinstance(obj, self.model):
             model = obj
         else:
@@ -180,21 +231,28 @@ class PydanticSchema(marshmallow.Schema):
         return model.model_dump(mode="json", by_alias=True, context={_OMIT_NONE: True})
 
 
-def schema_for(model: type[ModelType]) -> PydanticSchema:
-    """Return the cached Flask-Rebar schema adapter for a Pydantic model."""
-    schema = _SCHEMA_CACHE.get(model)
-    if schema is None:
-        schema_class = type(component_name(model), (PydanticSchema,), {"model": model})
-        schema = schema_class()
-        json_schema = _openapi_schema(model)
-        required = set(json_schema.get(sw.required, ()))
-        schema.fields = schema.declared_fields = {
-            name: _JsonSchemaField(
-                property_schema, data_key=name, required=name in required
-            )
-            for name, property_schema in json_schema.get(sw.properties, {}).items()
-        }
-        _SCHEMA_CACHE[model] = schema
+def schema_for(model: type[ModelType], *, many: bool = False) -> PydanticSchema:
+    """Build a fresh Flask-Rebar schema adapter for a Pydantic model.
+
+    A new instance is returned on every call so that request-time mutations
+    (e.g. ``compat.exclude_unknown_fields`` toggling ``.unknown``) on a schema
+    used in one role (headers) can't bleed into another registration that
+    reuses the same model in a different role (body, query string).
+
+    Pass ``many=True`` to validate/serialize a JSON array of ``model``
+    instances rather than a single one, e.g.
+    ``response_body_schema={200: schema_for(Widget, many=True)}``.
+    """
+    schema_class = type(component_name(model), (PydanticSchema,), {"model": model})
+    schema = schema_class(many=many)
+    json_schema = _openapi_schema(model)
+    required = set(json_schema.get(sw.required, ()))
+    schema.fields = schema.declared_fields = {
+        name: _JsonSchemaField(
+            property_schema, data_key=name, required=name in required
+        )
+        for name, property_schema in json_schema.get(sw.properties, {}).items()
+    }
     return schema
 
 
@@ -233,7 +291,7 @@ def _openapi_schema(
         return cached
     raw_schema = model.model_json_schema(mode=mode, ref_template="{model}")
     definitions = raw_schema.pop("$defs", {})
-    schema: dict[str, Any] = _inline_refs(raw_schema, definitions, ())
+    schema: dict[str, Any] = _inline_refs(raw_schema, definitions, (), top_level=True)
     _OPENAPI_SCHEMA_CACHE[key] = schema
     return schema
 
@@ -263,12 +321,6 @@ def _marshmallow_errors(error: PydanticValidationError) -> dict[Any, Any]:
     return errors
 
 
-_SCHEMA_CACHE: dict[type[BaseModel], PydanticSchema] = {}
-_OPENAPI_SCHEMA_CACHE: dict[tuple[type[BaseModel], str], dict[str, Any]] = {}
-_INVALID_NAME_CHARS = re.compile(r"[^A-Za-z0-9._-]")
-_PROPERTY_MAP_KEYS = ("properties", "patternProperties", "$defs")
-
-
 class _JsonSchemaField(marshmallow.fields.Field):
     """A placeholder Marshmallow field carrying a Pydantic JSON Schema property."""
 
@@ -277,7 +329,12 @@ class _JsonSchemaField(marshmallow.fields.Field):
         super().__init__(**kwargs)
 
 
-def _inline_refs(node: Any, definitions: dict[str, Any], stack: tuple[str, ...]) -> Any:
+def _inline_refs(
+    node: Any,
+    definitions: dict[str, Any],
+    stack: tuple[str, ...],
+    top_level: bool = False,
+) -> Any:
     if isinstance(node, list):
         return [_inline_refs(item, definitions, stack) for item in node]
     if not isinstance(node, dict):
@@ -287,10 +344,18 @@ def _inline_refs(node: Any, definitions: dict[str, Any], stack: tuple[str, ...])
     if reference is not None:
         if reference in stack:
             return {sw.type_: sw.object_}
-        merged = {
-            **definitions.get(reference, {}),
-            **{key: value for key, value in node.items() if key != "$ref"},
+        target = definitions.get(reference, {})
+        # A field-level override (e.g. `default`) describes this particular
+        # use site, not the referenced type. Once the target is itself a
+        # named component, dropping it here keeps every use site of that
+        # component identical, so they can share one component definition.
+        is_named_component = sw.title in target
+        overrides = {
+            key: value
+            for key, value in node.items()
+            if key != "$ref" and not (is_named_component and key == sw.default)
         }
+        merged = {**target, **overrides}
         return _inline_refs(merged, definitions, (*stack, reference))
 
     node = {
@@ -306,10 +371,16 @@ def _inline_refs(node: Any, definitions: dict[str, Any], stack: tuple[str, ...])
     }
 
     if sw.title in node:
-        if node.get(sw.type_) != sw.object_:
-            del node[sw.title]
-        else:
+        # Pydantic gives every property an auto title derived from its field
+        # name (e.g. `page_width` -> "Page Width"), which is just noise for
+        # scalar/array fields - drop it there. But the model's own top-level
+        # title (kept regardless of its root type) and a referenced model's
+        # title (always type object, merged in above) are real component
+        # names that `get_ref_schema` needs to resolve, so keep those.
+        if top_level or node.get(sw.type_) == sw.object_:
             node[sw.title] = _INVALID_NAME_CHARS.sub("", str(node[sw.title]))
+        else:
+            del node[sw.title]
     return node
 
 
@@ -321,7 +392,15 @@ class _PydanticSchemaConverter(MarshmallowConverter):
 
     def convert(self, obj: PydanticSchema, context: Any) -> dict[str, Any]:
         del context
-        return openapi_schema(obj.model, mode=self.mode)
+        schema = openapi_schema(obj.model, mode=self.mode)
+        if obj.many:
+            # Mirrors marshmallow's SchemaConverter: the array wrapper itself
+            # carries no title, so `flatten()` only registers the singular
+            # `schema` (which does) as a component, and `get_ref_schema` -
+            # keyed on the class's title, shared by both the singular and
+            # many instances of this same model - resolves to it correctly.
+            return {sw.type_: sw.array, sw.items: schema}
+        return schema
 
 
 class _JsonSchemaFieldConverter(MarshmallowConverter):

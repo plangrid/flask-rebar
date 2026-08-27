@@ -169,6 +169,12 @@ def _flatten(
 
     if sw.title in schema:
         definitions_key = get_key(schema)
+        existing = definitions.get(definitions_key)
+        if existing is not None and existing != schema:
+            raise ValueError(
+                f"Multiple distinct schemas share the component name "
+                f"'{definitions_key}'. Give them distinct titles/class names."
+            )
         definitions[definitions_key] = schema
         schema = {sw.ref: create_ref(base, definitions_key)}
 
@@ -268,11 +274,18 @@ def get_unique_schema_definitions(
 
             all_schemas.add(schema)
 
-    flattened = {}
+    flattened: Dict[str, Any] = {}
 
     for obj in converted:
         _, flattened_definitions = flatten(obj, base)
-        flattened.update(flattened_definitions)
+        for key, value in flattened_definitions.items():
+            existing = flattened.get(key)
+            if existing is not None and existing != value:
+                raise ValueError(
+                    f"Multiple distinct schemas share the component name "
+                    f"'{key}'. Give them distinct titles/class names."
+                )
+            flattened[key] = value
 
     return flattened
 

@@ -13,12 +13,13 @@ Models
 ------
 
 Although you can use a plain Pydantic ``BaseModel`` subclass, Flask-Rebar provides two thin subclasses:
+
 - ``ApiModel``, with:
-    - ``extra="forbid"``: unknown fields fail validation instead of being ignored,
-    - ``from_attributes=True``: instantiate by attribute or by keys,
-    - ``populate_by_name=True``: construct instances by field name even when a field has a wire-format alias.
+     - ``extra="forbid"``: unknown fields fail validation instead of being ignored,
+     - ``from_attributes=True``: instantiate by attribute or by keys,
+     - ``populate_by_name=True``: construct instances by field name even when a field has a wire-format alias.
 - ``CamelCaseApiModel``,
-    - ``alias_generator=to_camel``, automatically generate camel-case aliases for all fields.
+     - ``alias_generator=to_camel``, automatically generate camel-case aliases for all fields.
 
 .. code-block:: python
 
@@ -72,6 +73,21 @@ model that validated the request (compatible with type hints):
 Use ``validated_args`` in the same way with ``query_string_schema``. Repeated
 query parameters are preserved for list, set, tuple, and optional sequence
 fields.
+
+.. warning:: Avoid ``ApiModel``/``CamelCaseApiModel`` for
+    ``query_string_schema``. Real clients routinely attach query parameters,
+    and ``extra="forbid"`` would reject these requests with a 400. Define a
+    plain ``BaseModel`` with ``extra="ignore"`` for query strings instead.
+
+.. code-block:: python
+
+    from pydantic import BaseModel, ConfigDict
+
+
+    class ListWidgets(BaseModel):
+         model_config = ConfigDict(extra="ignore")
+
+         limit: int = 20
 
 Headers work the same way, but HTTP header names don't match either
 ``ApiModel``'s snake_case fields or ``CamelCaseApiModel``'s camelCase
@@ -137,6 +153,55 @@ without changing ordinary ``model_dump`` behavior:
    class WidgetResponse(OmitNone, CamelCaseApiModel):
        name: str
        description: str | None = None
+
+There are two ways to validate or serialize a JSON array of ``Model``
+instances. Define a plain Pydantic ``RootModel[list[Model]]`` and pass it
+directly to the handler:
+
+.. code-block:: python
+
+    from pydantic import RootModel
+
+    from flask_rebar.utils.pydantic import validated_body
+
+
+   class WidgetResponses(RootModel[list[WidgetResponse]]):
+       pass
+
+   class WidgetRequests(RootModel[list[WidgetRequest]]):
+       pass
+
+
+   @registry.handles(
+       rule="/widgets",
+       method="POST",
+       request_body_schema=WidgetRequests,
+       response_body_schema={200: WidgetResponses},
+   )
+    def list_widgets() -> tuple[list[WidgetResponse], int]:
+       widgets: list[WidgetRequest] = validated_body(WidgetRequests).root
+       return [w.to_response() for w in widgets], 200
+
+Alternatively, use ``schema_for(Model, many=True)`` when you want to reuse the
+same model/class for singular and plural responses. Pass the result in place
+of the model class. When this schema is used for request validation, pass the
+singular model to ``validated_body``; the ``many=True`` adapter returns a list
+of validated model instances:
+
+.. code-block:: python
+
+    from flask_rebar.utils.pydantic import schema_for, validated_body
+
+
+   @registry.handles(
+       rule="/widgets",
+       method="POST",
+       request_body_schema=schema_for(WidgetRequest, many=True),
+       response_body_schema={200: schema_for(WidgetResponse, many=True)},
+   )
+   def list_widgets() -> tuple[list[WidgetResponse], int]:
+       widgets: list[WidgetRequest] = validated_body(WidgetRequest)
+       return [w.to_response() for w in widgets], 200
 
 
 Swagger
