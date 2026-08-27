@@ -219,6 +219,9 @@ def test_recursive_generic_pydantic_model_self_reference_resolves():
         children: list["Tree[T]"] = []
 
     IntTree = Tree[int]
+    # Pydantic's stack-based schema rebuild can happen far from the class definition 
+    # (e.g. during Swagger generation) but is unreliable in Python 3.10.
+    IntTree.model_rebuild()
 
     rebar = Rebar()
     registry = rebar.create_handler_registry(prefix="/v1")

@@ -49,6 +49,11 @@ models automatically and adapts them, the same way it already does for
 plain Marshmallow schema classes. ``validated_body`` returns the Pydantic
 model that validated the request (compatible with type hints):
 
+.. note:: When validation fails for a Pydantic schema, Flask-Rebar raises
+    Pydantic's native ``ValidationError``. It is not converted to a Marshmallow
+    ``ValidationError``, so its error details and attributes follow Pydantic's
+    format.
+
 .. code-block:: python
 
    from flask_rebar import Rebar
