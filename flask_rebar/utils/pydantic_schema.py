@@ -52,10 +52,10 @@ try:
         ConfigDict,
         PlainSerializer,
         SerializationInfo,
+        TypeAdapter,
         WithJsonSchema,
         model_serializer,
     )
-    from pydantic import ValidationError as PydanticValidationError
     from pydantic.alias_generators import to_camel
 except ModuleNotFoundError as error:
     if error.name == "pydantic":
@@ -179,24 +179,28 @@ class PydanticSchema(marshmallow.Schema):
         partial: Any = None,
         unknown: str | None = None,
     ) -> BaseModel | list[BaseModel]:
-        """Validate data with Pydantic and return its model instance(s)."""
+        """Validate data with Pydantic and return its model instance(s).
+
+        :raises: pydantic.ValidationError
+        """
         del partial
         if many is None:
             many = self.many
         if many:
-            errors: dict[int, Any] = {}
-            models = []
-            for index, item in enumerate(data):
-                try:
-                    models.append(self._load_one(item, unknown))
-                except marshmallow.ValidationError as error:
-                    errors[index] = error.messages
-            if errors:
-                raise marshmallow.ValidationError(errors)
-            return models
-        return self._load_one(data, unknown)
+            # TypeAdapter validates the whole list in one pass, so a failure's
+            # `loc` is index-prefixed (e.g. `(1, "pageWidth")`) by Pydantic itself.
+            return self._list_adapter.validate_python(
+                [self._prepare(item, unknown) for item in data]
+            )
+        return self.model.model_validate(self._prepare(data, unknown))
 
-    def _load_one(self, data: Any, unknown: str | None) -> BaseModel:
+    @cached_property
+    def _list_adapter(self) -> TypeAdapter[Any]:
+        # self.model is only known at runtime (set dynamically in schema_for),
+        # so mypy can't resolve it as a type argument here.
+        return TypeAdapter(list[self.model])  # type: ignore[name-defined]
+
+    def _prepare(self, data: Any, unknown: str | None) -> Any:
         if isinstance(data, MultiDict):
             data = self._flatten_multidict(data)
         if (unknown or self.unknown) == marshmallow.EXCLUDE and isinstance(
@@ -204,10 +208,7 @@ class PydanticSchema(marshmallow.Schema):
         ):
             known = self._known_keys
             data = {key: value for key, value in data.items() if key in known}
-        try:
-            return self.model.model_validate(data)
-        except PydanticValidationError as error:
-            raise marshmallow.ValidationError(_marshmallow_errors(error)) from error
+        return data
 
     def _flatten_multidict(self, data: MultiDict) -> dict[str, Any]:
         sequence_keys = self._sequence_keys
@@ -309,17 +310,6 @@ def _accepts_sequence(annotation: Any) -> bool:
     if origin is UnionType or origin is Union:
         return any(_accepts_sequence(argument) for argument in get_args(annotation))
     return False
-
-
-def _marshmallow_errors(error: PydanticValidationError) -> dict[Any, Any]:
-    errors: dict[Any, Any] = {}
-    for item in error.errors():
-        location = item["loc"] or ("_schema",)
-        target = errors
-        for part in location[:-1]:
-            target = target.setdefault(part, {})
-        target.setdefault(location[-1], []).append(item["msg"])
-    return errors
 
 
 class _JsonSchemaField(marshmallow.fields.Field):

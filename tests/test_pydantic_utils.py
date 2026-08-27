@@ -5,14 +5,19 @@ import warnings
 from typing import Annotated, Generic, TypeVar
 from uuid import UUID
 
-import marshmallow
 import pytest
 from flask import Flask
 from flask_rebar import Rebar, SwaggerV3Generator, compat
 
 pytest.importorskip("pydantic")
 
-from pydantic import BaseModel, Field, computed_field, RootModel  # noqa: E402
+from pydantic import (  # noqa: E402
+    BaseModel,
+    Field,
+    RootModel,
+    ValidationError as PydanticValidationError,
+    computed_field,
+)
 
 from flask_rebar.utils.pydantic_schema import (  # noqa: E402
     ApiModel,
@@ -98,9 +103,10 @@ def test_validation_errors_keep_the_rebar_error_shape(client):
 
     assert response.status_code == 400
     assert response.json["rebar_error_code"] == "body_validation_failed"
-    assert response.json["errors"] == {
-        "name": "Field required",
-        "pageWidth": "Input should be a valid number, unable to parse string as a number",
+    errors_by_field = {tuple(e["loc"]): e["type"] for e in response.json["errors"]}
+    assert errors_by_field == {
+        ("name",): "missing",
+        ("pageWidth",): "float_parsing",
     }
 
 
@@ -111,7 +117,9 @@ def test_unknown_fields_are_rejected(client):
     )
 
     assert response.status_code == 400
-    assert "unexpected" in response.json["errors"]
+    [error] = response.json["errors"]
+    assert error["loc"] == ["unexpected"]
+    assert error["type"] == "extra_forbidden"
 
 
 def test_response_omits_none_values(client):
@@ -297,7 +305,8 @@ def test_excluding_unknown_fields_on_a_headers_schema_does_not_leak_to_other_rol
 
     body_response = client.post("/v1/body-role", json={"name": "x", "unexpected": True})
     assert body_response.status_code == 400
-    assert "unexpected" in body_response.json["errors"]
+    [error] = body_response.json["errors"]
+    assert error["loc"] == ["unexpected"]
 
 
 def test_many_loads_and_dumps_a_list_of_models():
@@ -313,10 +322,11 @@ def test_many_loads_and_dumps_a_list_of_models():
 def test_many_load_errors_are_keyed_by_index():
     schema = schema_for(CreateThing, many=True)
 
-    with pytest.raises(marshmallow.ValidationError) as excinfo:
+    with pytest.raises(PydanticValidationError) as excinfo:
         schema.load([{"name": "x", "pageWidth": 1.0}, {"pageWidth": "wide"}])
 
-    assert list(excinfo.value.messages) == [1]
+    locs = [error["loc"][0] for error in excinfo.value.errors()]
+    assert locs == [1, 1]
 
 
 def test_many_response_body_schema_returns_a_json_array():
@@ -445,7 +455,7 @@ def test_api_model_keeps_snake_case_fields_and_rejects_unknown_fields():
     assert schema_for(SnakeCaseThing).load({"page_width": 1.5}) == SnakeCaseThing(
         page_width=1.5
     )
-    with pytest.raises(marshmallow.ValidationError):
+    with pytest.raises(PydanticValidationError):
         schema_for(SnakeCaseThing).load({"pageWidth": 1.5})
 
 

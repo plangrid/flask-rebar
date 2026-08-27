@@ -9,6 +9,7 @@
 """
 import collections
 import copy
+import json
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -32,7 +33,10 @@ from flask_rebar import errors
 from flask_rebar import messages
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.utils.marshmallow_objects_helpers import get_marshmallow_objects_schema
-from flask_rebar.utils.pydantic_helpers import get_pydantic_schema
+from flask_rebar.utils.pydantic_helpers import (
+    PydanticValidationError,
+    get_pydantic_schema,
+)
 
 
 class HeadersProxy(collections.abc.Mapping):
@@ -181,6 +185,23 @@ def raise_400_for_marshmallow_errors(
     raise errors.BadRequest(msg=msg, additional_data=additional_data)
 
 
+def raise_400_for_pydantic_errors(
+    error: PydanticValidationError, msg: Union[str, messages.ErrorMessage]
+) -> NoReturn:
+    """
+    Throws a 400 error using Pydantic's own error format, rather than
+    reshaping it into Marshmallow's.
+
+    :param error: The pydantic.ValidationError raised while loading the request.
+    :param Union[str,messages.ErrorMessage] msg: The overall message to use in the response.
+    :raises: errors.BadRequest
+    """
+    # error.json() (not error.errors()) guarantees every value is JSON-safe.
+    raise errors.BadRequest(
+        msg=msg, additional_data={"errors": json.loads(error.json())}
+    )
+
+
 def get_json_body_params_or_400(schema: Schema) -> Dict[str, Any]:
     """
     Retrieves the JSON body of a request, validating/loading the payload
@@ -233,6 +254,8 @@ def _get_data_or_400(
         return compat.load(schema=schema, data=data)
     except marshmallow.ValidationError as e:
         raise_400_for_marshmallow_errors(errs=e.messages_dict, msg=message)
+    except PydanticValidationError as e:
+        raise_400_for_pydantic_errors(error=e, msg=message)
 
 
 def _get_json_body_or_400() -> Union[List[Any], Dict[str, Any]]:

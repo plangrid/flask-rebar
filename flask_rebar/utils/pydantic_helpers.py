@@ -6,8 +6,15 @@ try:
     import pydantic
 
     PYDANTIC = True
+    PydanticValidationError = pydantic.ValidationError
 except ImportError:
     PYDANTIC = False
+
+    class PydanticValidationError(Exception):  # type: ignore[no-redef]
+        """Stand-in so callers can safely except this even without pydantic installed."""
+
+        def json(self, *_args: Any, **_kwargs: Any) -> str:
+            return "null"
 
 
 def get_pydantic_schema(model: Any) -> Optional[Schema]:
