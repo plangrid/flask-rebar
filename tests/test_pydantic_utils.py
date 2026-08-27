@@ -186,7 +186,7 @@ def test_swagger_v3_generation_does_not_warn(client):
 def test_recursive_pydantic_models_keep_a_self_reference_in_swagger():
     class Node(ApiModel):
         name: str
-        children: list["Node"] = []
+        children: list["Node"] = []  # noqa: F821
 
     rebar = Rebar()
     registry = rebar.create_handler_registry(prefix="/v1")
@@ -216,7 +216,7 @@ def test_recursive_generic_pydantic_model_self_reference_resolves():
 
     class Tree(ApiModel, Generic[T]):
         value: T
-        children: list["Tree[T]"] = []
+        children: list["Tree[T]"] = []  # noqa: F821
 
     IntTree = Tree[int]
     # Pydantic's stack-based schema rebuild can happen far from the class definition
@@ -248,7 +248,9 @@ def test_recursive_generic_pydantic_model_self_reference_resolves():
 def test_recursive_pydantic_model_self_reference_keeps_field_overrides():
     class Node(ApiModel):
         name: str
-        children: list[Annotated["Node", Field(description="child node")]] = []
+        children: list[
+            Annotated["Node", Field(description="child node")]  # noqa: F821
+        ] = []
 
     schema = openapi_schema(Node)
 
