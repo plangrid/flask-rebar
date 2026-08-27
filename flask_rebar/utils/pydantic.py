@@ -342,8 +342,6 @@ def _inline_refs(
 
     reference = node.get("$ref")
     if reference is not None:
-        if reference in stack:
-            return {sw.type_: sw.object_}
         target = definitions.get(reference, {})
         # A field-level override (e.g. `default`) describes this particular
         # use site, not the referenced type. Once the target is itself a
@@ -355,6 +353,13 @@ def _inline_refs(
             for key, value in node.items()
             if key != "$ref" and not (is_named_component and key == sw.default)
         }
+        if reference in stack:
+            # The target was already merged in higher up the stack, where its
+            # title is sanitized into its component name (see below). Recompute
+            # that same name so this leftover pointer, once resolved by
+            # `_flatten`, lands on the same swagger definition.
+            name = _INVALID_NAME_CHARS.sub("", str(target.get(sw.title, reference)))
+            return {**overrides, sw.ref: name}
         merged = {**target, **overrides}
         return _inline_refs(merged, definitions, (*stack, reference))
 

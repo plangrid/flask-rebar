@@ -1,6 +1,7 @@
 """Tests for the Pydantic Flask-Rebar adapter."""
 
 import json
+from typing import Annotated, Generic, TypeVar
 from uuid import UUID
 
 import marshmallow
@@ -159,6 +160,74 @@ def test_pydantic_models_generate_swagger_definitions(client):
         "$ref": "#/definitions/Nested"
     }
     assert "rotation" in schemas["Nested"]["properties"]
+
+
+def test_recursive_pydantic_models_keep_a_self_reference_in_swagger():
+    class Node(ApiModel):
+        name: str
+        children: list["Node"] = []
+
+    rebar = Rebar()
+    registry = rebar.create_handler_registry(prefix="/v1")
+
+    @registry.handles(
+        rule="/nodes",
+        method="GET",
+        response_body_schema={200: Node},
+    )
+    def get_node():
+        return {"name": "root", "children": []}, 200
+
+    app = Flask(__name__)
+    rebar.init_app(app)
+
+    swagger = registry.swagger_generator.generate_swagger(registry)
+    node_schema = swagger["definitions"]["Node"]
+
+    assert node_schema["properties"]["children"]["items"] == {
+        "$ref": "#/definitions/Node"
+    }
+
+
+def test_recursive_generic_pydantic_model_self_reference_resolves():
+    T = TypeVar("T")
+
+    class Tree(ApiModel, Generic[T]):
+        value: T
+        children: list["Tree[T]"] = []
+
+    IntTree = Tree[int]
+
+    rebar = Rebar()
+    registry = rebar.create_handler_registry(prefix="/v1")
+
+    @registry.handles(
+        rule="/trees",
+        method="GET",
+        response_body_schema={200: IntTree},
+    )
+    def get_tree():
+        return {"value": 1, "children": []}, 200
+
+    app = Flask(__name__)
+    rebar.init_app(app)
+
+    swagger = registry.swagger_generator.generate_swagger(registry)
+    definitions = swagger["definitions"]
+    ref = definitions["Treeint"]["properties"]["children"]["items"]["$ref"]
+
+    assert ref.rsplit("/", 1)[-1] in definitions
+
+
+def test_recursive_pydantic_model_self_reference_keeps_field_overrides():
+    class Node(ApiModel):
+        name: str
+        children: list[Annotated["Node", Field(description="child node")]] = []
+
+    schema = openapi_schema(Node)
+
+    assert schema["properties"]["children"]["items"]["$ref"] == "Node"
+    assert schema["properties"]["children"]["items"]["description"] == "child node"
 
 
 def test_schema_generation_inlines_references_and_drops_property_titles():

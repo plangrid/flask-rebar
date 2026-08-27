@@ -140,6 +140,10 @@ def flatten(schema: Dict[str, Any], base: str) -> Tuple[Dict[str, str], Dict[str
 def _flatten(
     schema: Dict[str, Any], definitions: Dict[str, Any], base: str
 ) -> Dict[str, str]:
+    if sw.ref in schema and not schema[sw.ref].startswith("#/"):
+        schema[sw.ref] = create_ref(base, schema[sw.ref])
+        return schema
+
     # With OpenAPI 3.1, this will be a list of allowed types that includes sw.null if the field is nullable.
     schema_type: str | list[str] | None = schema.get(sw.type_)
     schema_types = []
