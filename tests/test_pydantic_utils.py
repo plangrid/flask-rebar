@@ -1,13 +1,14 @@
 """Tests for the Pydantic Flask-Rebar adapter."""
 
 import json
+import warnings
 from typing import Annotated, Generic, TypeVar
 from uuid import UUID
 
 import marshmallow
 import pytest
 from flask import Flask
-from flask_rebar import Rebar, compat
+from flask_rebar import Rebar, SwaggerV3Generator, compat
 
 pytest.importorskip("pydantic")
 
@@ -149,7 +150,8 @@ def test_query_string_validation_errors(client):
 
 def test_pydantic_models_generate_swagger_definitions(client):
     registry = client.application.config["registry"]
-    swagger = registry.swagger_generator.generate_swagger(registry)
+    with pytest.warns(UserWarning, match="Swagger 2.0"):
+        swagger = registry.swagger_generator.generate_swagger(registry)
     schemas = swagger["definitions"]
 
     assert schemas["CreateThing"]["properties"]["nested"] == {
@@ -160,6 +162,17 @@ def test_pydantic_models_generate_swagger_definitions(client):
         "$ref": "#/definitions/Nested"
     }
     assert "rotation" in schemas["Nested"]["properties"]
+
+
+def test_swagger_v3_generation_does_not_warn(client):
+    registry = client.application.config["registry"]
+    registry.swagger_generator = SwaggerV3Generator()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        swagger = registry.swagger_generator.generate_swagger(registry)
+
+    assert "CreateThing" in swagger["components"]["schemas"]
 
 
 def test_recursive_pydantic_models_keep_a_self_reference_in_swagger():
@@ -181,7 +194,8 @@ def test_recursive_pydantic_models_keep_a_self_reference_in_swagger():
     app = Flask(__name__)
     rebar.init_app(app)
 
-    swagger = registry.swagger_generator.generate_swagger(registry)
+    with pytest.warns(UserWarning, match="Swagger 2.0"):
+        swagger = registry.swagger_generator.generate_swagger(registry)
     node_schema = swagger["definitions"]["Node"]
 
     assert node_schema["properties"]["children"]["items"] == {
@@ -212,7 +226,8 @@ def test_recursive_generic_pydantic_model_self_reference_resolves():
     app = Flask(__name__)
     rebar.init_app(app)
 
-    swagger = registry.swagger_generator.generate_swagger(registry)
+    with pytest.warns(UserWarning, match="Swagger 2.0"):
+        swagger = registry.swagger_generator.generate_swagger(registry)
     definitions = swagger["definitions"]
     ref = definitions["Treeint"]["properties"]["children"]["items"]["$ref"]
 
@@ -336,7 +351,8 @@ def test_many_response_body_schema_returns_a_json_array():
         }
     ]
 
-    swagger = registry.swagger_generator.generate_swagger(registry)
+    with pytest.warns(UserWarning, match="Swagger 2.0"):
+        swagger = registry.swagger_generator.generate_swagger(registry)
     responses = swagger["paths"]["/v1/things/many"]["get"]["responses"]
     assert responses["200"]["schema"] == {
         "type": "array",
@@ -377,7 +393,8 @@ def test_root_model_lists_work_as_a_pure_pydantic_alternative_to_many():
     assert response.status_code == 200
     assert response.json == [{"count": 1}, {"count": 2}]
 
-    swagger = registry.swagger_generator.generate_swagger(registry)
+    with pytest.warns(UserWarning, match="Swagger 2.0"):
+        swagger = registry.swagger_generator.generate_swagger(registry)
     ref = swagger["paths"]["/v1/items"]["get"]["responses"]["200"]["schema"]["$ref"]
     definitions = swagger["definitions"]
 
@@ -415,7 +432,9 @@ def test_colliding_component_names_fail_swagger_generation():
     def get_second():
         return {}, 200
 
-    with pytest.raises(ValueError, match="Item"):
+    with pytest.warns(UserWarning, match="Swagger 2.0"), pytest.raises(
+        ValueError, match="Item"
+    ):
         registry.swagger_generator.generate_swagger(registry)
 
 

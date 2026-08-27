@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import re
 import sys
+import warnings
 from collections.abc import Mapping
 from copy import deepcopy
 from datetime import datetime
@@ -396,7 +397,14 @@ class _PydanticSchemaConverter(MarshmallowConverter):
         self.mode = mode
 
     def convert(self, obj: PydanticSchema, context: Any) -> dict[str, Any]:
-        del context
+        if context.openapi_version == 2:
+            warnings.warn(
+                "Pydantic models produce JSON Schema (anyOf, nullable unions, "
+                "advanced constraints) that Swagger 2.0 / draft-4 cannot represent. "
+                "The generated document may be invalid. Use SwaggerV3Generator "
+                "with Pydantic models instead.",
+                stacklevel=2,
+            )
         schema = openapi_schema(obj.model, mode=self.mode)
         if obj.many:
             # Mirrors marshmallow's SchemaConverter: the array wrapper itself

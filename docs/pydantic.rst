@@ -207,9 +207,10 @@ of validated model instances:
 Swagger
 -------
 
-Pydantic models do not emit valid Swagger 2 schemas. Flask-Rebar does not currently
-fail automatically, so the generated Swagger 2 document may only fail later when 
-it is validated or used to generate a client.
+Pydantic models do not emit valid Swagger 2 schemas. Flask-Rebar warns the first
+time a Pydantic-backed schema is converted through a Swagger 2 generator, but it
+does not fail automatically, so the generated Swagger 2 document may still only
+fail later when it is validated or used to generate a client.
 
 Use ``SwaggerV3Generator`` with Pydantic models. It generates an OpenAPI 3
 document that can represent Pydantic's schema, including nullable values,
