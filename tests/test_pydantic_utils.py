@@ -14,7 +14,7 @@ pytest.importorskip("pydantic")
 
 from pydantic import BaseModel, Field, computed_field, RootModel  # noqa: E402
 
-from flask_rebar.utils.pydantic import (  # noqa: E402
+from flask_rebar.utils.pydantic_schema import (  # noqa: E402
     ApiModel,
     CamelCaseApiModel,
     DateTime,

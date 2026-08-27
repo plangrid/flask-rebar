@@ -23,7 +23,7 @@ Although you can use a plain Pydantic ``BaseModel`` subclass, Flask-Rebar provid
 
 .. code-block:: python
 
-   from flask_rebar.utils.pydantic import ApiModel
+   from flask_rebar.utils.pydantic_schema import ApiModel
 
 
    class CreateWidget(ApiModel):
@@ -36,7 +36,7 @@ camel-case aliases (``pageWidth``) alongside the Python field names:
 
 .. code-block:: python
 
-   from flask_rebar.utils.pydantic import CamelCaseApiModel
+   from flask_rebar.utils.pydantic_schema import CamelCaseApiModel
 
 
    class CreateWidget(CamelCaseApiModel):
@@ -52,7 +52,7 @@ model that validated the request (compatible with type hints):
 .. code-block:: python
 
    from flask_rebar import Rebar
-   from flask_rebar.utils.pydantic import validated_body
+   from flask_rebar.utils.pydantic_schema import validated_body
 
    rebar = Rebar()
    registry = rebar.create_handler_registry()
@@ -100,7 +100,7 @@ ignored rather than rejected:
 
    from pydantic import Field
 
-   from flask_rebar.utils.pydantic import ApiModel, validated_headers
+   from flask_rebar.utils.pydantic_schema import ApiModel, validated_headers
 
 
    class WidgetHeaders(ApiModel):
@@ -121,7 +121,7 @@ offset when serialized to JSON, rather than Pydantic's default:
 
 .. code-block:: python
 
-   from flask_rebar.utils.pydantic import ApiModel, DateTime
+   from flask_rebar.utils.pydantic_schema import ApiModel, DateTime
 
 
    class WidgetResponse(ApiModel):
@@ -147,7 +147,7 @@ without changing ordinary ``model_dump`` behavior:
 
 .. code-block:: python
 
-   from flask_rebar.utils.pydantic import CamelCaseApiModel, OmitNone
+   from flask_rebar.utils.pydantic_schema import CamelCaseApiModel, OmitNone
 
 
    class WidgetResponse(OmitNone, CamelCaseApiModel):
@@ -162,7 +162,7 @@ directly to the handler:
 
     from pydantic import RootModel
 
-    from flask_rebar.utils.pydantic import validated_body
+    from flask_rebar.utils.pydantic_schema import validated_body
 
 
    class WidgetResponses(RootModel[list[WidgetResponse]]):
@@ -190,7 +190,7 @@ of validated model instances:
 
 .. code-block:: python
 
-    from flask_rebar.utils.pydantic import schema_for, validated_body
+    from flask_rebar.utils.pydantic_schema import schema_for, validated_body
 
 
    @registry.handles(
