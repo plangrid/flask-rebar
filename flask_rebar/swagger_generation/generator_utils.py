@@ -140,6 +140,10 @@ def flatten(schema: Dict[str, Any], base: str) -> Tuple[Dict[str, str], Dict[str
 def _flatten(
     schema: Dict[str, Any], definitions: Dict[str, Any], base: str
 ) -> Dict[str, str]:
+    if sw.ref in schema and not schema[sw.ref].startswith("#/"):
+        schema[sw.ref] = create_ref(base, schema[sw.ref])
+        return schema
+
     # With OpenAPI 3.1, this will be a list of allowed types that includes sw.null if the field is nullable.
     schema_type: str | list[str] | None = schema.get(sw.type_)
     schema_types = []
@@ -169,6 +173,12 @@ def _flatten(
 
     if sw.title in schema:
         definitions_key = get_key(schema)
+        existing = definitions.get(definitions_key)
+        if existing is not None and existing != schema:
+            raise ValueError(
+                f"Multiple distinct schemas share the component name "
+                f"'{definitions_key}'. Give them distinct titles/class names."
+            )
         definitions[definitions_key] = schema
         schema = {sw.ref: create_ref(base, definitions_key)}
 
@@ -268,11 +278,18 @@ def get_unique_schema_definitions(
 
             all_schemas.add(schema)
 
-    flattened = {}
+    flattened: Dict[str, Any] = {}
 
     for obj in converted:
         _, flattened_definitions = flatten(obj, base)
-        flattened.update(flattened_definitions)
+        for key, value in flattened_definitions.items():
+            existing = flattened.get(key)
+            if existing is not None and existing != value:
+                raise ValueError(
+                    f"Multiple distinct schemas share the component name "
+                    f"'{key}'. Give them distinct titles/class names."
+                )
+            flattened[key] = value
 
     return flattened
 

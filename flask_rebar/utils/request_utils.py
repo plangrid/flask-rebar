@@ -9,6 +9,7 @@
 """
 import collections
 import copy
+import json
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -32,6 +33,10 @@ from flask_rebar import errors
 from flask_rebar import messages
 from flask_rebar.utils.defaults import USE_DEFAULT
 from flask_rebar.utils.marshmallow_objects_helpers import get_marshmallow_objects_schema
+from flask_rebar.utils.pydantic_helpers import (
+    PydanticValidationError,
+    get_pydantic_schema,
+)
 
 
 class HeadersProxy(collections.abc.Mapping):
@@ -127,8 +132,8 @@ def normalize_schema(
     schema: Any,
 ) -> Union[Schema, Type[Schema], Type[USE_DEFAULT], None]:
     """
-    This allows for either an instance of a marshmallow.Schema or the class
-    itself to be passed to functions.
+    This allows for either of (an instance or class of a marshmallow.Schema), or
+    a pydantic model class itself to be passed to functions.
     For Marshmallow-objects support, if a Model class is passed, return its __schema__
 
     Possible types:
@@ -136,18 +141,22 @@ def normalize_schema(
     - schema class -> return instance of schema class
     - marshmallow-objects Model class -> return schema class (is this right?)
     - marshmallow-objects Model instance -> return schema class (is this right?)
+    - pydantic BaseModel class or instance -> return its cached schema adapter
     - None -> return None
     - USE_DEFAULT -> return USE_DEFAULT
     """
     if schema not in (None, USE_DEFAULT) and not isinstance(schema, marshmallow.Schema):
         # See if we were handed a marshmallow_objects Model class or instance:
         mo_schema = get_marshmallow_objects_schema(schema)
+        pydantic_schema = get_pydantic_schema(schema)
         if mo_schema:
             model = schema
             schema = mo_schema
             # If __swagger_title__ is defined on the Model, propagate that down:
             if hasattr(model, "__swagger_title__"):
                 schema.__swagger_title__ = model.__swagger_title__
+        elif pydantic_schema is not None:
+            schema = pydantic_schema
         else:
             # assume we were passed a Schema class (not an instance)
             schema = schema()
@@ -174,6 +183,23 @@ def raise_400_for_marshmallow_errors(
     additional_data = {"errors": copied}
 
     raise errors.BadRequest(msg=msg, additional_data=additional_data)
+
+
+def raise_400_for_pydantic_errors(
+    error: PydanticValidationError, msg: Union[str, messages.ErrorMessage]
+) -> NoReturn:
+    """
+    Throws a 400 error using Pydantic's own error format, rather than
+    reshaping it into Marshmallow's.
+
+    :param error: The pydantic.ValidationError raised while loading the request.
+    :param Union[str,messages.ErrorMessage] msg: The overall message to use in the response.
+    :raises: errors.BadRequest
+    """
+    # error.json() (not error.errors()) guarantees every value is JSON-safe.
+    raise errors.BadRequest(
+        msg=msg, additional_data={"errors": json.loads(error.json())}
+    )
 
 
 def get_json_body_params_or_400(schema: Schema) -> Dict[str, Any]:
@@ -228,6 +254,8 @@ def _get_data_or_400(
         return compat.load(schema=schema, data=data)
     except marshmallow.ValidationError as e:
         raise_400_for_marshmallow_errors(errs=e.messages_dict, msg=message)
+    except PydanticValidationError as e:
+        raise_400_for_pydantic_errors(error=e, msg=message)
 
 
 def _get_json_body_or_400() -> Union[List[Any], Dict[str, Any]]:

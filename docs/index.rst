@@ -100,6 +100,7 @@ Here's what a basic Flask-Rebar application looks like:
    api_reference
    tutorials
    recipes
+   pydantic
    contributing
    version_history
    changelog

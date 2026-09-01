@@ -42,6 +42,9 @@ def dump(schema: Schema, data: Dict[str, Any]) -> Dict[str, Any]:
     Accordingly, we are making validation "opt-in" here, which can be controlled at schema level with
     RequireOnDumpMixin or globally via validate_on_dump attribute of Rebar instance
     """
+    if getattr(schema, "dump_validates", False):
+        return schema.dump(data)
+
     try:
         force_validation = current_app.extensions["rebar"]["instance"].validate_on_dump
     except (
