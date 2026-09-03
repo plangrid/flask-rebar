@@ -6,3 +6,5 @@ from flask_rebar.swagger_generation.swagger_objects import Server
 from flask_rebar.swagger_generation.swagger_objects import ServerVariable
 from flask_rebar.swagger_generation.marshmallow_to_swagger import sets_swagger_attr
 from flask_rebar.swagger_generation.marshmallow_to_swagger import ConverterRegistry
+from flask_rebar.swagger_generation.openapi_extensions import openapi_extension
+from flask_rebar.swagger_generation.openapi_extensions import openapi_extensions
