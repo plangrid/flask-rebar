@@ -32,12 +32,34 @@ from tests.swagger_generation.registries import (
     multiple_authenticators,
 )
 
+try:
+    from tests.swagger_generation.registries import deepfried_marshmallow  # noqa: E402
+except ImportError:
+    deepfried_marshmallow = None
+
 
 def _assert_dicts_equal(a, b):
     result = json.dumps(a, indent=2, sort_keys=True)
     expected = json.dumps(b, indent=2, sort_keys=True)
 
     assert result == expected
+
+
+def _standardize_required(obj):
+    """Recursively sort any 'required' lists in a JSON-like structure.
+
+    This makes tests resilient to differences in field ordering across
+    Marshmallow versions (e.g., insertion-order vs. alphabetical).
+    """
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == "required" and isinstance(v, list):
+                v.sort()
+            else:
+                _standardize_required(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            _standardize_required(item)
 
 
 def test_swagger_v2_generator_non_registry_parameters():
@@ -251,6 +273,36 @@ def test_path_parameter_types_must_be_the_same_for_same_path(generator):
             marshmallow_objects.swagger_v3_generator,
             marshmallow_objects.EXPECTED_SWAGGER_V3,
         ),
+        (
+            pytest.param(
+                deepfried_marshmallow.registry if deepfried_marshmallow else None,
+                deepfried_marshmallow.swagger_v2_generator
+                if deepfried_marshmallow
+                else None,
+                deepfried_marshmallow.EXPECTED_SWAGGER_V2
+                if deepfried_marshmallow
+                else None,
+                marks=pytest.mark.skipif(
+                    deepfried_marshmallow is None,
+                    reason="DeepFriedMarshmallow is unavailable",
+                ),
+            )
+        ),
+        (
+            pytest.param(
+                deepfried_marshmallow.registry if deepfried_marshmallow else None,
+                deepfried_marshmallow.swagger_v3_generator
+                if deepfried_marshmallow
+                else None,
+                deepfried_marshmallow.EXPECTED_SWAGGER_V3
+                if deepfried_marshmallow
+                else None,
+                marks=pytest.mark.skipif(
+                    deepfried_marshmallow is None,
+                    reason="DeepFriedMarshmallow is unavailable",
+                ),
+            )
+        ),
     ],
 )
 def test_swagger_generators(registry, swagger_generator, expected_swagger):
@@ -265,6 +317,8 @@ def test_swagger_generators(registry, swagger_generator, expected_swagger):
     validate_swagger(expected_swagger, schema=swagger_jsonschema)
 
     swagger = swagger_generator.generate(registry)
+    _standardize_required(swagger)
+    _standardize_required(expected_swagger)
 
     result = json.dumps(swagger, indent=2, sort_keys=True)
     expected = json.dumps(expected_swagger, indent=2, sort_keys=True)
