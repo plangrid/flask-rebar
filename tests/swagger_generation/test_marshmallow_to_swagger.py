@@ -122,6 +122,10 @@ class TestConverterRegistry(TestCase):
                 {"type": "string", "maxLength": 9},
             ),
             (
+                m.fields.String(allow_none=True, validate=v.Length(max=9)),
+                {"type": "string", "maxLength": 9, "x-nullable": True},
+            ),
+            (
                 m.fields.String(validate=v.OneOf(["a", "b"])),
                 {"type": "string", "enum": ["a", "b"]},
             ),
@@ -168,6 +172,25 @@ class TestConverterRegistry(TestCase):
     def test_primitive_types_openapi_v3(self):
         for field, result in [
             (m.fields.Integer(allow_none=True), {"type": ["integer", "null"]}),
+            (
+                m.fields.String(validate=v.Length(max=9)),
+                {"type": "string", "maxLength": 9},
+            ),
+            (
+                m.fields.String(allow_none=True, validate=v.Length(min=1, max=9)),
+                {"type": ["string", "null"], "minLength": 1, "maxLength": 9},
+            ),
+            (
+                m.fields.List(
+                    m.fields.Integer(), allow_none=True, validate=v.Length(min=1, max=9)
+                ),
+                {
+                    "type": ["array", "null"],
+                    "items": {"type": "integer"},
+                    "minItems": 1,
+                    "maxItems": 9,
+                },
+            ),
             (
                 QueryParamList(m.fields.Integer()),
                 {"type": "array", "items": {"type": "integer"}, "explode": True},
