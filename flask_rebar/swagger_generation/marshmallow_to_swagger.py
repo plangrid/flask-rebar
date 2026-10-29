@@ -9,6 +9,7 @@
     :license: MIT, see LICENSE for details.
 """
 import copy
+import enum
 import inspect
 import logging
 import sys
@@ -806,6 +807,20 @@ class EnumConverter(FieldConverter):
             return [entry.value for entry in obj.enum]
         else:
             return [entry.name for entry in obj.enum]
+
+    @sets_swagger_attr(sw.default)
+    def get_default(self, obj: Any, context: _Context) -> Any:
+        # Document an enum member default the same way the choices are listed
+        # in get_enum, so the spec stays JSON serializable.
+        default = super().get_default(obj, context)
+        if not isinstance(default, enum.Enum):
+            return default
+        if obj.by_value or (
+            LoadDumpOptions is not None
+            and obj.load_by == obj.dump_by == LoadDumpOptions.value
+        ):
+            return default.value
+        return default.name
 
 
 ALL_CONVERTERS = tuple(
