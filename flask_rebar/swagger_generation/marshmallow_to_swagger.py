@@ -642,11 +642,19 @@ class OneOfConverter(ValidatorConverter):
 class LengthConverter(ValidatorConverter):
     MARSHMALLOW_TYPE = Length
 
+    @staticmethod
+    def _is_type(context: _Context, sw_type: str) -> bool:
+        # With OpenApi 3.1, nullable fields have a list of types (e.g. ["string", "null"])
+        memo_type = context.memo[sw.type_]
+        if isinstance(memo_type, list):
+            return sw_type in memo_type
+        return memo_type == sw_type
+
     @sets_swagger_attr(sw.min_items)
     def get_minimum_items(
         self, obj: Length, context: _Context
     ) -> Union[Type[UNSET], int]:
-        if context.memo[sw.type_] == sw.array:
+        if self._is_type(context, sw.array):
             if obj.min is not None:
                 return obj.min
         return UNSET
@@ -655,7 +663,7 @@ class LengthConverter(ValidatorConverter):
     def get_maximum_items(
         self, obj: Length, context: _Context
     ) -> Union[Type[UNSET], int]:
-        if context.memo[sw.type_] == sw.array:
+        if self._is_type(context, sw.array):
             if obj.max is not None:
                 return obj.max
         return UNSET
@@ -664,7 +672,7 @@ class LengthConverter(ValidatorConverter):
     def get_minimum_length(
         self, obj: Length, context: _Context
     ) -> Union[Type[UNSET], int]:
-        if context.memo[sw.type_] == sw.string:
+        if self._is_type(context, sw.string):
             if obj.min is not None:
                 return obj.min
         return UNSET
@@ -673,7 +681,7 @@ class LengthConverter(ValidatorConverter):
     def get_maximum_length(
         self, obj: Length, context: _Context
     ) -> Union[Type[UNSET], int]:
-        if context.memo[sw.type_] == sw.string:
+        if self._is_type(context, sw.string):
             if obj.max is not None:
                 return obj.max
         return UNSET
