@@ -7,19 +7,22 @@ from uuid import UUID
 
 import pytest
 from flask import Flask
+
 from flask_rebar import Rebar, SwaggerV3Generator, compat
 
 pytest.importorskip("pydantic")
 
-from pydantic import (  # noqa: E402
+from pydantic import (
     BaseModel,
     Field,
     RootModel,
-    ValidationError as PydanticValidationError,
     computed_field,
 )
+from pydantic import (
+    ValidationError as PydanticValidationError,
+)
 
-from flask_rebar.utils.pydantic_schema import (  # noqa: E402
+from flask_rebar.utils.pydantic_schema import (
     ApiModel,
     CamelCaseApiModel,
     DateTime,
@@ -186,7 +189,7 @@ def test_swagger_v3_generation_does_not_warn(client):
 def test_recursive_pydantic_models_keep_a_self_reference_in_swagger():
     class Node(ApiModel):
         name: str
-        children: list["Node"] = []  # noqa: F821
+        children: list["Node"] = []
 
     rebar = Rebar()
     registry = rebar.create_handler_registry(prefix="/v1")
@@ -216,7 +219,7 @@ def test_recursive_generic_pydantic_model_self_reference_resolves():
 
     class Tree(ApiModel, Generic[T]):
         value: T
-        children: list["Tree[T]"] = []  # noqa: F821
+        children: list["Tree[T]"] = []
 
     IntTree = Tree[int]
     # Pydantic's stack-based schema rebuild can happen far from the class definition
@@ -249,7 +252,7 @@ def test_recursive_pydantic_model_self_reference_keeps_field_overrides():
     class Node(ApiModel):
         name: str
         children: list[
-            Annotated["Node", Field(description="child node")]  # noqa: F821
+            Annotated["Node", Field(description="child node")]
         ] = []
 
     schema = openapi_schema(Node)
@@ -550,3 +553,43 @@ def test_a_plain_dict_response_is_validated_and_coerced_through_the_model():
 
     assert response.status_code == 200
     assert response.json == {"count": 5, "ratio": 2.0}
+
+
+def test_response_description_uses_the_model_docstring() -> None:
+    class Documented(CamelCaseApiModel):
+        """A documented thing"""
+
+        name: str
+
+    class Undocumented(CamelCaseApiModel):
+        name: str
+
+    rebar = Rebar()
+    registry = rebar.create_handler_registry(swagger_generator=SwaggerV3Generator())
+
+    @registry.handles(
+        rule="/documented",
+        method="GET",
+        response_body_schema={200: Documented},
+    )
+    def documented() -> Documented:
+        return Documented(name="x")
+
+    @registry.handles(
+        rule="/undocumented",
+        method="GET",
+        response_body_schema={200: Undocumented},
+    )
+    def undocumented() -> Undocumented:
+        return Undocumented(name="x")
+
+    app = Flask(__name__)
+    rebar.init_app(app)
+    spec = registry.swagger_generator.generate(registry)
+
+    def description(path: str) -> str:
+        return spec["paths"][path]["get"]["responses"]["200"]["description"]
+
+    assert description("/documented") == "A documented thing"
+    # Without a docstring the description still falls back to the component name.
+    assert description("/undocumented") == "Undocumented"
