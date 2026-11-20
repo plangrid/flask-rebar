@@ -251,9 +251,7 @@ def test_recursive_generic_pydantic_model_self_reference_resolves():
 def test_recursive_pydantic_model_self_reference_keeps_field_overrides():
     class Node(ApiModel):
         name: str
-        children: list[
-            Annotated["Node", Field(description="child node")]
-        ] = []
+        children: list[Annotated["Node", Field(description="child node")]] = []
 
     schema = openapi_schema(Node)
 
