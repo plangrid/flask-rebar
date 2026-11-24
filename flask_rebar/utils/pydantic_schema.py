@@ -5,6 +5,7 @@ Install this module's optional dependency with ``flask-rebar[pydantic]``.
 
 from __future__ import annotations
 
+import inspect
 import re
 import sys
 import warnings
@@ -245,7 +246,17 @@ def schema_for(model: type[ModelType], *, many: bool = False) -> PydanticSchema:
     instances rather than a single one, e.g.
     ``response_body_schema={200: schema_for(Widget, many=True)}``.
     """
-    schema_class = type(component_name(model), (PydanticSchema,), {"model": model})
+    # Carry the model's docstring over so Swagger generation can use it as the
+    # response description (as it does for a Marshmallow schema), instead of
+    # falling back to the class name.
+    schema_class = type(
+        component_name(model),
+        (PydanticSchema,),
+        {
+            "model": model,
+            "__doc__": inspect.cleandoc(model.__doc__) if model.__doc__ else None,
+        },
+    )
     schema = schema_class(many=many)
     json_schema = _openapi_schema(model)
     required = set(json_schema.get(sw.required, ()))
