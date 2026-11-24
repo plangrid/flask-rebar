@@ -66,6 +66,18 @@ class TestConverterRegistry(TestCase):
                 {"enum": [1, 2, 3], "type": "integer"},
             ),
             (
+                EnumField(StopLight, load_default=StopLight.red),
+                {
+                    "enum": ["green", "yellow", "red"],
+                    "type": "string",
+                    "default": "red",
+                },
+            ),
+            (
+                EnumField(StopLight, by_value=True, load_default=StopLight.red),
+                {"enum": [1, 2, 3], "type": "integer", "default": 3},
+            ),
+            (
                 m.fields.Integer(allow_none=True),
                 {"type": "integer", "x-nullable": True},
             ),
