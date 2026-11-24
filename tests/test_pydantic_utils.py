@@ -7,6 +7,7 @@ from uuid import UUID
 
 import pytest
 from flask import Flask
+
 from flask_rebar import Rebar, SwaggerV3Generator, compat
 
 pytest.importorskip("pydantic")
@@ -15,8 +16,10 @@ from pydantic import (  # noqa: E402
     BaseModel,
     Field,
     RootModel,
-    ValidationError as PydanticValidationError,
     computed_field,
+)
+from pydantic import (  # noqa: E402
+    ValidationError as PydanticValidationError,
 )
 
 from flask_rebar.utils.pydantic_schema import (  # noqa: E402
@@ -550,3 +553,43 @@ def test_a_plain_dict_response_is_validated_and_coerced_through_the_model():
 
     assert response.status_code == 200
     assert response.json == {"count": 5, "ratio": 2.0}
+
+
+def test_response_description_uses_the_model_docstring() -> None:
+    class Documented(CamelCaseApiModel):
+        """A documented thing"""
+
+        name: str
+
+    class Undocumented(CamelCaseApiModel):
+        name: str
+
+    rebar = Rebar()
+    registry = rebar.create_handler_registry(swagger_generator=SwaggerV3Generator())
+
+    @registry.handles(
+        rule="/documented",
+        method="GET",
+        response_body_schema={200: Documented},
+    )
+    def documented() -> Documented:
+        return Documented(name="x")
+
+    @registry.handles(
+        rule="/undocumented",
+        method="GET",
+        response_body_schema={200: Undocumented},
+    )
+    def undocumented() -> Undocumented:
+        return Undocumented(name="x")
+
+    app = Flask(__name__)
+    rebar.init_app(app)
+    spec = registry.swagger_generator.generate(registry)
+
+    def description(path: str) -> str:
+        return spec["paths"][path]["get"]["responses"]["200"]["description"]
+
+    assert description("/documented") == "A documented thing"
+    # Without a docstring the description still falls back to the component name.
+    assert description("/undocumented") == "Undocumented"
