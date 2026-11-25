@@ -14,6 +14,10 @@ from flask_rebar.validation import ResponseSchema, RequestSchema
 
 from flask_rebar.swagger_generation.swagger_generator_v2 import SwaggerV2Generator
 from flask_rebar.swagger_generation.swagger_generator_v3 import SwaggerV3Generator
+from flask_rebar.swagger_generation.openapi_extensions import (
+    openapi_extension,
+    openapi_extensions,
+)
 from flask_rebar.swagger_generation.swagger_objects import (
     ExternalDocumentation,
     Tag,
